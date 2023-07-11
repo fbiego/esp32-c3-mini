@@ -443,9 +443,9 @@ class MyCallbacks : public BLECharacteristicCallbacks
 
         notifications[notificationIndex % BUFFER_SIZE].message = message;
 
-        msgLen = pData[2] + 3;
+        msgLen = pData[2] + 2;
 
-        if (msgLen <= 20)
+        if (msgLen <= 19)
         {
           // message is complete
           onNotificationsOpen(click);
@@ -477,7 +477,7 @@ class MyCallbacks : public BLECharacteristicCallbacks
         message += (char)pData[i];
       }
       notifications[notificationIndex % BUFFER_SIZE].message += message;
-      if (((msgLen > (pData[0] + 1) * 20) && (msgLen <= (pData[0] + 2) * 20)) || (pData[0] <= 0x0F))
+      if (((msgLen > (pData[0] + 1) * 19) && (msgLen <= (pData[0] + 2) * 19)) || (pData[0] == 0x0F))
       {
         // message is complete || message is longer than expected, truncate
         onNotificationsOpen(click);
