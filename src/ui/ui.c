@@ -7,8 +7,6 @@
 #include "ui_helpers.h"
 
 ///////////////////// VARIABLES ////////////////////
-void hideLeft_Animation( lv_obj_t *TargetObject, int delay);
-void showAlert_Animation( lv_obj_t *TargetObject, int delay);
 void ui_event_clockScreen( lv_event_t * e);
 lv_obj_t *ui_clockScreen;
 lv_obj_t *ui_hourLabel;
@@ -24,7 +22,7 @@ lv_obj_t *ui_alertIcon;
 lv_obj_t *ui_alertText;
 void ui_event_weatherScreen( lv_event_t * e);
 lv_obj_t *ui_weatherScreen;
-lv_obj_t *ui_waetherPanel;
+lv_obj_t *ui_weatherPanel;
 lv_obj_t *ui_weatherCity;
 lv_obj_t *ui_weatherCurrentIcon;
 lv_obj_t *ui_weatherCurrentTemp;
@@ -91,86 +89,6 @@ const lv_img_dsc_t *ui_imgset_419715717[8] = {&ui_img_229834011, &ui_img_2298350
 #endif
 
 ///////////////////// ANIMATIONS ////////////////////
-void hideLeft_Animation( lv_obj_t *TargetObject, int delay)
-{
-ui_anim_user_data_t *PropertyAnimation_0_user_data = lv_mem_alloc(sizeof(ui_anim_user_data_t));
-PropertyAnimation_0_user_data->target = TargetObject;
-PropertyAnimation_0_user_data->val = -1;
-lv_anim_t PropertyAnimation_0;
-lv_anim_init(&PropertyAnimation_0);
-lv_anim_set_time(&PropertyAnimation_0, 1000);
-lv_anim_set_user_data(&PropertyAnimation_0, PropertyAnimation_0_user_data);
-lv_anim_set_custom_exec_cb(&PropertyAnimation_0, _ui_anim_callback_set_x );
-lv_anim_set_values(&PropertyAnimation_0, 0, -300 );
-lv_anim_set_path_cb( &PropertyAnimation_0, lv_anim_path_ease_out);
-lv_anim_set_delay( &PropertyAnimation_0, delay + 0 );
-lv_anim_set_deleted_cb( &PropertyAnimation_0, _ui_anim_callback_free_user_data );
-lv_anim_set_playback_time(&PropertyAnimation_0, 0);
-lv_anim_set_playback_delay(&PropertyAnimation_0, 0);
-lv_anim_set_repeat_count(&PropertyAnimation_0, 0);
-lv_anim_set_repeat_delay(&PropertyAnimation_0, 0);
-lv_anim_set_early_apply( &PropertyAnimation_0, false );
-lv_anim_start(&PropertyAnimation_0);
-ui_anim_user_data_t *PropertyAnimation_1_user_data = lv_mem_alloc(sizeof(ui_anim_user_data_t));
-PropertyAnimation_1_user_data->target = TargetObject;
-PropertyAnimation_1_user_data->val = -1;
-lv_anim_t PropertyAnimation_1;
-lv_anim_init(&PropertyAnimation_1);
-lv_anim_set_time(&PropertyAnimation_1, 1000);
-lv_anim_set_user_data(&PropertyAnimation_1, PropertyAnimation_1_user_data);
-lv_anim_set_custom_exec_cb(&PropertyAnimation_1, _ui_anim_callback_set_opacity );
-lv_anim_set_values(&PropertyAnimation_1, 255, 0 );
-lv_anim_set_path_cb( &PropertyAnimation_1, lv_anim_path_ease_out);
-lv_anim_set_delay( &PropertyAnimation_1, delay + 0 );
-lv_anim_set_deleted_cb( &PropertyAnimation_1, _ui_anim_callback_free_user_data );
-lv_anim_set_playback_time(&PropertyAnimation_1, 0);
-lv_anim_set_playback_delay(&PropertyAnimation_1, 0);
-lv_anim_set_repeat_count(&PropertyAnimation_1, 0);
-lv_anim_set_repeat_delay(&PropertyAnimation_1, 0);
-lv_anim_set_early_apply( &PropertyAnimation_1, false );
-lv_anim_start(&PropertyAnimation_1);
-
-}
-void showAlert_Animation( lv_obj_t *TargetObject, int delay)
-{
-ui_anim_user_data_t *PropertyAnimation_0_user_data = lv_mem_alloc(sizeof(ui_anim_user_data_t));
-PropertyAnimation_0_user_data->target = TargetObject;
-PropertyAnimation_0_user_data->val = -1;
-lv_anim_t PropertyAnimation_0;
-lv_anim_init(&PropertyAnimation_0);
-lv_anim_set_time(&PropertyAnimation_0, 1000);
-lv_anim_set_user_data(&PropertyAnimation_0, PropertyAnimation_0_user_data);
-lv_anim_set_custom_exec_cb(&PropertyAnimation_0, _ui_anim_callback_set_opacity );
-lv_anim_set_values(&PropertyAnimation_0, 0, 255 );
-lv_anim_set_path_cb( &PropertyAnimation_0, lv_anim_path_ease_in);
-lv_anim_set_delay( &PropertyAnimation_0, delay + 0 );
-lv_anim_set_deleted_cb( &PropertyAnimation_0, _ui_anim_callback_free_user_data );
-lv_anim_set_playback_time(&PropertyAnimation_0, 0);
-lv_anim_set_playback_delay(&PropertyAnimation_0, 0);
-lv_anim_set_repeat_count(&PropertyAnimation_0, 0);
-lv_anim_set_repeat_delay(&PropertyAnimation_0, 0);
-lv_anim_set_early_apply( &PropertyAnimation_0, false );
-lv_anim_start(&PropertyAnimation_0);
-ui_anim_user_data_t *PropertyAnimation_1_user_data = lv_mem_alloc(sizeof(ui_anim_user_data_t));
-PropertyAnimation_1_user_data->target = TargetObject;
-PropertyAnimation_1_user_data->val = -1;
-lv_anim_t PropertyAnimation_1;
-lv_anim_init(&PropertyAnimation_1);
-lv_anim_set_time(&PropertyAnimation_1, 1000);
-lv_anim_set_user_data(&PropertyAnimation_1, PropertyAnimation_1_user_data);
-lv_anim_set_custom_exec_cb(&PropertyAnimation_1, _ui_anim_callback_set_x );
-lv_anim_set_values(&PropertyAnimation_1, -200, 0 );
-lv_anim_set_path_cb( &PropertyAnimation_1, lv_anim_path_ease_in);
-lv_anim_set_delay( &PropertyAnimation_1, delay + 0 );
-lv_anim_set_deleted_cb( &PropertyAnimation_1, _ui_anim_callback_free_user_data );
-lv_anim_set_playback_time(&PropertyAnimation_1, 0);
-lv_anim_set_playback_delay(&PropertyAnimation_1, 0);
-lv_anim_set_repeat_count(&PropertyAnimation_1, 0);
-lv_anim_set_repeat_delay(&PropertyAnimation_1, 0);
-lv_anim_set_early_apply( &PropertyAnimation_1, false );
-lv_anim_start(&PropertyAnimation_1);
-
-}
 
 ///////////////////// FUNCTIONS ////////////////////
 void ui_event_clockScreen( lv_event_t * e) {
@@ -195,10 +113,10 @@ void ui_event_alertPanel( lv_event_t * e) {
     lv_event_code_t event_code = lv_event_get_code(e);lv_obj_t * target = lv_event_get_target(e);
 if ( event_code == LV_EVENT_CLICKED) {
       onClickAlert( e );
-      hideLeft_Animation(ui_alertPanel, 0);
+      _ui_flag_modify( ui_alertPanel, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
 }
 if ( event_code == LV_EVENT_GESTURE &&  lv_indev_get_gesture_dir(lv_indev_get_act()) == LV_DIR_LEFT  ) {
-      hideLeft_Animation(ui_alertPanel, 0);
+      _ui_flag_modify( ui_alertPanel, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
 }
 }
 void ui_event_weatherScreen( lv_event_t * e) {
@@ -207,11 +125,12 @@ if ( event_code == LV_EVENT_GESTURE &&  lv_indev_get_gesture_dir(lv_indev_get_ac
       _ui_screen_change( ui_clockScreen, LV_SCR_LOAD_ANIM_MOVE_BOTTOM, 500, 0);
 }
 if ( event_code == LV_EVENT_GESTURE &&  lv_indev_get_gesture_dir(lv_indev_get_act()) == LV_DIR_LEFT  ) {
-      _ui_flag_modify( ui_waetherPanel, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
+      _ui_flag_modify( ui_weatherPanel, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
       _ui_flag_modify( ui_forecastPanel, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_REMOVE);
+      onForecastOpen( e );
 }
 if ( event_code == LV_EVENT_GESTURE &&  lv_indev_get_gesture_dir(lv_indev_get_act()) == LV_DIR_RIGHT  ) {
-      _ui_flag_modify( ui_waetherPanel, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_REMOVE);
+      _ui_flag_modify( ui_weatherPanel, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_REMOVE);
       _ui_flag_modify( ui_forecastPanel, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
 }
 if ( event_code == LV_EVENT_SCREEN_LOAD_START) {
@@ -356,31 +275,26 @@ lv_obj_set_x( ui_dayLabel, 0 );
 lv_obj_set_y( ui_dayLabel, -99 );
 lv_obj_set_align( ui_dayLabel, LV_ALIGN_CENTER );
 lv_label_set_text(ui_dayLabel,"Sunday");
-lv_obj_set_style_text_color(ui_dayLabel, lv_color_hex(0xDFDFDF), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_text_opa(ui_dayLabel, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
 lv_obj_set_style_text_font(ui_dayLabel, &lv_font_montserrat_16, LV_PART_MAIN| LV_STATE_DEFAULT);
 
 ui_amPmLabel = lv_label_create(ui_clockScreen);
 lv_obj_set_width( ui_amPmLabel, LV_SIZE_CONTENT);  /// 1
 lv_obj_set_height( ui_amPmLabel, LV_SIZE_CONTENT);   /// 1
-lv_obj_set_x( ui_amPmLabel, 24 );
+lv_obj_set_x( ui_amPmLabel, 12 );
 lv_obj_set_y( ui_amPmLabel, 105 );
 lv_obj_set_align( ui_amPmLabel, LV_ALIGN_CENTER );
 lv_label_set_text(ui_amPmLabel,"PM");
-lv_obj_add_flag( ui_amPmLabel, LV_OBJ_FLAG_HIDDEN );   /// Flags
 lv_obj_set_style_text_font(ui_amPmLabel, &lv_font_montserrat_20, LV_PART_MAIN| LV_STATE_DEFAULT);
 
 ui_alertPanel = lv_obj_create(ui_clockScreen);
 lv_obj_set_width( ui_alertPanel, 200);
-lv_obj_set_height( ui_alertPanel, 50);
-lv_obj_set_x( ui_alertPanel, -250 );
-lv_obj_set_y( ui_alertPanel, 0 );
+lv_obj_set_height( ui_alertPanel, 55);
 lv_obj_set_align( ui_alertPanel, LV_ALIGN_CENTER );
 lv_obj_clear_flag( ui_alertPanel, LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SCROLLABLE );    /// Flags
 lv_obj_set_style_bg_color(ui_alertPanel, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT );
 lv_obj_set_style_bg_opa(ui_alertPanel, 240, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_border_color(ui_alertPanel, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_border_opa(ui_alertPanel, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
+lv_obj_set_style_border_color(ui_alertPanel, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT );
+lv_obj_set_style_border_opa(ui_alertPanel, 240, LV_PART_MAIN| LV_STATE_DEFAULT);
 lv_obj_set_style_border_width(ui_alertPanel, 1, LV_PART_MAIN| LV_STATE_DEFAULT);
 lv_obj_set_style_pad_left(ui_alertPanel, 5, LV_PART_MAIN| LV_STATE_DEFAULT);
 lv_obj_set_style_pad_right(ui_alertPanel, 5, LV_PART_MAIN| LV_STATE_DEFAULT);
@@ -397,12 +311,13 @@ lv_obj_clear_flag( ui_alertIcon, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
 
 ui_alertText = lv_label_create(ui_alertPanel);
 lv_obj_set_width( ui_alertText, 142);
-lv_obj_set_height( ui_alertText, 36);
+lv_obj_set_height( ui_alertText, 40);
 lv_obj_set_x( ui_alertText, 39 );
 lv_obj_set_y( ui_alertText, 0 );
 lv_obj_set_align( ui_alertText, LV_ALIGN_LEFT_MID );
 lv_label_set_long_mode(ui_alertText,LV_LABEL_LONG_DOT);
 lv_label_set_text(ui_alertText,"this is a notification example");
+lv_obj_set_style_text_font(ui_alertText, &lv_font_montserrat_16, LV_PART_MAIN| LV_STATE_DEFAULT);
 
 lv_obj_add_event_cb(ui_alertPanel, ui_event_alertPanel, LV_EVENT_ALL, NULL);
 lv_obj_add_event_cb(ui_clockScreen, ui_event_clockScreen, LV_EVENT_ALL, NULL);
@@ -417,17 +332,17 @@ lv_obj_set_style_bg_opa(ui_weatherScreen, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
 lv_obj_set_style_bg_img_src( ui_weatherScreen, &ui_img_857483832, LV_PART_MAIN | LV_STATE_DEFAULT );
 lv_obj_set_style_bg_img_opa(ui_weatherScreen, 150, LV_PART_MAIN| LV_STATE_DEFAULT);
 
-ui_waetherPanel = lv_obj_create(ui_weatherScreen);
-lv_obj_set_width( ui_waetherPanel, 240);
-lv_obj_set_height( ui_waetherPanel, 240);
-lv_obj_set_align( ui_waetherPanel, LV_ALIGN_CENTER );
-lv_obj_clear_flag( ui_waetherPanel, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
-lv_obj_set_style_radius(ui_waetherPanel, 0, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_bg_color(ui_waetherPanel, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_bg_opa(ui_waetherPanel, 0, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_border_width(ui_waetherPanel, 0, LV_PART_MAIN| LV_STATE_DEFAULT);
+ui_weatherPanel = lv_obj_create(ui_weatherScreen);
+lv_obj_set_width( ui_weatherPanel, 240);
+lv_obj_set_height( ui_weatherPanel, 240);
+lv_obj_set_align( ui_weatherPanel, LV_ALIGN_CENTER );
+lv_obj_clear_flag( ui_weatherPanel, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
+lv_obj_set_style_radius(ui_weatherPanel, 0, LV_PART_MAIN| LV_STATE_DEFAULT);
+lv_obj_set_style_bg_color(ui_weatherPanel, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT );
+lv_obj_set_style_bg_opa(ui_weatherPanel, 0, LV_PART_MAIN| LV_STATE_DEFAULT);
+lv_obj_set_style_border_width(ui_weatherPanel, 0, LV_PART_MAIN| LV_STATE_DEFAULT);
 
-ui_weatherCity = lv_label_create(ui_waetherPanel);
+ui_weatherCity = lv_label_create(ui_weatherPanel);
 lv_obj_set_width( ui_weatherCity, LV_SIZE_CONTENT);  /// 1
 lv_obj_set_height( ui_weatherCity, LV_SIZE_CONTENT);   /// 1
 lv_obj_set_x( ui_weatherCity, -3 );
@@ -436,7 +351,7 @@ lv_obj_set_align( ui_weatherCity, LV_ALIGN_CENTER );
 lv_label_set_text(ui_weatherCity,"");
 lv_obj_set_style_text_font(ui_weatherCity, &lv_font_montserrat_20, LV_PART_MAIN| LV_STATE_DEFAULT);
 
-ui_weatherCurrentIcon = lv_img_create(ui_waetherPanel);
+ui_weatherCurrentIcon = lv_img_create(ui_weatherPanel);
 lv_img_set_src(ui_weatherCurrentIcon, &ui_img_602206286);
 lv_obj_set_width( ui_weatherCurrentIcon, LV_SIZE_CONTENT);  /// 1
 lv_obj_set_height( ui_weatherCurrentIcon, LV_SIZE_CONTENT);   /// 1
@@ -447,7 +362,7 @@ lv_obj_add_flag( ui_weatherCurrentIcon, LV_OBJ_FLAG_ADV_HITTEST );   /// Flags
 lv_obj_clear_flag( ui_weatherCurrentIcon, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
 lv_img_set_zoom(ui_weatherCurrentIcon,400);
 
-ui_weatherCurrentTemp = lv_label_create(ui_waetherPanel);
+ui_weatherCurrentTemp = lv_label_create(ui_weatherPanel);
 lv_obj_set_width( ui_weatherCurrentTemp, LV_SIZE_CONTENT);  /// 1
 lv_obj_set_height( ui_weatherCurrentTemp, LV_SIZE_CONTENT);   /// 1
 lv_obj_set_x( ui_weatherCurrentTemp, 0 );
@@ -456,7 +371,7 @@ lv_obj_set_align( ui_weatherCurrentTemp, LV_ALIGN_CENTER );
 lv_label_set_text(ui_weatherCurrentTemp,"--°C");
 lv_obj_set_style_text_font(ui_weatherCurrentTemp, &lv_font_montserrat_46, LV_PART_MAIN| LV_STATE_DEFAULT);
 
-ui_weatherUpdateTime = lv_label_create(ui_waetherPanel);
+ui_weatherUpdateTime = lv_label_create(ui_weatherPanel);
 lv_obj_set_width( ui_weatherUpdateTime, LV_SIZE_CONTENT);  /// 1
 lv_obj_set_height( ui_weatherUpdateTime, LV_SIZE_CONTENT);   /// 1
 lv_obj_set_x( ui_weatherUpdateTime, 0 );
@@ -930,7 +845,7 @@ lv_obj_set_y( ui_phoneSearchButton, 65 );
 lv_obj_set_align( ui_phoneSearchButton, LV_ALIGN_CENTER );
 lv_obj_add_state( ui_phoneSearchButton, LV_STATE_CHECKED );     /// States
 lv_obj_add_flag( ui_phoneSearchButton, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_CHECKABLE | LV_OBJ_FLAG_ADV_HITTEST );   /// Flags
-lv_obj_clear_flag( ui_phoneSearchButton, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
+lv_obj_clear_flag( ui_phoneSearchButton, LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SCROLLABLE );    /// Flags
 lv_obj_set_style_img_recolor(ui_phoneSearchButton, lv_color_hex(0x000000), LV_PART_MAIN| LV_STATE_CHECKED);
 lv_obj_set_style_img_recolor_opa(ui_phoneSearchButton, 230, LV_PART_MAIN| LV_STATE_CHECKED);
 lv_obj_set_style_radius(ui_phoneSearchButton, 5, LV_PART_MAIN| LV_STATE_PRESSED);

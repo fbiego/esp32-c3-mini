@@ -229,6 +229,9 @@ bool batRq, infoRq;
 Timer infoTimer;
 Timer screenTimer;
 Timer alertTimer;
+Timer searchTimer;
+
+lv_event_t *click;
 
 // Circular buffer size
 #define BUFFER_SIZE 10
@@ -236,6 +239,7 @@ Timer alertTimer;
 Notification notifications[BUFFER_SIZE];
 int notificationIndex = 0;
 bool bufferFull = false;
+int msgLen = 0;
 
 bool isDay();
 int getNotificationIconIndex(int id);
@@ -349,6 +353,7 @@ class MyCallbacks : public BLECharacteristicCallbacks
             lv_obj_set_style_text_color(ui_dayLabel, lv_color_hex(c), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_color(ui_dateLabel, lv_color_hex(c), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_color(ui_weatherTemp, lv_color_hex(c), LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_color(ui_amPmLabel, lv_color_hex(c), LV_PART_MAIN | LV_STATE_DEFAULT);
           }
         }
         if (pData[8] == 0x02)
@@ -395,12 +400,6 @@ class MyCallbacks : public BLECharacteristicCallbacks
           int sign = (pData[(k * 2) + 6] & 1) ? -1 : 1;
           int temp = ((int)pData[(k * 2) + 7]) * sign;
           int dy = rtc.getDayofWeek() + k;
-          Serial.print("Day: ");
-          Serial.print(days[dy % 7]);
-          Serial.print("\tIcon: ");
-          Serial.print(icon);
-          Serial.print("\tTemp: ");
-          Serial.println(temp);
           weather[weatherSize].day = dy % 7;
           weather[weatherSize].icon = icon;
           weather[weatherSize].temp = temp;
@@ -426,7 +425,8 @@ class MyCallbacks : public BLECharacteristicCallbacks
 
         int icon = pData[6];
 
-        if (icon == 0x02){
+        if (icon == 0x02)
+        {
           // skip cancel call command
           break;
         }
@@ -443,12 +443,14 @@ class MyCallbacks : public BLECharacteristicCallbacks
 
         notifications[notificationIndex % BUFFER_SIZE].message = message;
 
-        lv_event_t *click;
-        onNotificationsOpen(click);
+        msgLen = pData[2] + 3;
 
-        // screenTimer.time = millis();
-        // screenTimer.active = true;
-        showAlert();
+        if (msgLen <= 20)
+        {
+          // message is complete
+          onNotificationsOpen(click);
+          showAlert();
+        }
 
         break;
       }
@@ -467,7 +469,7 @@ class MyCallbacks : public BLECharacteristicCallbacks
         weatherCity = city;
       }
     }
-    else if (pData[0] < 5)
+    else if (pData[0] <= 0x0F)
     {
       String message = "";
       for (int i = 1; i < len; i++)
@@ -475,6 +477,12 @@ class MyCallbacks : public BLECharacteristicCallbacks
         message += (char)pData[i];
       }
       notifications[notificationIndex % BUFFER_SIZE].message += message;
+      if (((msgLen > (pData[0] + 1) * 20) && (msgLen <= (pData[0] + 2) * 20)) || (pData[0] <= 0x0F))
+      {
+        // message is complete || message is longer than expected, truncate
+        onNotificationsOpen(click);
+        showAlert();
+      }
     }
   }
 };
@@ -680,6 +688,11 @@ void addForecast(lv_obj_t *parent, Weather weather)
   lv_obj_set_style_text_font(forecastDay, &lv_font_montserrat_20, LV_PART_MAIN | LV_STATE_DEFAULT);
 }
 
+void onForecastOpen(lv_event_t * e){
+
+  lv_obj_scroll_to_y(ui_forecastPanel, 0, LV_ANIM_ON);
+}
+
 void onNotificationsOpen(lv_event_t *e)
 {
   lv_obj_clean(ui_messageList);
@@ -698,7 +711,6 @@ void onNotificationsOpen(lv_event_t *e)
 
 void onWeatherLoad(lv_event_t *e)
 {
-
   if (isDay())
   {
     lv_obj_set_style_bg_img_src(ui_weatherScreen, &ui_img_857483832, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -707,6 +719,8 @@ void onWeatherLoad(lv_event_t *e)
   {
     lv_obj_set_style_bg_img_src(ui_weatherScreen, &ui_img_753022056, LV_PART_MAIN | LV_STATE_DEFAULT);
   }
+  lv_obj_clear_flag(ui_weatherPanel, LV_OBJ_FLAG_HIDDEN);
+  lv_obj_add_flag(ui_forecastPanel, LV_OBJ_FLAG_HIDDEN);
   if (weatherSize > 0)
   {
     lv_label_set_text(ui_weatherCity, weatherCity.c_str());
@@ -726,6 +740,7 @@ void onWeatherLoad(lv_event_t *e)
     {
       addForecast(ui_forecastList, weather[i]);
     }
+    
   }
 }
 
@@ -875,7 +890,7 @@ void showAlert()
     alertTimer.active = true;
 
     // show the alert
-    showAlert_Animation(ui_alertPanel, 0);
+    lv_obj_clear_flag(ui_alertPanel, LV_OBJ_FLAG_HIDDEN);
   }
 }
 
@@ -921,6 +936,8 @@ void setup()
   notifications[0].icon = 0xC0;
   notifications[0].time = "Chronos";
   notifications[0].message = "Download from Google Play to sync time and receive notifications";
+
+  showAlert();
 
   screenTimer.active = true;
   screenTimer.time = millis();
@@ -974,7 +991,7 @@ void loop()
     if (alertTimer.time + alertTimer.duration < millis())
     {
       alertTimer.active = false;
-      hideLeft_Animation(ui_alertPanel, 0);
+      lv_obj_add_flag(ui_alertPanel, LV_OBJ_FLAG_HIDDEN);
     }
   }
 
@@ -985,7 +1002,7 @@ void loop()
 
     if (screenTimer.duration < 0)
     {
-      Serial.println("Always On active");
+      // Serial.println("Always On active");
       screenTimer.active = false;
     }
     else if (screenTimer.time + screenTimer.duration < millis())

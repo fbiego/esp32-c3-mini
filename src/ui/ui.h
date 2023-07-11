@@ -13,8 +13,6 @@ extern "C" {
     #include "lvgl.h"
 
 #include "ui_events.h"
-void hideLeft_Animation( lv_obj_t *TargetObject, int delay);
-void showAlert_Animation( lv_obj_t *TargetObject, int delay);
 void ui_event_clockScreen( lv_event_t * e);
 extern lv_obj_t *ui_clockScreen;
 extern lv_obj_t *ui_hourLabel;
@@ -30,7 +28,7 @@ extern lv_obj_t *ui_alertIcon;
 extern lv_obj_t *ui_alertText;
 void ui_event_weatherScreen( lv_event_t * e);
 extern lv_obj_t *ui_weatherScreen;
-extern lv_obj_t *ui_waetherPanel;
+extern lv_obj_t *ui_weatherPanel;
 extern lv_obj_t *ui_weatherCity;
 extern lv_obj_t *ui_weatherCurrentIcon;
 extern lv_obj_t *ui_weatherCurrentTemp;

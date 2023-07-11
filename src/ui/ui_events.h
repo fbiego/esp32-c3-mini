@@ -12,6 +12,7 @@ extern "C" {
 
 void onLoadHome(lv_event_t * e);
 void onClickAlert(lv_event_t * e);
+void onForecastOpen(lv_event_t * e);
 void onWeatherLoad(lv_event_t * e);
 void onNotificationsOpen(lv_event_t * e);
 void onBrightnessChange(lv_event_t * e);
