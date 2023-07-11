@@ -19,6 +19,7 @@ A demo Watch project for ESP32 C3 mini 240*240 touch display development board
 ## Chronos App
 Click to download
 [<img src="chronos.png?raw=true" width=100 align=left>](https://fbiego.com/chronos/app?id=c3-mini)
+<br><br><br><br>
 
 ### App functions
 - Sync time to device
