@@ -28,13 +28,13 @@ Click to download
 
 > Watch Tab >> Custom watchface >> Settings 
 ![config](config.png?raw=true "config")
-| --- | --- | --- | --- |
-| Style 1 | Top | Choose color | Change hour color |
-| Style 1 | Center | Choose color | Change minute color |
-| Style 1 | Bottom | Choose color | Change other text color |
-| Style 2 | Top | -- | Set `Forest` background |
-| Style 2 | Center | -- | Set `Lake` background |
-| Style 2 | Bottom | -- | Set `Mountain` background |
-| Style 3 | Top | -- | Set `Stars` background |
-| Style 3 | Center | -- | Set `Night` background |
-| Style 3 | Bottom | -- | -- |
+| --- | --- | --- | --- | 
+| Style 1 | Top | Choose color | Change hour color | 
+| Style 1 | Center | Choose color | Change minute color | 
+| Style 1 | Bottom | Choose color | Change other text color | 
+| Style 2 | Top | -- | Set `Forest` background | 
+| Style 2 | Center | -- | Set `Lake` background | 
+| Style 2 | Bottom | -- | Set `Mountain` background | 
+| Style 3 | Top | -- | Set `Stars` background | 
+| Style 3 | Center | -- | Set `Night` background | 
+| Style 3 | Bottom | -- | -- | 
