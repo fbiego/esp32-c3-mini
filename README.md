@@ -26,8 +26,11 @@ Click to download
 - Send weather info to device
 - Change background & font color of the time screen, see below
 
-> Watch Tab >> Custom watchface >> Settings 
+> Watch Tab >> Custom watchface >> Settings
+
 ![config](config.png?raw=true "config")
+
+| Button 1 | Button 2 | Color Selector | Result action | 
 | --- | --- | --- | --- | 
 | Style 1 | Top | Choose color | Change hour color | 
 | Style 1 | Center | Choose color | Change minute color | 
