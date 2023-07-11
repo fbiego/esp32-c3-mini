@@ -20,3 +20,21 @@ A demo Watch project for ESP32 C3 mini 240*240 touch display development board
 Click to download
 [<img src="chronos.png?raw=true" width=100 align=left>](https://fbiego.com/chronos/app?id=c3-mini)
 
+### App functions
+- Sync time to device
+- Send notifications to device
+- Send weather info to device
+- Change background & font color of the time screen, see below
+
+> Watch Tab >> Custom watchface >> Settings 
+![config](config.png?raw=true "config")
+| --- | --- | --- | --- |
+| Style 1 | Top | Choose color | Change hour color |
+| Style 1 | Center | Choose color | Change minute color |
+| Style 1 | Bottom | Choose color | Change other text color |
+| Style 2 | Top | -- | Set `Forest` background |
+| Style 2 | Center | -- | Set `Lake` background |
+| Style 2 | Bottom | -- | Set `Mountain` background |
+| Style 3 | Top | -- | Set `Stars` background |
+| Style 3 | Center | -- | Set `Night` background |
+| Style 3 | Bottom | -- | -- |
