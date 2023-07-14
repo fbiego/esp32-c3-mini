@@ -16,6 +16,7 @@ void onForecastOpen(lv_event_t * e);
 void onWeatherLoad(lv_event_t * e);
 void onNotificationsOpen(lv_event_t * e);
 void onBrightnessChange(lv_event_t * e);
+void onScrollMode(lv_event_t * e);
 void onTimeoutChange(lv_event_t * e);
 void onBatteryChange(lv_event_t * e);
 void onEndSearch(lv_event_t * e);

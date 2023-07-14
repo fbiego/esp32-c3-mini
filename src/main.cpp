@@ -33,12 +33,9 @@
 #define LGFX_USE_V1
 #include "Arduino.h"
 #include <lvgl.h>
-#include "demos/lv_demos.h"
 #include <LovyanGFX.hpp>
-#include <Ticker.h>
 #include "CST816D.h"
-#include <ESP32Time.h>
-#include <NimBLEDevice.h>
+#include <ChronosESP32.h>
 
 #include "ui/ui.h"
 
@@ -136,25 +133,13 @@ public:
 
 LGFX tft;
 CST816D touch(I2C_SDA, I2C_SCL, TP_RST, TP_INT);
-ESP32Time rtc;
+ChronosESP32 watch("Chronos C3");
 
 static const uint32_t screenWidth = 240;
 static const uint32_t screenHeight = 240;
 
 static lv_disp_draw_buf_t draw_buf;
 static lv_color_t buf[2][screenWidth * buf_size];
-
-#define SERVICE_UUID "6e400001-b5a3-f393-e0a9-e50e24dcca9e"
-#define CHARACTERISTIC_UUID_RX "6e400002-b5a3-f393-e0a9-e50e24dcca9e"
-#define CHARACTERISTIC_UUID_TX "6e400003-b5a3-f393-e0a9-e50e24dcca9e"
-
-static BLECharacteristic *pCharacteristicTX;
-static BLECharacteristic *pCharacteristicRX;
-
-static bool deviceConnected = false;
-
-String macAddr = "AA:BB:CC:DD:EE:FF";
-bool hr24 = true;
 
 String days[7] = {"SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"};
 
@@ -175,7 +160,8 @@ lv_img_dsc_t notificationIcons[] = {
     ui_img_viber_png,     // Viber
     ui_img_vkontakte_png, // Vkontakte
     ui_img_telegram_png,  // Telegram
-    ui_img_chrns_png      // Chronos
+    ui_img_chrns_png,     // Chronos
+    ui_img_wechat_png     // Wechat
 };
 
 lv_img_dsc_t weatherIcons[] = {
@@ -206,45 +192,18 @@ struct Timer
   bool active;
 };
 
-struct Notification
-{
-  int icon;
-  String time;
-  String message;
-};
-
-struct Weather
-{
-  int icon;
-  int day;
-  int temp;
-};
-
-String weatherTime = "";
-String weatherCity = "";
-int weatherSize = 0;
-Weather weather[7];
-
-bool batRq, infoRq;
-Timer infoTimer;
 Timer screenTimer;
 Timer alertTimer;
 Timer searchTimer;
 
 lv_event_t *click;
 
-// Circular buffer size
-#define BUFFER_SIZE 10
-// Circular buffer for notifications
-Notification notifications[BUFFER_SIZE];
-int notificationIndex = 0;
-bool bufferFull = false;
-int msgLen = 0;
+bool circular = false;
 
+void showAlert();
 bool isDay();
 int getNotificationIconIndex(int id);
 int getWeatherIconIndex(int id);
-void showAlert();
 
 /* Display flushing */
 void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
@@ -284,232 +243,91 @@ void my_touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
   }
 }
 
-class MyServerCallbacks : public BLEServerCallbacks
+void connectionCallback(bool state)
 {
-  void onConnect(BLEServer *pServer)
-  {
-    deviceConnected = true;
-    infoTimer.active = true;
-    infoTimer.time = millis();
-  }
-  void onDisconnect(BLEServer *pServer)
-  {
-    deviceConnected = false;
-    pServer->startAdvertising();
-  }
-};
+}
 
-class MyCallbacks : public BLECharacteristicCallbacks
+void notificationCallback(Notification notification)
 {
+  onNotificationsOpen(click);
+  showAlert();
+}
 
-  void onWrite(BLECharacteristic *pCharacteristic)
-  {
-    // uint8_t *pData;
-    // std::string value = pCharacteristic->getValue();
-    // int len = value.length();
-    // pData = pCharacteristic->getData();
-    std::string pData = pCharacteristic->getValue();
-    int len = pData.length();
-
-    //        Serial.print("Write callback for characteristic ");
-    //        Serial.print(pCharacteristic->getUUID().toString().c_str());
-    //        Serial.print(" of data length ");
-    //        Serial.println(len);
-    Serial.print("RX  ");
-    for (int i = 0; i < len; i++)
-    {
-      Serial.printf("%02X ", pData[i]);
-    }
-    Serial.println();
-
-    if (pData[0] == 0xAB)
-    {
-      switch (pData[4])
-      {
-      case 0x93:
-        rtc.setTime(pData[13], pData[12], pData[11], pData[10], pData[9], pData[7] * 256 + pData[8]);
-        break;
-      case 0x7C:
-        hr24 = pData[6] == 0;
-        break;
-
-      case 0x9C:
-        screenTimer.time = millis();
-        screenTimer.active = true;
-        if (pData[8] == 0x01)
-        { // Style 1
-          // get color RGB pData[5], pData[6], pData[7]
-          uint32_t c = ((uint32_t)pData[5] << 16) | ((uint32_t)pData[6] << 8) | (uint32_t)pData[7];
-          if (pData[9] == 0x01)
-          { // TOP
-            lv_obj_set_style_text_color(ui_hourLabel, lv_color_hex(c), LV_PART_MAIN | LV_STATE_DEFAULT);
-          }
-          if (pData[9] == 0x02)
-          { // CENTER
-            lv_obj_set_style_text_color(ui_minuteLabel, lv_color_hex(c), LV_PART_MAIN | LV_STATE_DEFAULT);
-          }
-          if (pData[9] == 0x03)
-          { // BOTTOM
-            lv_obj_set_style_text_color(ui_dayLabel, lv_color_hex(c), LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_obj_set_style_text_color(ui_dateLabel, lv_color_hex(c), LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_obj_set_style_text_color(ui_weatherTemp, lv_color_hex(c), LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_obj_set_style_text_color(ui_amPmLabel, lv_color_hex(c), LV_PART_MAIN | LV_STATE_DEFAULT);
-          }
-        }
-        if (pData[8] == 0x02)
-        { // Style 2
-          if (pData[9] == 0x01)
-          { // TOP
-            lv_obj_set_style_bg_img_src(ui_clockScreen, &ui_img_forest_png, LV_PART_MAIN | LV_STATE_DEFAULT);
-          }
-          if (pData[9] == 0x02)
-          { // CENTER
-            lv_obj_set_style_bg_img_src(ui_clockScreen, &ui_img_lake_png, LV_PART_MAIN | LV_STATE_DEFAULT);
-          }
-          if (pData[9] == 0x03)
-          { // BOTTOM
-            lv_obj_set_style_bg_img_src(ui_clockScreen, &ui_img_mountain_png, LV_PART_MAIN | LV_STATE_DEFAULT);
-          }
-        }
-        if (pData[8] == 0x03)
-        { // Style 3
-          if (pData[9] == 0x01)
-          { // TOP
-            lv_obj_set_style_bg_img_src(ui_clockScreen, &ui_img_stars_png, LV_PART_MAIN | LV_STATE_DEFAULT);
-          }
-          if (pData[9] == 0x02)
-          { // CENTER
-            lv_obj_set_style_bg_img_src(ui_clockScreen, &ui_img_753022056, LV_PART_MAIN | LV_STATE_DEFAULT);
-          }
-          if (pData[9] == 0x03)
-          { // BOTTOM
-            // lv_obj_set_style_bg_img_src( ui_clockScreen, &ui_img_forest_png, LV_PART_MAIN | LV_STATE_DEFAULT);
-          }
-        }
-
-        break;
-
-      case 0x7E:
-        // AB 00 11 FF 7E 80 XY 12 00 15 00 15 10 16 00 15 10 15 10 15
-        weatherTime = rtc.getTime("updated at\n%H:%M");
-        weatherSize = 0;
-
-        for (int k = 0; k < (len - 6) / 2; k++)
-        {
-          int icon = pData[(k * 2) + 6] >> 4;
-          int sign = (pData[(k * 2) + 6] & 1) ? -1 : 1;
-          int temp = ((int)pData[(k * 2) + 7]) * sign;
-          int dy = rtc.getDayofWeek() + k;
-          weather[weatherSize].day = dy % 7;
-          weather[weatherSize].icon = icon;
-          weather[weatherSize].temp = temp;
-
-          if (k == 0)
-          {
-            lv_label_set_text_fmt(ui_weatherTemp, "%d°C", temp);
-            // set icon ui_weatherIcon
-            if (isDay())
-            {
-              lv_img_set_src(ui_weatherIcon, &weatherIcons[getWeatherIconIndex(icon)]);
-            }
-            else
-            {
-              lv_img_set_src(ui_weatherIcon, &weatherNtIcons[getWeatherIconIndex(icon)]);
-            }
-          }
-
-          weatherSize++;
-        }
-        break;
-      case 0x72:
-
-        int icon = pData[6];
-
-        if (icon == 0x02)
-        {
-          // skip cancel call command
-          break;
-        }
-
-        notificationIndex++;
-        notifications[notificationIndex % BUFFER_SIZE].icon = icon;
-        notifications[notificationIndex % BUFFER_SIZE].time = rtc.getTime("%H:%M");
-
-        String message = "";
-        for (int i = 8; i < len; i++)
-        {
-          message += (char)pData[i];
-        }
-
-        notifications[notificationIndex % BUFFER_SIZE].message = message;
-
-        msgLen = pData[2] + 2;
-
-        if (msgLen <= 19)
-        {
-          // message is complete
-          onNotificationsOpen(click);
-          showAlert();
-        }
-
-        break;
-      }
-    }
-    else if (pData[0] == 0xEA)
-    {
-      if (pData[4] == 0x7E)
-      {
-        String city = "";
-        for (int c = 7; c < len; c++)
-        {
-          city += (char)pData[c];
-        }
-        Serial.print("City: ");
-        Serial.println(city);
-        weatherCity = city;
-      }
-    }
-    else if (pData[0] <= 0x0F)
-    {
-      String message = "";
-      for (int i = 1; i < len; i++)
-      {
-        message += (char)pData[i];
-      }
-      notifications[notificationIndex % BUFFER_SIZE].message += message;
-      if (((msgLen > (pData[0] + 1) * 19) && (msgLen <= (pData[0] + 2) * 19)) || (pData[0] == 0x0F))
-      {
-        // message is complete || message is longer than expected, truncate
-        onNotificationsOpen(click);
-        showAlert();
-      }
-    }
-  }
-};
-
-void init_BLE()
+void configCallback(Config config, uint32_t a, uint32_t b)
 {
-  BLEDevice::init("ESP32 C3 mini");
-  BLEServer *pServer = BLEDevice::createServer();
-  pServer->setCallbacks(new MyServerCallbacks());
+  switch (config)
+  {
+  case CF_WEATHER:
 
-  BLEService *pService = pServer->createService(SERVICE_UUID);
-  pCharacteristicTX = pService->createCharacteristic(CHARACTERISTIC_UUID_TX, NIMBLE_PROPERTY::NOTIFY);
-  pCharacteristicRX = pService->createCharacteristic(CHARACTERISTIC_UUID_RX, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_NR);
-  pCharacteristicRX->setCallbacks(new MyCallbacks());
-  pCharacteristicTX->setCallbacks(new MyCallbacks());
-  // pCharacteristicTX->addDescriptor(new BLE2902());
-  // pCharacteristicTX->setNotifyProperty(true);
-  pService->start();
+    if (a)
+    {
+      lv_label_set_text_fmt(ui_weatherTemp, "%d°C", watch.getWeatherAt(0).temp);
+      // set icon ui_weatherIcon
+      if (isDay())
+      {
+        lv_img_set_src(ui_weatherIcon, &weatherIcons[getWeatherIconIndex(watch.getWeatherAt(0).icon)]);
+      }
+      else
+      {
+        lv_img_set_src(ui_weatherIcon, &weatherNtIcons[getWeatherIconIndex(watch.getWeatherAt(0).icon)]);
+      }
+    }
 
-  BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
-  pAdvertising->addServiceUUID(SERVICE_UUID);
-  pAdvertising->setScanResponse(true);
-  pAdvertising->setMinPreferred(0x06); // functions that help with iPhone connections issue
-  pAdvertising->setMinPreferred(0x12);
-  BLEDevice::startAdvertising();
+    break;
+  case CF_FONT:
+    screenTimer.time = millis();
+    screenTimer.active = true;
+    if (((b >> 16) & 0xFFFF) == 0x01)
+    { // Style 1
+      if ((b & 0xFFFF) == 0x01)
+      { // TOP
+        lv_obj_set_style_text_color(ui_hourLabel, lv_color_hex(a), LV_PART_MAIN | LV_STATE_DEFAULT);
+      }
+      if ((b & 0xFFFF) == 0x02)
+      { // CENTER
+        lv_obj_set_style_text_color(ui_minuteLabel, lv_color_hex(a), LV_PART_MAIN | LV_STATE_DEFAULT);
+      }
+      if ((b & 0xFFFF) == 0x03)
+      { // BOTTOM
+        lv_obj_set_style_text_color(ui_dayLabel, lv_color_hex(a), LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_text_color(ui_dateLabel, lv_color_hex(a), LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_text_color(ui_weatherTemp, lv_color_hex(a), LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_text_color(ui_amPmLabel, lv_color_hex(a), LV_PART_MAIN | LV_STATE_DEFAULT);
+      }
+    }
+    if (((b >> 16) & 0xFFFF) == 0x02)
+    { // Style 2
+      if ((b & 0xFFFF) == 0x01)
+      { // TOP
+        lv_obj_set_style_bg_img_src(ui_clockScreen, &ui_img_forest_png, LV_PART_MAIN | LV_STATE_DEFAULT);
+      }
+      if ((b & 0xFFFF) == 0x02)
+      { // CENTER
+        lv_obj_set_style_bg_img_src(ui_clockScreen, &ui_img_lake_png, LV_PART_MAIN | LV_STATE_DEFAULT);
+      }
+      if ((b & 0xFFFF) == 0x03)
+      { // BOTTOM
+        lv_obj_set_style_bg_img_src(ui_clockScreen, &ui_img_mountain_png, LV_PART_MAIN | LV_STATE_DEFAULT);
+      }
+    }
+    if (((b >> 16) & 0xFFFF) == 0x03)
+    { // Style 3
+      if ((b & 0xFFFF) == 0x01)
+      { // TOP
+        lv_obj_set_style_bg_img_src(ui_clockScreen, &ui_img_stars_png, LV_PART_MAIN | LV_STATE_DEFAULT);
+      }
+      if ((b & 0xFFFF) == 0x02)
+      { // CENTER
+        lv_obj_set_style_bg_img_src(ui_clockScreen, &ui_img_753022056, LV_PART_MAIN | LV_STATE_DEFAULT);
+      }
+      if ((b & 0xFFFF) == 0x03)
+      { // BOTTOM
+        // lv_obj_set_style_bg_img_src( ui_clockScreen, &ui_img_forest_png, LV_PART_MAIN | LV_STATE_DEFAULT);
+      }
+    }
 
-  macAddr = BLEDevice::getAddress().toString().c_str();
+    break;
+  }
 }
 
 int getWeatherIconIndex(int id)
@@ -575,8 +393,57 @@ int getNotificationIconIndex(int id)
     return 15;
   case 0xC0:
     return 16;
+  case 0x09:
+    return 17;
   default:
     return 0;
+  }
+}
+
+static void onScroll(lv_event_t *e)
+{
+  lv_obj_t *list = lv_event_get_target(e);
+
+  lv_area_t list_a;
+  lv_obj_get_coords(list, &list_a);
+  lv_coord_t list_y_center = list_a.y1 + lv_area_get_height(&list_a) / 2;
+
+  lv_coord_t r = lv_obj_get_height(list) * 7 / 10;
+  uint32_t i;
+  uint32_t child_cnt = lv_obj_get_child_cnt(list);
+  for (i = 0; i < child_cnt; i++)
+  {
+    lv_obj_t *child = lv_obj_get_child(list, i);
+    lv_area_t child_a;
+    lv_obj_get_coords(child, &child_a);
+
+    lv_coord_t child_y_center = child_a.y1 + lv_area_get_height(&child_a) / 2;
+
+    lv_coord_t diff_y = child_y_center - list_y_center;
+    diff_y = LV_ABS(diff_y);
+
+    /*Get the x of diff_y on a circle.*/
+    lv_coord_t x;
+    /*If diff_y is out of the circle use the last point of the circle (the radius)*/
+    if (diff_y >= r)
+    {
+      x = r;
+    }
+    else
+    {
+      /*Use Pythagoras theorem to get x from radius and y*/
+      uint32_t x_sqr = r * r - diff_y * diff_y;
+      lv_sqrt_res_t res;
+      lv_sqrt(x_sqr, &res, 0x8000); /*Use lvgl's built in sqrt root function*/
+      x = r - res.i;
+    }
+
+    /*Translate the item by the calculated X coordinate*/
+    lv_obj_set_style_translate_x(child, circular ? x : 0, 0);
+
+    /*Use some opacity with larger translations*/
+    // lv_opa_t opa = lv_map(x, 0, r, LV_OPA_TRANSP, LV_OPA_COVER);
+    // lv_obj_set_style_opa(child, LV_OPA_COVER - opa, 0);
   }
 }
 
@@ -587,15 +454,15 @@ void onMessageClick(lv_event_t *e)
 
   Serial.print("Message clicked at index ");
   Serial.print(index);
-  index %= BUFFER_SIZE;
+  index %= NOTIF_SIZE;
   Serial.print(" >> ");
   Serial.println(index);
 
-  lv_label_set_text(ui_messageTime, notifications[index].time.c_str());
-  lv_label_set_text(ui_messageContent, notifications[index].message.c_str());
-  lv_img_set_src(ui_messageIcon, &notificationIcons[getNotificationIconIndex(notifications[index].icon)]);
+  lv_label_set_text(ui_messageTime, watch.getNotificationAt(index).time.c_str());
+  lv_label_set_text(ui_messageContent, watch.getNotificationAt(index).message.c_str());
+  lv_img_set_src(ui_messageIcon, &notificationIcons[getNotificationIconIndex(watch.getNotificationAt(index).icon)]);
 
-  lv_obj_scroll_to_y(ui_notificationPanel, 0, LV_ANIM_ON);
+  lv_obj_scroll_to_y(ui_messagePanel, 0, LV_ANIM_ON);
   lv_obj_add_flag(ui_messageList, LV_OBJ_FLAG_HIDDEN);
   lv_obj_clear_flag(ui_messagePanel, LV_OBJ_FLAG_HIDDEN);
 }
@@ -688,23 +555,27 @@ void addForecast(lv_obj_t *parent, Weather weather)
   lv_obj_set_style_text_font(forecastDay, &lv_font_montserrat_20, LV_PART_MAIN | LV_STATE_DEFAULT);
 }
 
-void onForecastOpen(lv_event_t * e){
-
+void onForecastOpen(lv_event_t *e)
+{
   lv_obj_scroll_to_y(ui_forecastPanel, 0, LV_ANIM_ON);
+}
+
+void onScrollMode(lv_event_t *e)
+{
+  lv_obj_t *obj = lv_event_get_target(e);
+  circular = lv_obj_has_state(obj, LV_STATE_CHECKED);
+  lv_obj_scroll_by(ui_settingsList, 0, circular ? 1 : -1, LV_ANIM_ON);
 }
 
 void onNotificationsOpen(lv_event_t *e)
 {
   lv_obj_clean(ui_messageList);
-  for (int j = notificationIndex; j >= 0; j--)
+  int c = watch.getNotificationCount();
+  for (int i = 0; i < c; i++)
   {
-    if (j <= notificationIndex - BUFFER_SIZE)
-    {
-      break;
-    }
-    addNotificationList(ui_messageList, notifications[j % BUFFER_SIZE], j);
+    addNotificationList(ui_messageList, watch.getNotificationAt(i), i);
   }
-  lv_obj_scroll_to_y(ui_notificationPanel, 0, LV_ANIM_ON);
+  lv_obj_scroll_to_y(ui_messageList, 1, LV_ANIM_ON);
   lv_obj_clear_flag(ui_messageList, LV_OBJ_FLAG_HIDDEN);
   lv_obj_add_flag(ui_messagePanel, LV_OBJ_FLAG_HIDDEN);
 }
@@ -721,26 +592,27 @@ void onWeatherLoad(lv_event_t *e)
   }
   lv_obj_clear_flag(ui_weatherPanel, LV_OBJ_FLAG_HIDDEN);
   lv_obj_add_flag(ui_forecastPanel, LV_OBJ_FLAG_HIDDEN);
-  if (weatherSize > 0)
+  if (watch.getWeatherCount() > 0)
   {
-    lv_label_set_text(ui_weatherCity, weatherCity.c_str());
-    lv_label_set_text(ui_weatherUpdateTime, weatherTime.c_str());
-    lv_label_set_text_fmt(ui_weatherCurrentTemp, "%d°C", weather[0].temp);
+    String updateTime = "Updated at\n" + watch.getWeatherTime();
+    lv_label_set_text(ui_weatherCity, watch.getWeatherCity().c_str());
+    lv_label_set_text(ui_weatherUpdateTime, updateTime.c_str());
+    lv_label_set_text_fmt(ui_weatherCurrentTemp, "%d°C", watch.getWeatherAt(0).temp);
     if (isDay())
     {
-      lv_img_set_src(ui_weatherCurrentIcon, &weatherIcons[getWeatherIconIndex(weather[0].icon)]);
+      lv_img_set_src(ui_weatherCurrentIcon, &weatherIcons[getWeatherIconIndex(watch.getWeatherAt(0).icon)]);
     }
     else
     {
-      lv_img_set_src(ui_weatherCurrentIcon, &weatherNtIcons[getWeatherIconIndex(weather[0].icon)]);
+      lv_img_set_src(ui_weatherCurrentIcon, &weatherNtIcons[getWeatherIconIndex(watch.getWeatherAt(0).icon)]);
     }
 
     lv_obj_clean(ui_forecastList);
-    for (int i = 0; i < weatherSize; i++)
+    int c = watch.getWeatherCount();
+    for (int i = 0; i < c; i++)
     {
-      addForecast(ui_forecastList, weather[i]);
+      addForecast(ui_forecastList, watch.getWeatherAt(i));
     }
-    
   }
 }
 
@@ -765,23 +637,18 @@ void onBrightnessChange(lv_event_t *e)
 
 void onBatteryChange(lv_event_t *e)
 {
-  batRq = true;
+  uint8_t lvl = lv_slider_get_value(ui_batterySlider);
+  watch.setBattery(lvl);
 }
 
 void onStartSearch(lv_event_t *e)
 {
-  uint8_t startCmd[] = {0xAB, 0x00, 0x04, 0xFF, 0x7D, 0x80, 0x01};
-  pCharacteristicTX->setValue(startCmd, 7);
-  pCharacteristicTX->notify();
-  vTaskDelay(200);
+  watch.findPhone(true);
 }
 
 void onEndSearch(lv_event_t *e)
 {
-  uint8_t endCmd[] = {0xAB, 0x00, 0x04, 0xFF, 0x7D, 0x80, 0x00};
-  pCharacteristicTX->setValue(endCmd, 7);
-  pCharacteristicTX->notify();
-  vTaskDelay(200);
+  watch.findPhone(false);
 }
 
 void onClickAlert(lv_event_t *e)
@@ -797,11 +664,11 @@ void onClickAlert(lv_event_t *e)
   screenTimer.active = true;
 
   // load the last received message
-  lv_label_set_text(ui_messageTime, notifications[notificationIndex % BUFFER_SIZE].time.c_str());
-  lv_label_set_text(ui_messageContent, notifications[notificationIndex % BUFFER_SIZE].message.c_str());
-  lv_img_set_src(ui_messageIcon, &notificationIcons[getNotificationIconIndex(notifications[notificationIndex % BUFFER_SIZE].icon)]);
+  lv_label_set_text(ui_messageTime, watch.getNotificationAt(0).time.c_str());
+  lv_label_set_text(ui_messageContent, watch.getNotificationAt(0).message.c_str());
+  lv_img_set_src(ui_messageIcon, &notificationIcons[getNotificationIconIndex(watch.getNotificationAt(0).icon)]);
 
-  lv_obj_scroll_to_y(ui_notificationPanel, 0, LV_ANIM_ON);
+  lv_obj_scroll_to_y(ui_messagePanel, 0, LV_ANIM_ON);
   lv_obj_add_flag(ui_messageList, LV_OBJ_FLAG_HIDDEN);
   lv_obj_clear_flag(ui_messagePanel, LV_OBJ_FLAG_HIDDEN);
 }
@@ -831,26 +698,17 @@ void onTimeoutChange(lv_event_t *e)
 
 void onMusicPlay(lv_event_t *e)
 {
-  uint8_t playCmd[] = {0xAB, 0x00, 0x04, 0xFF, 0x99, 0x80, 0x00};
-  pCharacteristicTX->setValue(playCmd, 7);
-  pCharacteristicTX->notify();
-  vTaskDelay(200);
+  watch.musicControl(MUSIC_TOGGLE);
 }
 
 void onMusicPrevious(lv_event_t *e)
 {
-  uint8_t prevCmd[] = {0xAB, 0x00, 0x04, 0xFF, 0x99, 0x80, 0x01};
-  pCharacteristicTX->setValue(prevCmd, 7);
-  pCharacteristicTX->notify();
-  vTaskDelay(200);
+  watch.musicControl(MUSIC_PREVIOUS);
 }
 
 void onMusicNext(lv_event_t *e)
 {
-  uint8_t nextCmd[] = {0xAB, 0x00, 0x04, 0xFF, 0x99, 0x80, 0x02};
-  pCharacteristicTX->setValue(nextCmd, 7);
-  pCharacteristicTX->notify();
-  vTaskDelay(200);
+  watch.musicControl(MUSIC_NEXT);
 }
 
 void showAlert()
@@ -865,11 +723,11 @@ void showAlert()
     screenTimer.active = true;
 
     // load the last received message
-    lv_label_set_text(ui_messageTime, notifications[notificationIndex % BUFFER_SIZE].time.c_str());
-    lv_label_set_text(ui_messageContent, notifications[notificationIndex % BUFFER_SIZE].message.c_str());
-    lv_img_set_src(ui_messageIcon, &notificationIcons[getNotificationIconIndex(notifications[notificationIndex % BUFFER_SIZE].icon)]);
+    lv_label_set_text(ui_messageTime, watch.getNotificationAt(0).time.c_str());
+    lv_label_set_text(ui_messageContent, watch.getNotificationAt(0).message.c_str());
+    lv_img_set_src(ui_messageIcon, &notificationIcons[getNotificationIconIndex(watch.getNotificationAt(0).icon)]);
 
-    lv_obj_scroll_to_y(ui_notificationPanel, 0, LV_ANIM_ON);
+    lv_obj_scroll_to_y(ui_messagePanel, 0, LV_ANIM_ON);
     lv_obj_add_flag(ui_messageList, LV_OBJ_FLAG_HIDDEN);
     lv_obj_clear_flag(ui_messagePanel, LV_OBJ_FLAG_HIDDEN);
   }
@@ -879,8 +737,8 @@ void showAlert()
     lv_obj_set_parent(ui_alertPanel, actScr);
 
     // load the last received message
-    lv_label_set_text(ui_alertText, notifications[notificationIndex % BUFFER_SIZE].message.c_str());
-    lv_img_set_src(ui_alertIcon, &notificationIcons[getNotificationIconIndex(notifications[notificationIndex % BUFFER_SIZE].icon)]);
+    lv_label_set_text(ui_alertText, watch.getNotificationAt(0).message.c_str());
+    lv_img_set_src(ui_alertIcon, &notificationIcons[getNotificationIconIndex(watch.getNotificationAt(0).icon)]);
 
     // turn screen for timeout + 5 seconds
     screenTimer.time = millis() + 5000;
@@ -928,14 +786,18 @@ void setup()
 
   ui_init();
 
-  init_BLE();
+  watch.setConnectionCallback(connectionCallback);
+  watch.setNotificationCallback(notificationCallback);
+  watch.setConfigurationCallback(configCallback);
+  watch.begin();
+  watch.set24Hour(true);
 
-  String about = "v1.0 [fbiego]\nESP32 C3 Mini\n" + macAddr;
+  String about = "v1.0 [fbiego]\nESP32 C3 Mini\n" + watch.getAddress();
   lv_label_set_text(ui_aboutText, about.c_str());
 
-  notifications[0].icon = 0xC0;
-  notifications[0].time = "Chronos";
-  notifications[0].message = "Download from Google Play to sync time and receive notifications";
+  lv_obj_add_event_cb(ui_settingsList, onScroll, LV_EVENT_SCROLL, NULL);
+  lv_obj_add_event_cb(ui_messageList, onScroll, LV_EVENT_SCROLL, NULL);
+  lv_obj_scroll_to_y(ui_settingsList, 1, LV_ANIM_ON);
 
   showAlert();
 
@@ -951,18 +813,9 @@ void loop()
   lv_timer_handler(); /* let the GUI do its work */
   delay(5);
 
-  if (hr24)
-  {
-    lv_label_set_text(ui_hourLabel, rtc.getTime("%H").c_str());
-    lv_obj_add_flag(ui_amPmLabel, LV_OBJ_FLAG_HIDDEN);
-  }
-  else
-  {
-    lv_label_set_text(ui_hourLabel, rtc.getTime("%I").c_str());
-    lv_obj_clear_flag(ui_amPmLabel, LV_OBJ_FLAG_HIDDEN);
-  }
+  watch.loop();
 
-  if (!deviceConnected)
+  if (!watch.isConnected())
   {
     lv_obj_add_state(ui_btStateButton, LV_STATE_CHECKED);
   }
@@ -970,22 +823,12 @@ void loop()
   {
     lv_obj_clear_state(ui_btStateButton, LV_STATE_CHECKED);
   }
-  lv_label_set_text(ui_dayLabel, rtc.getTime("%A").c_str());
-  lv_label_set_text(ui_minuteLabel, rtc.getTime("%M").c_str());
-  lv_label_set_text(ui_dateLabel, rtc.getTime("%d\n%B").c_str());
-  lv_label_set_text(ui_amPmLabel, rtc.getAmPm(false).c_str());
+  lv_label_set_text(ui_hourLabel, watch.getHourZ().c_str());
+  lv_label_set_text(ui_dayLabel, watch.getTime("%A").c_str());
+  lv_label_set_text(ui_minuteLabel, watch.getTime("%M").c_str());
+  lv_label_set_text(ui_dateLabel, watch.getTime("%d\n%B").c_str());
+  lv_label_set_text(ui_amPmLabel, watch.getAmPmC(false).c_str());
 
-  if (infoTimer.active)
-  {
-    if (infoTimer.time + infoTimer.duration < millis())
-    {
-      // timer end
-      infoTimer.active = false;
-
-      infoRq = true;
-      batRq = true;
-    }
-  }
   if (alertTimer.active)
   {
     if (alertTimer.time + alertTimer.duration < millis())
@@ -1014,27 +857,9 @@ void loop()
       lv_disp_load_scr(ui_clockScreen);
     }
   }
-  if (batRq)
-  {
-    batRq = false;
-    uint8_t lvl = lv_slider_get_value(ui_batterySlider);
-    uint8_t batCmd[] = {0xAB, 0x00, 0x05, 0xFF, 0x91, 0x80, 0x00, lvl};
-    pCharacteristicTX->setValue(batCmd, 8);
-    pCharacteristicTX->notify();
-    vTaskDelay(200);
-  }
-
-  if (infoRq)
-  {
-    infoRq = false;
-    uint8_t infoCmd[] = {0xab, 0x00, 0x11, 0xff, 0x92, 0xc0, 0x01, 0x00, 0x00, 0x87, 0x53, 0x00, 0x00, 0x00, 0x00, 0x28, 0x00, 0xe2, 0x07, 0x80};
-    pCharacteristicTX->setValue(infoCmd, 20);
-    pCharacteristicTX->notify();
-    vTaskDelay(200);
-  }
 }
 
 bool isDay()
 {
-  return rtc.getHour(true) > 7 && rtc.getHour(true) < 21;
+  return watch.getHour(true) > 7 && watch.getHour(true) < 21;
 }

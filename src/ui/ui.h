@@ -38,16 +38,13 @@ extern lv_obj_t *ui_forecastTitle;
 extern lv_obj_t *ui_forecastList;
 void ui_event_notificationScreen( lv_event_t * e);
 extern lv_obj_t *ui_notificationScreen;
-extern lv_obj_t *ui_notificationPanel;
 extern lv_obj_t *ui_messagePanel;
 extern lv_obj_t *ui_messageIcon;
 extern lv_obj_t *ui_messageTime;
 extern lv_obj_t *ui_messageContent;
 extern lv_obj_t *ui_messageList;
-extern lv_obj_t *ui_noMessageLabel;
 void ui_event_settingsScreen( lv_event_t * e);
 extern lv_obj_t *ui_settingsScreen;
-extern lv_obj_t *ui_settingsPanel;
 extern lv_obj_t *ui_settingsList;
 extern lv_obj_t *ui_settingsTitle;
 extern lv_obj_t *ui_brightnessPanel;
@@ -55,6 +52,11 @@ void ui_event_brightnessSlider( lv_event_t * e);
 extern lv_obj_t *ui_brightnessSlider;
 extern lv_obj_t *ui_brightnessIcon;
 extern lv_obj_t *ui_brightnessLabel;
+extern lv_obj_t *ui_scrollingPanel;
+extern lv_obj_t *ui_scrollIcon;
+void ui_event_Switch2( lv_event_t * e);
+extern lv_obj_t *ui_Switch2;
+extern lv_obj_t *ui_scrollLabel;
 extern lv_obj_t *ui_timeoutPanel;
 void ui_event_timeoutSelect( lv_event_t * e);
 extern lv_obj_t *ui_timeoutSelect;
@@ -70,7 +72,6 @@ extern lv_obj_t *ui_aboutIcon;
 extern lv_obj_t *ui_aboutText;
 void ui_event_controlScreen( lv_event_t * e);
 extern lv_obj_t *ui_controlScreen;
-extern lv_obj_t *ui_controlPanel;
 extern lv_obj_t *ui_controlTitle;
 void ui_event_musicPlayButton( lv_event_t * e);
 extern lv_obj_t *ui_musicPlayButton;
@@ -91,6 +92,7 @@ LV_IMG_DECLARE( ui_img_857483832);   // assets\day-sky.png
 LV_IMG_DECLARE( ui_img_602206286);   // assets\dy-0.png
 LV_IMG_DECLARE( ui_img_chrns_png);   // assets\chrns.png
 LV_IMG_DECLARE( ui_img_brightness_png);   // assets\brightness.png
+LV_IMG_DECLARE( ui_img_scrolling_png);   // assets\scrolling.png
 LV_IMG_DECLARE( ui_img_timeout_png);   // assets\timeout.png
 LV_IMG_DECLARE( ui_img_bat_png);   // assets\bat.png
 LV_IMG_DECLARE( ui_img_info_png);   // assets\info.png
