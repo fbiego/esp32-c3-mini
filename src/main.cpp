@@ -36,15 +36,11 @@
 #include <LovyanGFX.hpp>
 #include "CST816D.h"
 #include <ChronosESP32.h>
+#include <Timber.h>
 
 #include "ui/ui.h"
+#include "main.h"
 
-#define I2C_SDA 4
-#define I2C_SCL 5
-#define TP_INT 0
-#define TP_RST 1
-
-#define off_pin 35
 #define buf_size 50
 
 class LGFX : public lgfx::LGFX_Device
@@ -61,7 +57,7 @@ public:
       auto cfg = _bus_instance.config();
 
       // SPIバスの設定
-      cfg.spi_host = SPI2_HOST; // 使用するSPIを選択  ESP32-S2,C3 : SPI2_HOST or SPI3_HOST / ESP32 : VSPI_HOST or HSPI_HOST
+      cfg.spi_host = SPI; // 使用するSPIを選択  ESP32-S2,C3 : SPI2_HOST or SPI3_HOST / ESP32 : VSPI_HOST or HSPI_HOST
       // ※ ESP-IDFバージョンアップに伴い、VSPI_HOST , HSPI_HOSTの記述は非推奨になるため、エラーが出る場合は代わりにSPI2_HOST , SPI3_HOSTを使用してください。
       cfg.spi_mode = 0;                  // SPI通信モードを設定 (0 ~ 3)
       cfg.freq_write = 80000000;         // 传输时的SPI时钟（最高80MHz，四舍五入为80MHz除以整数得到的值）
@@ -70,10 +66,10 @@ public:
       cfg.use_lock = true;               // 使用事务锁时设置为 true
       cfg.dma_channel = SPI_DMA_CH_AUTO; // 使用するDMAチャンネルを設定 (0=DMA不使用 / 1=1ch / 2=ch / SPI_DMA_CH_AUTO=自動設定)
       // ※ ESP-IDFバージョンアップに伴い、DMAチャンネルはSPI_DMA_CH_AUTO(自動設定)が推奨になりました。1ch,2chの指定は非推奨になります。
-      cfg.pin_sclk = 6;  // SPIのSCLKピン番号を設定
-      cfg.pin_mosi = 7;  // SPIのCLKピン番号を設定
-      cfg.pin_miso = -1; // SPIのMISOピン番号を設定 (-1 = disable)
-      cfg.pin_dc = 2;    // SPIのD/Cピン番号を設定  (-1 = disable)
+      cfg.pin_sclk = SCLK; // SPIのSCLKピン番号を設定
+      cfg.pin_mosi = MOSI; // SPIのCLKピン番号を設定
+      cfg.pin_miso = MISO; // SPIのMISOピン番号を設定 (-1 = disable)
+      cfg.pin_dc = DC;     // SPIのD/Cピン番号を設定  (-1 = disable)
 
       _bus_instance.config(cfg);              // 設定値をバスに反映します。
       _panel_instance.setBus(&_bus_instance); // バスをパネルにセットします。
@@ -82,8 +78,8 @@ public:
     {                                      // 表示パネル制御の設定を行います。
       auto cfg = _panel_instance.config(); // 表示パネル設定用の構造体を取得します。
 
-      cfg.pin_cs = 10;   // CSが接続されているピン番号   (-1 = disable)
-      cfg.pin_rst = -1;  // RSTが接続されているピン番号  (-1 = disable)
+      cfg.pin_cs = CS;   // CSが接続されているピン番号   (-1 = disable)
+      cfg.pin_rst = RST; // RSTが接続されているピン番号  (-1 = disable)
       cfg.pin_busy = -1; // BUSYが接続されているピン番号 (-1 = disable)
 
       // ※ 以下の設定値はパネル毎に一般的な初期値が設定さ BUSYが接続されているピン番号 (-1 = disable)れていますので、不明な項目はコメントアウトして試してみてください。
@@ -109,7 +105,7 @@ public:
     {                                      // Set backlight control. (delete if not necessary)
       auto cfg = _light_instance.config(); // Get the structure for backlight configuration.
 
-      cfg.pin_bl = 3;      // pin number to which the backlight is connected
+      cfg.pin_bl = BL;     // pin number to which the backlight is connected
       cfg.invert = false;  // true to invert backlight brightness
       cfg.freq = 44100;    // backlight PWM frequency
       cfg.pwm_channel = 1; // PWM channel number to use
@@ -245,10 +241,13 @@ void my_touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
 
 void connectionCallback(bool state)
 {
+  Timber.d("Connection change");
 }
 
 void notificationCallback(Notification notification)
 {
+  Timber.d("Notification Received from " + notification.app + " at " + notification.time);
+  Timber.d(notification.message);
   onNotificationsOpen(click);
   showAlert();
 }
@@ -452,11 +451,8 @@ void onMessageClick(lv_event_t *e)
   // Your code here
   int index = (int)lv_event_get_user_data(e);
 
-  Serial.print("Message clicked at index ");
-  Serial.print(index);
   index %= NOTIF_SIZE;
-  Serial.print(" >> ");
-  Serial.println(index);
+  Timber.i("Message clicked at index %d", index);
 
   lv_label_set_text(ui_messageTime, watch.getNotificationAt(index).time.c_str());
   lv_label_set_text(ui_messageContent, watch.getNotificationAt(index).message.c_str());
@@ -677,8 +673,7 @@ void onTimeoutChange(lv_event_t *e)
 {
   lv_obj_t *obj = lv_event_get_target(e);
   uint16_t sel = lv_dropdown_get_selected(obj);
-  Serial.print("Selected index: ");
-  Serial.println(sel);
+  Timber.i("Selected index: %d", sel);
 
   if (sel == 4)
   {
@@ -752,11 +747,19 @@ void showAlert()
   }
 }
 
+void logCallback(Level level, unsigned long time, String message)
+{
+  Serial.print(message);
+}
+
 void setup()
 {
 
   Serial.begin(115200); /* prepare for possible serial debug */
-  Serial.println("Starting up device");
+
+  Timber.setLogCallback(logCallback);
+
+  Timber.i("Starting up device");
 
   tft.init();
   tft.initDMA();
@@ -804,8 +807,8 @@ void setup()
   screenTimer.active = true;
   screenTimer.time = millis();
 
-  Serial.println("Setup done");
-  Serial.println(about);
+  Timber.i("Setup done");
+  Timber.i(about);
 }
 
 void loop()
@@ -845,12 +848,12 @@ void loop()
 
     if (screenTimer.duration < 0)
     {
-      // Serial.println("Always On active");
+      // Timber.w("Always On active");
       screenTimer.active = false;
     }
     else if (screenTimer.time + screenTimer.duration < millis())
     {
-      Serial.println("Screen timeout");
+      Timber.w("Screen timeout");
       screenTimer.active = false;
 
       tft.setBrightness(0);
