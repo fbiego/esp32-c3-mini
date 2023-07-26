@@ -37,6 +37,7 @@
 #include "CST816D.h"
 #include <ChronosESP32.h>
 #include <Timber.h>
+#include <Preferences.h>
 
 #include "ui/ui.h"
 #include "main.h"
@@ -130,6 +131,7 @@ public:
 LGFX tft;
 CST816D touch(I2C_SDA, I2C_SCL, TP_RST, TP_INT);
 ChronosESP32 watch("Chronos C3");
+Preferences prefs;
 
 static const uint32_t screenWidth = 240;
 static const uint32_t screenHeight = 240;
@@ -193,6 +195,12 @@ Timer alertTimer;
 Timer searchTimer;
 
 lv_event_t *click;
+lv_obj_t *ui_cameraPanel;
+lv_obj_t *ui_cameraTitle;
+lv_obj_t *ui_cameraIcon;
+lv_obj_t *ui_cameraLabel;
+lv_obj_t *ui_cameraButton;
+lv_obj_t *ui_cameraButtonLabel;
 
 bool circular = false;
 
@@ -200,6 +208,8 @@ void showAlert();
 bool isDay();
 int getNotificationIconIndex(int id);
 int getWeatherIconIndex(int id);
+void cameraPanel();
+void setTimeout(int i);
 
 /* Display flushing */
 void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
@@ -242,6 +252,7 @@ void my_touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
 void connectionCallback(bool state)
 {
   Timber.d("Connection change");
+  lv_obj_add_flag(ui_cameraPanel, LV_OBJ_FLAG_HIDDEN);
 }
 
 void notificationCallback(Notification notification)
@@ -325,6 +336,20 @@ void configCallback(Config config, uint32_t a, uint32_t b)
       }
     }
 
+    break;
+  case CF_CAMERA:
+    if (b)
+    {
+      lv_disp_load_scr(ui_clockScreen);
+      lv_obj_clear_flag(ui_cameraPanel, LV_OBJ_FLAG_HIDDEN);
+      screenTimer.time = millis() + 50;
+      screenTimer.active = true;
+    }
+    else
+    {
+      lv_obj_add_flag(ui_cameraPanel, LV_OBJ_FLAG_HIDDEN);
+      screenTimer.active = true;
+    }
     break;
   }
 }
@@ -551,6 +576,81 @@ void addForecast(lv_obj_t *parent, Weather weather)
   lv_obj_set_style_text_font(forecastDay, &lv_font_montserrat_20, LV_PART_MAIN | LV_STATE_DEFAULT);
 }
 
+void onCaptureClick(lv_event_t *e)
+{
+  watch.capturePhoto();
+}
+
+void cameraPanel()
+{
+  ui_cameraPanel = lv_obj_create(ui_clockScreen);
+  lv_obj_set_width(ui_cameraPanel, 240);
+  lv_obj_set_height(ui_cameraPanel, 240);
+  lv_obj_set_align(ui_cameraPanel, LV_ALIGN_CENTER);
+  lv_obj_add_flag(ui_cameraPanel, LV_OBJ_FLAG_HIDDEN);                                    /// Flags
+  lv_obj_clear_flag(ui_cameraPanel, LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SCROLLABLE); /// Flags
+  lv_obj_set_style_bg_color(ui_cameraPanel, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_opa(ui_cameraPanel, 235, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_border_width(ui_cameraPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_pad_left(ui_cameraPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_pad_right(ui_cameraPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_pad_top(ui_cameraPanel, 5, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_pad_bottom(ui_cameraPanel, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+  ui_cameraTitle = lv_label_create(ui_cameraPanel);
+  lv_obj_set_width(ui_cameraTitle, 150);
+  lv_obj_set_height(ui_cameraTitle, LV_SIZE_CONTENT); /// 1
+  lv_obj_set_x(ui_cameraTitle, 0);
+  lv_obj_set_y(ui_cameraTitle, 16);
+  lv_obj_set_align(ui_cameraTitle, LV_ALIGN_TOP_MID);
+  lv_label_set_text(ui_cameraTitle, "Camera");
+  lv_obj_set_style_text_align(ui_cameraTitle, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_text_font(ui_cameraTitle, &lv_font_montserrat_20, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_border_color(ui_cameraTitle, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_border_opa(ui_cameraTitle, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_border_width(ui_cameraTitle, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_border_side(ui_cameraTitle, LV_BORDER_SIDE_BOTTOM, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_pad_left(ui_cameraTitle, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_pad_right(ui_cameraTitle, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_pad_top(ui_cameraTitle, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_pad_bottom(ui_cameraTitle, 5, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+  ui_cameraIcon = lv_img_create(ui_cameraPanel);
+  lv_img_set_src(ui_cameraIcon, &ui_img_camera_png);
+  lv_obj_set_width(ui_cameraIcon, LV_SIZE_CONTENT);  /// 1
+  lv_obj_set_height(ui_cameraIcon, LV_SIZE_CONTENT); /// 1
+  lv_obj_set_x(ui_cameraIcon, -79);
+  lv_obj_set_y(ui_cameraIcon, -5);
+  lv_obj_set_align(ui_cameraIcon, LV_ALIGN_CENTER);
+  lv_obj_add_flag(ui_cameraIcon, LV_OBJ_FLAG_ADV_HITTEST);  /// Flags
+  lv_obj_clear_flag(ui_cameraIcon, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+
+  ui_cameraLabel = lv_label_create(ui_cameraPanel);
+  lv_obj_set_width(ui_cameraLabel, 160);
+  lv_obj_set_height(ui_cameraLabel, LV_SIZE_CONTENT); /// 1
+  lv_obj_set_x(ui_cameraLabel, 28);
+  lv_obj_set_y(ui_cameraLabel, -6);
+  lv_obj_set_align(ui_cameraLabel, LV_ALIGN_CENTER);
+  lv_label_set_text(ui_cameraLabel, "To close the dialog, exit the camera from the app");
+  lv_obj_set_style_text_font(ui_cameraLabel, &lv_font_montserrat_16, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+  ui_cameraButton = lv_btn_create(ui_cameraPanel);
+  lv_obj_set_width(ui_cameraButton, 108);
+  lv_obj_set_height(ui_cameraButton, 40);
+  lv_obj_set_x(ui_cameraButton, 0);
+  lv_obj_set_y(ui_cameraButton, 62);
+  lv_obj_set_align(ui_cameraButton, LV_ALIGN_CENTER);
+  lv_obj_add_flag(ui_cameraButton, LV_OBJ_FLAG_SCROLL_ON_FOCUS); /// Flags
+  lv_obj_clear_flag(ui_cameraButton, LV_OBJ_FLAG_SCROLLABLE);    /// Flags
+  lv_obj_add_event_cb(ui_cameraButton, onCaptureClick, LV_EVENT_CLICKED, NULL);
+
+  ui_cameraButtonLabel = lv_label_create(ui_cameraButton);
+  lv_obj_set_width(ui_cameraButtonLabel, LV_SIZE_CONTENT);  /// 1
+  lv_obj_set_height(ui_cameraButtonLabel, LV_SIZE_CONTENT); /// 1
+  lv_obj_set_align(ui_cameraButtonLabel, LV_ALIGN_CENTER);
+  lv_label_set_text(ui_cameraButtonLabel, "Capture");
+}
+
 void onForecastOpen(lv_event_t *e)
 {
   lv_obj_scroll_to_y(ui_forecastPanel, 0, LV_ANIM_ON);
@@ -561,6 +661,8 @@ void onScrollMode(lv_event_t *e)
   lv_obj_t *obj = lv_event_get_target(e);
   circular = lv_obj_has_state(obj, LV_STATE_CHECKED);
   lv_obj_scroll_by(ui_settingsList, 0, circular ? 1 : -1, LV_ANIM_ON);
+
+  prefs.putBool("circular", circular);
 }
 
 void onNotificationsOpen(lv_event_t *e)
@@ -628,7 +730,10 @@ void onBrightnessChange(lv_event_t *e)
 {
   // Your code here
   lv_obj_t *slider = lv_event_get_target(e);
-  tft.setBrightness(lv_slider_get_value(slider));
+  int v = lv_slider_get_value(slider);
+  tft.setBrightness(v);
+
+  prefs.putInt("brightness", v);
 }
 
 void onBatteryChange(lv_event_t *e)
@@ -675,18 +780,24 @@ void onTimeoutChange(lv_event_t *e)
   uint16_t sel = lv_dropdown_get_selected(obj);
   Timber.i("Selected index: %d", sel);
 
-  if (sel == 4)
+  setTimeout(sel);
+  prefs.putInt("timeout", sel);
+}
+
+void setTimeout(int i)
+{
+  if (i == 4)
   {
     screenTimer.duration = -1; // always on
   }
-  else if (sel == 0)
+  else if (i == 0)
   {
     screenTimer.duration = 5000; // 5 seconds
     screenTimer.active = true;
   }
-  else if (sel < 4)
+  else if (i < 4)
   {
-    screenTimer.duration = 10000 * sel; // 10, 20, 30 seconds
+    screenTimer.duration = 10000 * i; // 10, 20, 30 seconds
     screenTimer.active = true;
   }
 }
@@ -761,6 +872,8 @@ void setup()
 
   Timber.i("Starting up device");
 
+  prefs.begin("my-app");
+
   tft.init();
   tft.initDMA();
   tft.startWrite();
@@ -802,10 +915,47 @@ void setup()
   lv_obj_add_event_cb(ui_messageList, onScroll, LV_EVENT_SCROLL, NULL);
   lv_obj_scroll_to_y(ui_settingsList, 1, LV_ANIM_ON);
 
-  showAlert();
+  bool intro = prefs.getBool("intro", true);
+
+  if (intro)
+  {
+    showAlert();
+    prefs.putBool("intro", false);
+  }
+
+  cameraPanel();
+
+  // load saved preferences
+  int tm = prefs.getInt("timeout", 0);
+  int br = prefs.getInt("brightness", 100);
+  circular = prefs.getBool("circular", false);
+
+  if (tm > 4)
+  {
+    tm = 4;
+  }
+  else if (tm < 0)
+  {
+    tm = 0;
+  }
+
+  tft.setBrightness(br);
+
+  lv_dropdown_set_selected(ui_timeoutSelect, tm);
+  lv_slider_set_value(ui_brightnessSlider, br, LV_ANIM_OFF);
+  if (circular)
+  {
+    lv_obj_add_state(ui_Switch2, LV_STATE_CHECKED);
+  }
+  else
+  {
+    lv_obj_clear_state(ui_Switch2, LV_STATE_CHECKED);
+  }
 
   screenTimer.active = true;
   screenTimer.time = millis();
+
+  setTimeout(tm);
 
   Timber.i("Setup done");
   Timber.i(about);
@@ -849,6 +999,10 @@ void loop()
     if (screenTimer.duration < 0)
     {
       // Timber.w("Always On active");
+      screenTimer.active = false;
+    }
+    else if (watch.isCameraReady())
+    {
       screenTimer.active = false;
     }
     else if (screenTimer.time + screenTimer.duration < millis())

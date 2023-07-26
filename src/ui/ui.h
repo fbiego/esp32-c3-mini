@@ -101,6 +101,7 @@ LV_IMG_DECLARE( ui_img_1592976543);   // assets\left-arrow.png
 LV_IMG_DECLARE( ui_img_2138854088);   // assets\right-arrow.png
 LV_IMG_DECLARE( ui_img_bt_png);   // assets\bt.png
 LV_IMG_DECLARE( ui_img_search_png);   // assets\search.png
+LV_IMG_DECLARE( ui_img_camera_png);   // assets\camera.png
 LV_IMG_DECLARE( ui_img_602205261);   // assets\dy-1.png
 LV_IMG_DECLARE( ui_img_602199888);   // assets\dy-2.png
 LV_IMG_DECLARE( ui_img_602207311);   // assets\dy-3.png
