@@ -922,6 +922,10 @@ void setup()
     showAlert();
     prefs.putBool("intro", false);
   }
+  else
+  {
+    lv_obj_add_flag(ui_alertPanel, LV_OBJ_FLAG_HIDDEN);
+  }
 
   cameraPanel();
 
