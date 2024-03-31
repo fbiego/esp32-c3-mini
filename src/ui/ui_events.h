@@ -26,6 +26,8 @@ void onMusicNext(lv_event_t * e);
 void onStartSearch(lv_event_t * e);
 void onEndSearch(lv_event_t * e);
 
+void onWatchfaceChange(lv_event_t * e);
+
 #ifdef __cplusplus
 } /*extern "C"*/
 #endif

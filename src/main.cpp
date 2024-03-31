@@ -40,9 +40,20 @@
 #include <Preferences.h>
 
 #include "ui/ui.h"
+#include "faces/34_2_dial/34_2_dial.h"
+#include "faces/75_2_dial/75_2_dial.h"
+// #include "faces/79_2_dial/79_2_dial.h"
+#include "faces/radar/radar.h"
+// #include "faces/116_2_dial/116_2_dial.h"
+#include "faces/756_2_dial/756_2_dial.h"
+
+#include "faces/tix_resized/tix_resized.h"
+#include "faces/pixel_resized/pixel_resized.h"
+#include "faces/smart_resized/smart_resized.h"
+
 #include "main.h"
 
-#define buf_size 50
+#define buf_size 10
 
 class LGFX : public lgfx::LGFX_Device
 {
@@ -141,6 +152,9 @@ static lv_color_t buf[2][screenWidth * buf_size];
 
 String days[7] = {"SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"};
 
+lv_obj_t *watchfaces[] = {ui_clockScreen};
+lv_obj_t *watchface = ui_clockScreen;
+
 lv_img_dsc_t notificationIcons[] = {
     ui_img_sms_png,       // SMS
     ui_img_mail_png,      // Mail
@@ -210,6 +224,32 @@ int getNotificationIconIndex(int id);
 int getWeatherIconIndex(int id);
 void cameraPanel();
 void setTimeout(int i);
+
+lv_obj_t *ui_faceSelect;
+
+
+struct Face{
+  const char *name;
+  const lv_img_dsc_t *preview;
+  lv_obj_t **watchface;
+};
+
+Face face[] = {
+  {.name = "Default", .preview = &digital_preview, .watchface = &ui_clockScreen},
+  {.name = "Analog", .preview = &face_75_2_dial_dial_img_preview_0, .watchface = &face_75_2_dial},
+  {.name = "Shadow", .preview = &face_34_2_dial_dial_img_preview_0, .watchface = &face_34_2_dial},
+  // {.name = "Blue", .preview = &face_79_2_dial_dial_img_preview_0, .watchface = &face_79_2_dial},
+  {.name = "Radar", .preview = &face_radar_dial_img_preview_0, .watchface = &face_radar},
+  // {.name = "Outline", .preview = &face_116_2_dial_dial_img_preview_0, .watchface = &face_116_2_dial},
+  {.name = "Red", .preview = &face_756_2_dial_dial_img_preview_0, .watchface = &face_756_2_dial},
+  {.name = "Tix", .preview = &face_tix_resized_dial_img_preview_0, .watchface = &face_tix_resized},
+  {.name = "Pixel", .preview = &face_pixel_resized_dial_img_preview_0, .watchface = &face_pixel_resized},
+  {.name = "Smart", .preview = &face_smart_resized_dial_img_preview_0, .watchface = &face_smart_resized},
+};
+
+size_t faceSize = sizeof(face) / sizeof(face[0]);
+
+void update_faces();
 
 /* Display flushing */
 void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
@@ -305,42 +345,13 @@ void configCallback(Config config, uint32_t a, uint32_t b)
         lv_obj_set_style_text_color(ui_amPmLabel, lv_color_hex(a), LV_PART_MAIN | LV_STATE_DEFAULT);
       }
     }
-    if (((b >> 16) & 0xFFFF) == 0x02)
-    { // Style 2
-      if ((b & 0xFFFF) == 0x01)
-      { // TOP
-        lv_obj_set_style_bg_img_src(ui_clockScreen, &ui_img_forest_png, LV_PART_MAIN | LV_STATE_DEFAULT);
-      }
-      if ((b & 0xFFFF) == 0x02)
-      { // CENTER
-        lv_obj_set_style_bg_img_src(ui_clockScreen, &ui_img_lake_png, LV_PART_MAIN | LV_STATE_DEFAULT);
-      }
-      if ((b & 0xFFFF) == 0x03)
-      { // BOTTOM
-        lv_obj_set_style_bg_img_src(ui_clockScreen, &ui_img_mountain_png, LV_PART_MAIN | LV_STATE_DEFAULT);
-      }
-    }
-    if (((b >> 16) & 0xFFFF) == 0x03)
-    { // Style 3
-      if ((b & 0xFFFF) == 0x01)
-      { // TOP
-        lv_obj_set_style_bg_img_src(ui_clockScreen, &ui_img_stars_png, LV_PART_MAIN | LV_STATE_DEFAULT);
-      }
-      if ((b & 0xFFFF) == 0x02)
-      { // CENTER
-        lv_obj_set_style_bg_img_src(ui_clockScreen, &ui_img_753022056, LV_PART_MAIN | LV_STATE_DEFAULT);
-      }
-      if ((b & 0xFFFF) == 0x03)
-      { // BOTTOM
-        // lv_obj_set_style_bg_img_src( ui_clockScreen, &ui_img_forest_png, LV_PART_MAIN | LV_STATE_DEFAULT);
-      }
-    }
+    
 
     break;
   case CF_CAMERA:
     if (b)
     {
-      lv_disp_load_scr(ui_clockScreen);
+      lv_disp_load_scr(ui_home);
       lv_obj_clear_flag(ui_cameraPanel, LV_OBJ_FLAG_HIDDEN);
       screenTimer.time = millis() + 50;
       screenTimer.active = true;
@@ -576,6 +587,124 @@ void addForecast(lv_obj_t *parent, Weather weather)
   lv_obj_set_style_text_font(forecastDay, &lv_font_montserrat_20, LV_PART_MAIN | LV_STATE_DEFAULT);
 }
 
+void watchfaceEvents(lv_event_t *e)
+{
+  lv_event_code_t event_code = lv_event_get_code(e);
+  lv_obj_t *target = lv_event_get_target(e);
+  if (event_code == LV_EVENT_GESTURE && lv_indev_get_gesture_dir(lv_indev_get_act()) == LV_DIR_RIGHT)
+  {
+    lv_scr_load_anim(ui_notificationScreen, LV_SCR_LOAD_ANIM_OVER_RIGHT, 500, 0, false);
+  }
+  if (event_code == LV_EVENT_GESTURE && lv_indev_get_gesture_dir(lv_indev_get_act()) == LV_DIR_LEFT)
+  {
+    lv_scr_load_anim(ui_settingsScreen, LV_SCR_LOAD_ANIM_MOVE_LEFT, 500, 0, false);
+  }
+  if (event_code == LV_EVENT_GESTURE && lv_indev_get_gesture_dir(lv_indev_get_act()) == LV_DIR_BOTTOM)
+  {
+    lv_scr_load_anim(ui_controlScreen, LV_SCR_LOAD_ANIM_MOVE_BOTTOM, 500, 0, false);
+  }
+  if (event_code == LV_EVENT_GESTURE && lv_indev_get_gesture_dir(lv_indev_get_act()) == LV_DIR_TOP)
+  {
+    lv_scr_load_anim(ui_weatherScreen, LV_SCR_LOAD_ANIM_MOVE_TOP, 500, 0, false);
+  }
+  if (event_code == LV_EVENT_LONG_PRESSED)
+  {
+    // ui_home = ui_clockScreen;
+    lv_scr_load_anim(ui_faceSelect, LV_SCR_LOAD_ANIM_FADE_ON, 500, 0, false);
+  }
+}
+
+void onWatchfaceChange(lv_event_t *e)
+{
+  watchfaceEvents(e);
+}
+
+
+void onFaceEvent(lv_event_t *e){
+  watchfaceEvents(e);
+}
+
+void onFaceSelected(lv_event_t *e){
+  lv_event_code_t event_code = lv_event_get_code(e);
+  lv_obj_t *target = lv_event_get_target(e);
+  int index = (int)lv_event_get_user_data(e);
+
+  if (event_code == LV_EVENT_CLICKED)
+  {
+    ui_home = *face[index].watchface;
+    lv_scr_load_anim(ui_home, LV_SCR_LOAD_ANIM_FADE_ON, 500, 0, false);
+
+    prefs.putInt("watchface", index);
+  }
+}
+
+void addWatchface(const char* name, const lv_img_dsc_t *src, int index){
+
+  lv_obj_t *ui_faceItem = lv_obj_create(ui_faceSelect);
+  lv_obj_set_width( ui_faceItem, 160);
+  lv_obj_set_height( ui_faceItem, 180);
+  lv_obj_set_align( ui_faceItem, LV_ALIGN_CENTER );
+  lv_obj_clear_flag( ui_faceItem, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
+  lv_obj_set_style_radius(ui_faceItem, 0, LV_PART_MAIN| LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_color(ui_faceItem, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT );
+  lv_obj_set_style_bg_opa(ui_faceItem, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
+  lv_obj_set_style_border_width(ui_faceItem, 0, LV_PART_MAIN| LV_STATE_DEFAULT);
+  lv_obj_set_style_outline_color(ui_faceItem, lv_color_hex(0x142ABC), LV_PART_MAIN | LV_STATE_DEFAULT );
+  lv_obj_set_style_outline_opa(ui_faceItem, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
+  lv_obj_set_style_outline_width(ui_faceItem, 2, LV_PART_MAIN| LV_STATE_DEFAULT);
+  lv_obj_set_style_outline_pad(ui_faceItem, 1, LV_PART_MAIN| LV_STATE_DEFAULT);
+  lv_obj_set_style_pad_left(ui_faceItem, 0, LV_PART_MAIN| LV_STATE_DEFAULT);
+  lv_obj_set_style_pad_right(ui_faceItem, 0, LV_PART_MAIN| LV_STATE_DEFAULT);
+  lv_obj_set_style_pad_top(ui_faceItem, 0, LV_PART_MAIN| LV_STATE_DEFAULT);
+  lv_obj_set_style_pad_bottom(ui_faceItem, 0, LV_PART_MAIN| LV_STATE_DEFAULT);
+
+  lv_obj_t *ui_facePreview = lv_img_create(ui_faceItem);
+  lv_img_set_src(ui_facePreview, src);
+  lv_obj_set_width( ui_facePreview, LV_SIZE_CONTENT);  /// 1
+  lv_obj_set_height( ui_facePreview, LV_SIZE_CONTENT);   /// 1
+  lv_obj_set_align( ui_facePreview, LV_ALIGN_TOP_MID );
+  lv_obj_add_flag( ui_facePreview, LV_OBJ_FLAG_ADV_HITTEST );   /// Flags
+  lv_obj_clear_flag( ui_facePreview, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
+
+  lv_obj_t *ui_faceLabel = lv_label_create(ui_faceItem);
+  lv_obj_set_width( ui_faceLabel, 160);
+  lv_obj_set_height( ui_faceLabel, LV_SIZE_CONTENT);   /// 1
+  lv_obj_set_align( ui_faceLabel, LV_ALIGN_BOTTOM_MID );
+  lv_label_set_long_mode(ui_faceLabel,LV_LABEL_LONG_DOT);
+  lv_label_set_text(ui_faceLabel, name);
+  lv_obj_set_style_text_align(ui_faceLabel, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN| LV_STATE_DEFAULT);
+  lv_obj_set_style_text_font(ui_faceLabel, &lv_font_montserrat_16, LV_PART_MAIN| LV_STATE_DEFAULT);
+
+  lv_obj_add_event_cb(ui_faceItem, onFaceSelected, LV_EVENT_ALL, (void *)index);
+
+}
+
+void init_face_select(){
+  ui_faceSelect = lv_obj_create(NULL);
+  lv_obj_set_width( ui_faceSelect, 240);
+  lv_obj_set_height( ui_faceSelect, 240);
+  lv_obj_set_align( ui_faceSelect, LV_ALIGN_CENTER );
+  lv_obj_set_flex_flow(ui_faceSelect,LV_FLEX_FLOW_ROW);
+  lv_obj_set_flex_align(ui_faceSelect, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+  lv_obj_clear_flag( ui_faceSelect, LV_OBJ_FLAG_SNAPPABLE );    /// Flags
+  lv_obj_set_scrollbar_mode(ui_faceSelect, LV_SCROLLBAR_MODE_OFF);
+  lv_obj_set_style_radius(ui_faceSelect, 0, LV_PART_MAIN| LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_color(ui_faceSelect, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT );
+  lv_obj_set_style_bg_opa(ui_faceSelect, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
+  lv_obj_set_style_border_width(ui_faceSelect, 0, LV_PART_MAIN| LV_STATE_DEFAULT);
+  lv_obj_set_style_pad_left(ui_faceSelect, 30, LV_PART_MAIN| LV_STATE_DEFAULT);
+  lv_obj_set_style_pad_right(ui_faceSelect, 30, LV_PART_MAIN| LV_STATE_DEFAULT);
+  lv_obj_set_style_pad_top(ui_faceSelect, 0, LV_PART_MAIN| LV_STATE_DEFAULT);
+  lv_obj_set_style_pad_bottom(ui_faceSelect, 0, LV_PART_MAIN| LV_STATE_DEFAULT);
+  lv_obj_set_style_pad_row(ui_faceSelect, 10, LV_PART_MAIN| LV_STATE_DEFAULT);
+  lv_obj_set_style_pad_column(ui_faceSelect, 15, LV_PART_MAIN| LV_STATE_DEFAULT);
+
+  for (int x = 0; x < faceSize; x++){
+    addWatchface(face[x].name, face[x].preview, x);
+  }
+}
+
+
 void onCaptureClick(lv_event_t *e)
 {
   watch.capturePhoto();
@@ -583,7 +712,7 @@ void onCaptureClick(lv_event_t *e)
 
 void cameraPanel()
 {
-  ui_cameraPanel = lv_obj_create(ui_clockScreen);
+  ui_cameraPanel = lv_obj_create(ui_home);
   lv_obj_set_width(ui_cameraPanel, 240);
   lv_obj_set_height(ui_cameraPanel, 240);
   lv_obj_set_align(ui_cameraPanel, LV_ALIGN_CENTER);
@@ -902,13 +1031,34 @@ void setup()
 
   ui_init();
 
+  init_face_34_2_dial();
+  init_face_75_2_dial();
+  // init_face_79_2_dial();
+  init_face_radar();
+  // init_face_116_2_dial();
+  init_face_756_2_dial();
+
+  init_face_smart_resized();
+  init_face_tix_resized();
+  init_face_pixel_resized();
+
+  init_face_select();
+
+  int wf = prefs.getInt("watchface", 0);
+  if (wf >= faceSize){
+    wf = 0; // default
+  }
+  ui_home = *face[wf].watchface; // load saved watchface power on
+  lv_disp_load_scr(ui_home);
+
   watch.setConnectionCallback(connectionCallback);
   watch.setNotificationCallback(notificationCallback);
   watch.setConfigurationCallback(configCallback);
   watch.begin();
   watch.set24Hour(true);
+  watch.setBattery(85);
 
-  String about = "v1.0 [fbiego]\nESP32 C3 Mini\n" + watch.getAddress();
+  String about = "v2.0 [fbiego]\nESP32 C3 Mini\n" + watch.getAddress();
   lv_label_set_text(ui_aboutText, about.c_str());
 
   lv_obj_add_event_cb(ui_settingsList, onScroll, LV_EVENT_SCROLL, NULL);
@@ -972,19 +1122,27 @@ void loop()
 
   watch.loop();
 
-  if (!watch.isConnected())
+
+  if (ui_home == ui_clockScreen)
   {
-    lv_obj_add_state(ui_btStateButton, LV_STATE_CHECKED);
+    if (!watch.isConnected())
+    {
+      lv_obj_add_state(ui_btStateButton, LV_STATE_CHECKED);
+    }
+    else
+    {
+      lv_obj_clear_state(ui_btStateButton, LV_STATE_CHECKED);
+    }
+    lv_label_set_text(ui_hourLabel, watch.getHourZ().c_str());
+    lv_label_set_text(ui_dayLabel, watch.getTime("%A").c_str());
+    lv_label_set_text(ui_minuteLabel, watch.getTime("%M").c_str());
+    lv_label_set_text(ui_dateLabel, watch.getTime("%d\n%B").c_str());
+    lv_label_set_text(ui_amPmLabel, watch.getAmPmC(false).c_str());
   }
   else
   {
-    lv_obj_clear_state(ui_btStateButton, LV_STATE_CHECKED);
+    update_faces();
   }
-  lv_label_set_text(ui_hourLabel, watch.getHourZ().c_str());
-  lv_label_set_text(ui_dayLabel, watch.getTime("%A").c_str());
-  lv_label_set_text(ui_minuteLabel, watch.getTime("%M").c_str());
-  lv_label_set_text(ui_dateLabel, watch.getTime("%d\n%B").c_str());
-  lv_label_set_text(ui_amPmLabel, watch.getAmPmC(false).c_str());
 
   if (alertTimer.active)
   {
@@ -1015,7 +1173,7 @@ void loop()
       screenTimer.active = false;
 
       tft.setBrightness(0);
-      lv_disp_load_scr(ui_clockScreen);
+      lv_disp_load_scr(ui_home);
     }
   }
 }
@@ -1023,4 +1181,78 @@ void loop()
 bool isDay()
 {
   return watch.getHour(true) > 7 && watch.getHour(true) < 21;
+}
+
+void update_faces(){
+  int sec = watch.getSecond();
+  int min = watch.getMinute();
+  int hr = watch.getHourC();
+  bool md =  watch.is24Hour();
+  bool am = watch.getHour(true) < 12;
+  int dy = watch.getDay();
+  int mt = watch.getMonth() + 1;
+  int yr = watch.getYear();
+  int wk = watch.getDayofWeek();
+
+  int temp = watch.getWeatherAt(0).temp;
+  int ic =  watch.getWeatherAt(0).icon;
+
+  int bat = watch.getPhoneBattery();
+  int con =  watch.isConnected();
+
+  update_time_34_2_dial(sec, min, hr, md, am, dy, mt, yr, wk);
+  update_weather_34_2_dial(temp, ic);
+  update_status_34_2_dial(bat, con);
+  update_activity_34_2_dial(2735, 357, 345);
+  update_health_34_2_dial(76, 97);
+
+
+  update_time_75_2_dial(sec, min, hr, md, am, dy, mt, yr, wk);
+  update_weather_75_2_dial(temp, ic);
+  update_status_75_2_dial(bat, con);
+  update_activity_75_2_dial(2735, 357, 345);
+  update_health_75_2_dial(76, 97);
+
+  // update_time_79_2_dial(sec, min, hr, md, am, dy, mt, yr, wk);
+  // update_weather_79_2_dial(temp, ic);
+  // update_status_79_2_dial(bat, con);
+  // update_activity_79_2_dial(2735, 357, 345);
+  // update_health_79_2_dial(76, 97);
+
+  update_time_radar(sec, min, hr, md, am, dy, mt, yr, wk);
+  update_weather_radar(temp, ic);
+  update_status_radar(bat, con);
+  update_activity_radar(2735, 357, 345);
+  update_health_radar(76, 97);
+
+  // update_time_116_2_dial(sec, min, hr, md, am, dy, mt, yr, wk);
+  // update_weather_116_2_dial(temp, ic);
+  // update_status_116_2_dial(bat, con);
+  // update_activity_116_2_dial(2735, 357, 345);
+  // update_health_116_2_dial(76, 97);
+
+  update_time_756_2_dial(sec, min, hr, md, am, dy, mt, yr, wk);
+  update_weather_756_2_dial(temp, ic);
+  update_status_756_2_dial(bat, con);
+  update_activity_756_2_dial(2735, 357, 345);
+  update_health_756_2_dial(76, 97);
+
+  update_time_tix_resized(sec, min, hr, md, am, dy, mt, yr, wk);
+  update_weather_tix_resized(temp, ic);
+  update_status_tix_resized(bat, con);
+  update_activity_tix_resized(2735, 357, 345);
+  update_health_tix_resized(76, 97);
+
+  update_time_pixel_resized(sec, min, hr, md, am, dy, mt, yr, wk);
+  update_weather_pixel_resized(temp, ic);
+  update_status_pixel_resized(bat, con);
+  update_activity_pixel_resized(2735, 357, 345);
+  update_health_pixel_resized(76, 97);
+
+  update_time_smart_resized(sec, min, hr, md, am, dy, mt, yr, wk);
+  update_weather_smart_resized(temp, ic);
+  update_status_smart_resized(bat, con);
+  update_activity_smart_resized(2735, 357, 345);
+  update_health_smart_resized(76, 97);
+
 }
