@@ -476,6 +476,12 @@ void update_status_pixel_resized(int battery, bool connection){
 	lv_img_set_src(face_pixel_resized_16_59114, face_pixel_resized_dial_img_1_59114_group[(battery / 1) % 10]);
 	lv_img_set_src(face_pixel_resized_17_59114, face_pixel_resized_dial_img_1_59114_group[(battery / 10) % 10]);
 	lv_img_set_src(face_pixel_resized_18_59114, face_pixel_resized_dial_img_1_59114_group[(battery / 100) % 10]);
+	if (battery < 100)
+	{
+		lv_obj_add_flag(face_pixel_resized_18_59114, LV_OBJ_FLAG_HIDDEN);
+	} else {
+		lv_obj_clear_flag(face_pixel_resized_18_59114, LV_OBJ_FLAG_HIDDEN);
+	}
 	lv_img_set_src(face_pixel_resized_20_61728, face_pixel_resized_dial_img_20_61728_group[(battery / (100 / 7)) % 7]);
 
 }

@@ -170,9 +170,15 @@ void ui_event_notificationScreen(lv_event_t *e)
       lv_obj_t *target = lv_event_get_target(e);
       if (event_code == LV_EVENT_GESTURE && lv_indev_get_gesture_dir(lv_indev_get_act()) == LV_DIR_LEFT)
       {
-            _ui_screen_change(ui_home, LV_SCR_LOAD_ANIM_FADE_ON, 500, 0);
-            _ui_flag_modify(ui_messageList, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_REMOVE);
-            _ui_flag_modify(ui_messagePanel, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
+            if (lv_obj_has_flag(ui_messageList, LV_OBJ_FLAG_HIDDEN)){
+                  _ui_flag_modify(ui_messageList, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_REMOVE);
+                  _ui_flag_modify(ui_messagePanel, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
+            } else {
+                  _ui_screen_change(ui_home, LV_SCR_LOAD_ANIM_FADE_ON, 500, 0);
+                  _ui_flag_modify(ui_messageList, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_REMOVE);
+                  _ui_flag_modify(ui_messagePanel, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
+            }
+            
       }
       if (event_code == LV_EVENT_GESTURE && lv_indev_get_gesture_dir(lv_indev_get_act()) == LV_DIR_RIGHT)
       {
