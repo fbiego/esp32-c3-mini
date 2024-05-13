@@ -6,6 +6,8 @@
 
 #include "34_2_dial.h"
 
+#ifdef ENABLE_FACE_34_2_DIAL
+
 lv_obj_t *face_34_2_dial;
 lv_obj_t *face_34_2_dial_0_304;
 lv_obj_t *face_34_2_dial_1_58396;
@@ -87,7 +89,10 @@ const lv_img_dsc_t *face_34_2_dial_dial_img_14_118067_group[] = {
 };
 
 
-void init_face_34_2_dial(void){
+#endif
+
+void init_face_34_2_dial(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_t **)){
+#ifdef ENABLE_FACE_34_2_DIAL
     face_34_2_dial = lv_obj_create(NULL);
     lv_obj_clear_flag(face_34_2_dial, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_style_bg_color(face_34_2_dial, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -227,10 +232,19 @@ void init_face_34_2_dial(void){
     lv_obj_add_flag(face_34_2_dial_14_118067, LV_OBJ_FLAG_ADV_HITTEST );
     lv_obj_clear_flag(face_34_2_dial_14_118067, LV_OBJ_FLAG_SCROLLABLE );
 
+
+    callback("Shadow", &face_34_2_dial_dial_img_preview_0, &face_34_2_dial);
+
+#endif
 }
 
 void update_time_34_2_dial(int second, int minute, int hour, bool mode, bool am, int day, int month, int year, int weekday)
 {
+#ifdef ENABLE_FACE_34_2_DIAL
+    if (!face_34_2_dial)
+    {
+        return;
+    }
 	lv_img_set_src(face_34_2_dial_2_58427, face_34_2_dial_dial_img_2_58427_group[(year / 1) % 10]);
 	lv_img_set_src(face_34_2_dial_3_58427, face_34_2_dial_dial_img_2_58427_group[(year / 10) % 10]);
 	lv_img_set_src(face_34_2_dial_5_58427, face_34_2_dial_dial_img_2_58427_group[(month / 1) % 10]);
@@ -243,25 +257,78 @@ void update_time_34_2_dial(int second, int minute, int hour, bool mode, bool am,
 	lv_img_set_src(face_34_2_dial_12_86291, face_34_2_dial_dial_img_11_86291_group[(minute / 10) % 10]);
 	lv_img_set_src(face_34_2_dial_14_118067, face_34_2_dial_dial_img_14_118067_group[((weekday + 6) / 1) % 7]);
 
+#endif
 }
 
 void update_weather_34_2_dial(int temp, int icon)
 {
+#ifdef ENABLE_FACE_34_2_DIAL
+    if (!face_34_2_dial)
+    {
+        return;
+    }
 
+#endif
 }
 
 void update_status_34_2_dial(int battery, bool connection){
+#ifdef ENABLE_FACE_34_2_DIAL
+    if (!face_34_2_dial)
+    {
+        return;
+    }
 
+#endif
 }
 
 void update_activity_34_2_dial(int steps, int distance, int kcal)
 {
+#ifdef ENABLE_FACE_34_2_DIAL
+    if (!face_34_2_dial)
+    {
+        return;
+    }
 
+#endif
 }
 
 void update_health_34_2_dial(int bpm, int oxygen)
 {
+#ifdef ENABLE_FACE_34_2_DIAL
+    if (!face_34_2_dial)
+    {
+        return;
+    }
 
+#endif
+}
+
+void update_all_34_2_dial(int second, int minute, int hour, bool mode, bool am, int day, int month, int year, int weekday, 
+    int temp, int icon, int battery, bool connection, int steps, int distance, int kcal, int bpm, int oxygen)
+{
+#ifdef ENABLE_FACE_34_2_DIAL
+    update_time_34_2_dial(second, minute, hour, mode, am, day, month, year, weekday);
+    update_weather_34_2_dial(temp, icon);
+    update_status_34_2_dial(battery, connection);
+    update_activity_34_2_dial(steps, distance, kcal);
+    update_health_34_2_dial(bpm, oxygen);
+#endif
+}
+
+void update_check_34_2_dial(lv_obj_t *root, int second, int minute, int hour, bool mode, bool am, int day, int month, int year, int weekday, 
+    int temp, int icon, int battery, bool connection, int steps, int distance, int kcal, int bpm, int oxygen)
+{
+#ifdef ENABLE_FACE_34_2_DIAL
+    if (root != face_34_2_dial)
+    {
+        return;
+    }
+    update_time_34_2_dial(second, minute, hour, mode, am, day, month, year, weekday);
+    update_weather_34_2_dial(temp, icon);
+    update_status_34_2_dial(battery, connection);
+    update_activity_34_2_dial(steps, distance, kcal);
+    update_health_34_2_dial(bpm, oxygen);
+#endif
 }
 
 

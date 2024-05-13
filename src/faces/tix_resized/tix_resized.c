@@ -6,6 +6,8 @@
 
 #include "tix_resized.h"
 
+#ifdef ENABLE_FACE_TIX_RESIZED
+
 lv_obj_t *face_tix_resized;
 lv_obj_t *face_tix_resized_0_124;
 lv_obj_t *face_tix_resized_1_46402;
@@ -84,7 +86,10 @@ const lv_img_dsc_t *face_tix_resized_dial_img_5_152184_group[] = {
 };
 
 
-void init_face_tix_resized(void){
+#endif
+
+void init_face_tix_resized(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_t **)){
+#ifdef ENABLE_FACE_TIX_RESIZED
     face_tix_resized = lv_obj_create(NULL);
     lv_obj_clear_flag(face_tix_resized, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_style_bg_color(face_tix_resized, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -152,36 +157,98 @@ void init_face_tix_resized(void){
     lv_obj_add_flag(face_tix_resized_5_152184, LV_OBJ_FLAG_ADV_HITTEST );
     lv_obj_clear_flag(face_tix_resized_5_152184, LV_OBJ_FLAG_SCROLLABLE );
 
+
+    callback("Tix", &face_tix_resized_dial_img_preview_0, &face_tix_resized);
+
+#endif
 }
 
 void update_time_tix_resized(int second, int minute, int hour, bool mode, bool am, int day, int month, int year, int weekday)
 {
+#ifdef ENABLE_FACE_TIX_RESIZED
+    if (!face_tix_resized)
+    {
+        return;
+    }
 	lv_img_set_src(face_tix_resized_0_124, face_tix_resized_dial_img_0_124_group[(hour / 1) % 10]);
 	lv_img_set_src(face_tix_resized_1_46402, face_tix_resized_dial_img_1_46402_group[(hour / 10) % 3]);
 	lv_img_set_src(face_tix_resized_2_50918, face_tix_resized_dial_img_2_50918_group[(minute / 1) % 10]);
 	lv_img_set_src(face_tix_resized_3_97204, face_tix_resized_dial_img_3_97204_group[(minute / 10) % 10]);
 	lv_img_set_src(face_tix_resized_4_127846, face_tix_resized_dial_img_4_127846_group[((weekday + 6) / 1) % 7]);
 
+#endif
 }
 
 void update_weather_tix_resized(int temp, int icon)
 {
+#ifdef ENABLE_FACE_TIX_RESIZED
+    if (!face_tix_resized)
+    {
+        return;
+    }
 
+#endif
 }
 
 void update_status_tix_resized(int battery, bool connection){
+#ifdef ENABLE_FACE_TIX_RESIZED
+    if (!face_tix_resized)
+    {
+        return;
+    }
 	lv_img_set_src(face_tix_resized_5_152184, face_tix_resized_dial_img_5_152184_group[(battery / (100 / 7)) % 7]);
 
+#endif
 }
 
 void update_activity_tix_resized(int steps, int distance, int kcal)
 {
+#ifdef ENABLE_FACE_TIX_RESIZED
+    if (!face_tix_resized)
+    {
+        return;
+    }
 
+#endif
 }
 
 void update_health_tix_resized(int bpm, int oxygen)
 {
+#ifdef ENABLE_FACE_TIX_RESIZED
+    if (!face_tix_resized)
+    {
+        return;
+    }
 
+#endif
+}
+
+void update_all_tix_resized(int second, int minute, int hour, bool mode, bool am, int day, int month, int year, int weekday, 
+    int temp, int icon, int battery, bool connection, int steps, int distance, int kcal, int bpm, int oxygen)
+{
+#ifdef ENABLE_FACE_TIX_RESIZED
+    update_time_tix_resized(second, minute, hour, mode, am, day, month, year, weekday);
+    update_weather_tix_resized(temp, icon);
+    update_status_tix_resized(battery, connection);
+    update_activity_tix_resized(steps, distance, kcal);
+    update_health_tix_resized(bpm, oxygen);
+#endif
+}
+
+void update_check_tix_resized(lv_obj_t *root, int second, int minute, int hour, bool mode, bool am, int day, int month, int year, int weekday, 
+    int temp, int icon, int battery, bool connection, int steps, int distance, int kcal, int bpm, int oxygen)
+{
+#ifdef ENABLE_FACE_TIX_RESIZED
+    if (root != face_tix_resized)
+    {
+        return;
+    }
+    update_time_tix_resized(second, minute, hour, mode, am, day, month, year, weekday);
+    update_weather_tix_resized(temp, icon);
+    update_status_tix_resized(battery, connection);
+    update_activity_tix_resized(steps, distance, kcal);
+    update_health_tix_resized(bpm, oxygen);
+#endif
 }
 
 

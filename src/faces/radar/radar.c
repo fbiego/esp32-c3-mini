@@ -6,6 +6,8 @@
 
 #include "radar.h"
 
+#ifdef ENABLE_FACE_RADAR
+
 lv_obj_t *face_radar;
 lv_obj_t *face_radar_0_984;
 lv_obj_t *face_radar_1_58768;
@@ -23,7 +25,10 @@ lv_obj_t *face_radar_33_212563;
 
 
 
-void init_face_radar(void){
+#endif
+
+void init_face_radar(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_t **)){
+#ifdef ENABLE_FACE_RADAR
     face_radar = lv_obj_create(NULL);
     lv_obj_clear_flag(face_radar, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_style_bg_color(face_radar, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -76,33 +81,95 @@ void init_face_radar(void){
     lv_obj_clear_flag(face_radar_33_212563, LV_OBJ_FLAG_SCROLLABLE );
 	lv_img_set_pivot(face_radar_33_212563, 1, 121);
 
+
+    callback("Radar", &face_radar_dial_img_preview_0, &face_radar);
+
+#endif
 }
 
 void update_time_radar(int second, int minute, int hour, bool mode, bool am, int day, int month, int year, int weekday)
 {
+#ifdef ENABLE_FACE_RADAR
+    if (!face_radar)
+    {
+        return;
+    }
 	lv_img_set_angle(face_radar_1_58768, hour * 300 + (minute * 5));
 	lv_img_set_angle(face_radar_17_119773, minute * 60);
 	lv_img_set_angle(face_radar_33_212563, second * 60);
 
+#endif
 }
 
 void update_weather_radar(int temp, int icon)
 {
+#ifdef ENABLE_FACE_RADAR
+    if (!face_radar)
+    {
+        return;
+    }
 
+#endif
 }
 
 void update_status_radar(int battery, bool connection){
+#ifdef ENABLE_FACE_RADAR
+    if (!face_radar)
+    {
+        return;
+    }
 
+#endif
 }
 
 void update_activity_radar(int steps, int distance, int kcal)
 {
+#ifdef ENABLE_FACE_RADAR
+    if (!face_radar)
+    {
+        return;
+    }
 
+#endif
 }
 
 void update_health_radar(int bpm, int oxygen)
 {
+#ifdef ENABLE_FACE_RADAR
+    if (!face_radar)
+    {
+        return;
+    }
 
+#endif
+}
+
+void update_all_radar(int second, int minute, int hour, bool mode, bool am, int day, int month, int year, int weekday, 
+    int temp, int icon, int battery, bool connection, int steps, int distance, int kcal, int bpm, int oxygen)
+{
+#ifdef ENABLE_FACE_RADAR
+    update_time_radar(second, minute, hour, mode, am, day, month, year, weekday);
+    update_weather_radar(temp, icon);
+    update_status_radar(battery, connection);
+    update_activity_radar(steps, distance, kcal);
+    update_health_radar(bpm, oxygen);
+#endif
+}
+
+void update_check_radar(lv_obj_t *root, int second, int minute, int hour, bool mode, bool am, int day, int month, int year, int weekday, 
+    int temp, int icon, int battery, bool connection, int steps, int distance, int kcal, int bpm, int oxygen)
+{
+#ifdef ENABLE_FACE_RADAR
+    if (root != face_radar)
+    {
+        return;
+    }
+    update_time_radar(second, minute, hour, mode, am, day, month, year, weekday);
+    update_weather_radar(temp, icon);
+    update_status_radar(battery, connection);
+    update_activity_radar(steps, distance, kcal);
+    update_health_radar(bpm, oxygen);
+#endif
 }
 
 

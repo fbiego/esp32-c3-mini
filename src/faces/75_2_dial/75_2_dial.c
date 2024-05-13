@@ -6,6 +6,8 @@
 
 #include "75_2_dial.h"
 
+#ifdef ENABLE_FACE_75_2_DIAL
+
 lv_obj_t *face_75_2_dial;
 lv_obj_t *face_75_2_dial_0_1024;
 lv_obj_t *face_75_2_dial_2_216824;
@@ -42,7 +44,10 @@ const lv_img_dsc_t *face_75_2_dial_dial_img_2_216824_group[] = {
 };
 
 
-void init_face_75_2_dial(void){
+#endif
+
+void init_face_75_2_dial(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_t **)){
+#ifdef ENABLE_FACE_75_2_DIAL
     face_75_2_dial = lv_obj_create(NULL);
     lv_obj_clear_flag(face_75_2_dial, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_style_bg_color(face_75_2_dial, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -104,34 +109,96 @@ void init_face_75_2_dial(void){
     lv_obj_clear_flag(face_75_2_dial_35_138999, LV_OBJ_FLAG_SCROLLABLE );
 	lv_img_set_pivot(face_75_2_dial_35_138999, 5, 108);
 
+
+    callback("Analog", &face_75_2_dial_dial_img_preview_0, &face_75_2_dial);
+
+#endif
 }
 
 void update_time_75_2_dial(int second, int minute, int hour, bool mode, bool am, int day, int month, int year, int weekday)
 {
+#ifdef ENABLE_FACE_75_2_DIAL
+    if (!face_75_2_dial)
+    {
+        return;
+    }
 	lv_img_set_src(face_75_2_dial_2_216824, face_75_2_dial_dial_img_2_216824_group[((weekday + 6) / 1) % 7]);
 	lv_img_set_angle(face_75_2_dial_3_59132, hour * 300 + (minute * 5));
 	lv_img_set_angle(face_75_2_dial_19_89191, minute * 60);
 	lv_img_set_angle(face_75_2_dial_35_138999, second * 60);
 
+#endif
 }
 
 void update_weather_75_2_dial(int temp, int icon)
 {
+#ifdef ENABLE_FACE_75_2_DIAL
+    if (!face_75_2_dial)
+    {
+        return;
+    }
 
+#endif
 }
 
 void update_status_75_2_dial(int battery, bool connection){
+#ifdef ENABLE_FACE_75_2_DIAL
+    if (!face_75_2_dial)
+    {
+        return;
+    }
 
+#endif
 }
 
 void update_activity_75_2_dial(int steps, int distance, int kcal)
 {
+#ifdef ENABLE_FACE_75_2_DIAL
+    if (!face_75_2_dial)
+    {
+        return;
+    }
 
+#endif
 }
 
 void update_health_75_2_dial(int bpm, int oxygen)
 {
+#ifdef ENABLE_FACE_75_2_DIAL
+    if (!face_75_2_dial)
+    {
+        return;
+    }
 
+#endif
+}
+
+void update_all_75_2_dial(int second, int minute, int hour, bool mode, bool am, int day, int month, int year, int weekday, 
+    int temp, int icon, int battery, bool connection, int steps, int distance, int kcal, int bpm, int oxygen)
+{
+#ifdef ENABLE_FACE_75_2_DIAL
+    update_time_75_2_dial(second, minute, hour, mode, am, day, month, year, weekday);
+    update_weather_75_2_dial(temp, icon);
+    update_status_75_2_dial(battery, connection);
+    update_activity_75_2_dial(steps, distance, kcal);
+    update_health_75_2_dial(bpm, oxygen);
+#endif
+}
+
+void update_check_75_2_dial(lv_obj_t *root, int second, int minute, int hour, bool mode, bool am, int day, int month, int year, int weekday, 
+    int temp, int icon, int battery, bool connection, int steps, int distance, int kcal, int bpm, int oxygen)
+{
+#ifdef ENABLE_FACE_75_2_DIAL
+    if (root != face_75_2_dial)
+    {
+        return;
+    }
+    update_time_75_2_dial(second, minute, hour, mode, am, day, month, year, weekday);
+    update_weather_75_2_dial(temp, icon);
+    update_status_75_2_dial(battery, connection);
+    update_activity_75_2_dial(steps, distance, kcal);
+    update_health_75_2_dial(bpm, oxygen);
+#endif
 }
 
 

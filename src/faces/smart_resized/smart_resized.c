@@ -6,6 +6,8 @@
 
 #include "smart_resized.h"
 
+#ifdef ENABLE_FACE_SMART_RESIZED
+
 lv_obj_t *face_smart_resized;
 lv_obj_t *face_smart_resized_0_784;
 lv_obj_t *face_smart_resized_2_58894;
@@ -122,7 +124,10 @@ const lv_img_dsc_t *face_smart_resized_dial_img_38_93007_group[] = {
 };
 
 
-void init_face_smart_resized(void){
+#endif
+
+void init_face_smart_resized(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_t **)){
+#ifdef ENABLE_FACE_SMART_RESIZED
     face_smart_resized = lv_obj_create(NULL);
     lv_obj_clear_flag(face_smart_resized, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_style_bg_color(face_smart_resized, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -361,10 +366,19 @@ void init_face_smart_resized(void){
     lv_obj_add_flag(face_smart_resized_38_93007, LV_OBJ_FLAG_ADV_HITTEST );
     lv_obj_clear_flag(face_smart_resized_38_93007, LV_OBJ_FLAG_SCROLLABLE );
 
+
+    callback("Smart", &face_smart_resized_dial_img_preview_0, &face_smart_resized);
+
+#endif
 }
 
 void update_time_smart_resized(int second, int minute, int hour, bool mode, bool am, int day, int month, int year, int weekday)
 {
+#ifdef ENABLE_FACE_SMART_RESIZED
+    if (!face_smart_resized)
+    {
+        return;
+    }
 	lv_img_set_src(face_smart_resized_11_62309, face_smart_resized_dial_img_11_62309_group[(month / 1) % 10]);
 	lv_img_set_src(face_smart_resized_12_62309, face_smart_resized_dial_img_11_62309_group[(month / 10) % 10]);
 	lv_img_set_src(face_smart_resized_13_62309, face_smart_resized_dial_img_11_62309_group[(day / 1) % 10]);
@@ -375,15 +389,27 @@ void update_time_smart_resized(int second, int minute, int hour, bool mode, bool
 	lv_img_set_src(face_smart_resized_35_68383, face_smart_resized_dial_img_32_68383_group[(minute / 10) % 10]);
 	lv_img_set_src(face_smart_resized_38_93007, face_smart_resized_dial_img_38_93007_group[((weekday + 6) / 1) % 7]);
 
+#endif
 }
 
 void update_weather_smart_resized(int temp, int icon)
 {
+#ifdef ENABLE_FACE_SMART_RESIZED
+    if (!face_smart_resized)
+    {
+        return;
+    }
 	lv_img_set_src(face_smart_resized_2_58894, face_smart_resized_dial_img_weather[icon % 8]);
 
+#endif
 }
 
 void update_status_smart_resized(int battery, bool connection){
+#ifdef ENABLE_FACE_SMART_RESIZED
+    if (!face_smart_resized)
+    {
+        return;
+    }
 	lv_img_set_src(face_smart_resized_16_62309, face_smart_resized_dial_img_11_62309_group[(battery / 1) % 10]);
 	lv_img_set_src(face_smart_resized_17_62309, face_smart_resized_dial_img_11_62309_group[(battery / 10) % 10]);
 	lv_img_set_src(face_smart_resized_18_62309, face_smart_resized_dial_img_11_62309_group[(battery / 100) % 10]);
@@ -395,24 +421,65 @@ void update_status_smart_resized(int battery, bool connection){
 	}
 	lv_img_set_src(face_smart_resized_19_63501, face_smart_resized_dial_img_19_63501_group[(battery / (100 / 11)) % 11]);
 
+#endif
 }
 
 void update_activity_smart_resized(int steps, int distance, int kcal)
 {
+#ifdef ENABLE_FACE_SMART_RESIZED
+    if (!face_smart_resized)
+    {
+        return;
+    }
 	lv_img_set_src(face_smart_resized_27_67469, face_smart_resized_dial_img_21_67469_group[(steps / 1) % 10]);
 	lv_img_set_src(face_smart_resized_28_67469, face_smart_resized_dial_img_21_67469_group[(steps / 10) % 10]);
 	lv_img_set_src(face_smart_resized_29_67469, face_smart_resized_dial_img_21_67469_group[(steps / 100) % 10]);
 	lv_img_set_src(face_smart_resized_30_67469, face_smart_resized_dial_img_21_67469_group[(steps / 1000) % 10]);
 	lv_img_set_src(face_smart_resized_31_67469, face_smart_resized_dial_img_21_67469_group[(steps / 10000) % 10]);
 
+#endif
 }
 
 void update_health_smart_resized(int bpm, int oxygen)
 {
+#ifdef ENABLE_FACE_SMART_RESIZED
+    if (!face_smart_resized)
+    {
+        return;
+    }
 	lv_img_set_src(face_smart_resized_21_67469, face_smart_resized_dial_img_21_67469_group[(bpm / 1) % 10]);
 	lv_img_set_src(face_smart_resized_22_67469, face_smart_resized_dial_img_21_67469_group[(bpm / 10) % 10]);
 	lv_img_set_src(face_smart_resized_23_67469, face_smart_resized_dial_img_21_67469_group[(bpm / 100) % 10]);
 
+#endif
+}
+
+void update_all_smart_resized(int second, int minute, int hour, bool mode, bool am, int day, int month, int year, int weekday, 
+    int temp, int icon, int battery, bool connection, int steps, int distance, int kcal, int bpm, int oxygen)
+{
+#ifdef ENABLE_FACE_SMART_RESIZED
+    update_time_smart_resized(second, minute, hour, mode, am, day, month, year, weekday);
+    update_weather_smart_resized(temp, icon);
+    update_status_smart_resized(battery, connection);
+    update_activity_smart_resized(steps, distance, kcal);
+    update_health_smart_resized(bpm, oxygen);
+#endif
+}
+
+void update_check_smart_resized(lv_obj_t *root, int second, int minute, int hour, bool mode, bool am, int day, int month, int year, int weekday, 
+    int temp, int icon, int battery, bool connection, int steps, int distance, int kcal, int bpm, int oxygen)
+{
+#ifdef ENABLE_FACE_SMART_RESIZED
+    if (root != face_smart_resized)
+    {
+        return;
+    }
+    update_time_smart_resized(second, minute, hour, mode, am, day, month, year, weekday);
+    update_weather_smart_resized(temp, icon);
+    update_status_smart_resized(battery, connection);
+    update_activity_smart_resized(steps, distance, kcal);
+    update_health_smart_resized(bpm, oxygen);
+#endif
 }
 
 

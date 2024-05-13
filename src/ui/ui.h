@@ -6,6 +6,8 @@
 #ifndef _C3_WATCH_UI_H
 #define _C3_WATCH_UI_H
 
+#define MAX_FACES 15
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -14,6 +16,8 @@ extern "C"
 #include "lvgl.h"
 
 #include "ui_events.h"
+
+    void pulseCall_Animation(lv_obj_t *TargetObject, int delay);
     void ui_event_clockScreen(lv_event_t *e);
     extern lv_obj_t *ui_clockScreen;
     extern lv_obj_t *ui_hourLabel;
@@ -44,6 +48,15 @@ extern "C"
     extern lv_obj_t *ui_messageTime;
     extern lv_obj_t *ui_messageContent;
     extern lv_obj_t *ui_messageList;
+    void ui_event_appListScreen(lv_event_t *e);
+    extern lv_obj_t *ui_appListScreen;
+    extern lv_obj_t *ui_appList;
+
+    void ui_event_alertStateSwitch(lv_event_t *e);
+    extern lv_obj_t *ui_alertStateLabel;
+    extern lv_obj_t *ui_alertStateSwitch;
+    extern lv_obj_t *ui_alertStateIcon;
+    extern lv_obj_t *ui_alertStatePanel;
     void ui_event_settingsScreen(lv_event_t *e);
     extern lv_obj_t *ui_settingsScreen;
     extern lv_obj_t *ui_settingsList;
@@ -55,7 +68,7 @@ extern "C"
     extern lv_obj_t *ui_brightnessLabel;
     extern lv_obj_t *ui_scrollingPanel;
     extern lv_obj_t *ui_scrollIcon;
-    void ui_event_Switch2(lv_event_t *e);
+    void ui_event_scrollMode(lv_event_t *e);
     extern lv_obj_t *ui_Switch2;
     extern lv_obj_t *ui_scrollLabel;
     extern lv_obj_t *ui_timeoutPanel;
@@ -73,7 +86,6 @@ extern "C"
     extern lv_obj_t *ui_aboutText;
     void ui_event_controlScreen(lv_event_t *e);
     extern lv_obj_t *ui_controlScreen;
-    extern lv_obj_t *ui_controlTitle;
     void ui_event_musicPlayButton(lv_event_t *e);
     extern lv_obj_t *ui_musicPlayButton;
     void ui_event_musicPrevButton(lv_event_t *e);
@@ -83,11 +95,77 @@ extern "C"
     extern lv_obj_t *ui_btStateButton;
     void ui_event_phoneSearchButton(lv_event_t *e);
     extern lv_obj_t *ui_phoneSearchButton;
+    void ui_event_volumeUpButton(lv_event_t *e);
+    extern lv_obj_t *ui_volumeUpButton;
+    void ui_event_volumeDownButton(lv_event_t *e);
+    extern lv_obj_t *ui_volumeDownButton;
+    void ui_event_qrCodeButton(lv_event_t *e);
+    extern lv_obj_t *ui_qrCodeButton;
 
+    void ui_event_appInfoScreen(lv_event_t *e);
+    extern lv_obj_t *ui_appInfoScreen;
+    extern lv_obj_t *ui_appInfoPanel;
+    extern lv_obj_t *ui_appInfoTitle;
+    extern lv_obj_t *ui_appDetailsPanel;
+    extern lv_obj_t *ui_appDetailsIcon;
+    extern lv_obj_t *ui_appDetailsText;
+    extern lv_obj_t *ui_appConnectionPanel;
+    extern lv_obj_t *ui_appConnectionIcon;
+    extern lv_obj_t *ui_appConnectionText;
+    extern lv_obj_t *ui_appBatteryPanel;
+    extern lv_obj_t *ui_appBatteryIcon;
+    extern lv_obj_t *ui_appBatteryText;
+    extern lv_obj_t *ui_appBatteryLevel;
+
+    void ui_event_callScreen(lv_event_t *e);
+    extern lv_obj_t *ui_callScreen;
+    extern lv_obj_t *ui_callIcon;
+    extern lv_obj_t *ui_callLabel;
+    extern lv_obj_t *ui_callName;
+
+    extern lv_obj_t *ui_cameraScreen;
+    extern lv_obj_t *ui_cameraPanel;
+    extern lv_obj_t *ui_cameraTitle;
+    extern lv_obj_t *ui_cameraIcon;
+    extern lv_obj_t *ui_cameraLabel;
+    extern lv_obj_t *ui_cameraButton;
+    extern lv_obj_t *ui_cameraButtonLabel;
+
+    void ui_event_qrScreen(lv_event_t *e);
+    extern lv_obj_t *ui_qrScreen;
+    extern lv_obj_t *ui_qrPanel;
+    extern lv_obj_t *ui_qrItem;
+    extern lv_obj_t *ui_qrIcon;
+    extern lv_obj_t *ui_qrImage;
+    extern lv_obj_t *ui_qrLabel;
 
     extern lv_obj_t *ui_home;
-    
+    extern lv_obj_t *ui_faceSelect;
+
+    extern bool toAppList;
+    extern bool circular;
+    extern int numFaces;
+
+    void ui_event____initial_actions0(lv_event_t *e);
     extern lv_obj_t *ui____initial_actions0;
+
+    typedef struct WatchFace
+    {
+        const char *name;
+        const lv_img_dsc_t *preview;
+        lv_obj_t **watchface;
+    } Face;
+
+    extern Face faces[MAX_FACES];
+    void registerWatchface_cb(const char *name, const lv_img_dsc_t *preview, lv_obj_t **watchface);
+    void ui_update_watchfaces(int second, int minute, int hour, bool mode, bool am, int day, int month, int year, int weekday,
+                              int temp, int icon, int battery, bool connection, int steps, int distance, int kcal, int bpm, int oxygen);
+
+    void addNotificationList(int appId, const char *message, int index);
+    void addForecast(int day, int temp, int icon);
+    void addQrList(uint8_t id, const char *link);
+    void setWeatherIcon(lv_obj_t *obj, int id, bool day);
+    void setNotificationIcon(lv_obj_t *obj, int appId);
 
     LV_IMG_DECLARE(ui_img_753022056);      // assets\night-sky.png
     LV_IMG_DECLARE(ui_img_602195540);      // assets\dy-6.png
@@ -121,29 +199,57 @@ extern "C"
     LV_IMG_DECLARE(ui_img_mail_png);      // assets\mail.png
     LV_IMG_DECLARE(ui_img_messenger_png); // assets\messenger.png
     // LV_IMG_DECLARE( ui_img_mountain_png);   // assets\mountain.png
-    LV_IMG_DECLARE(ui_img_notify_png);    // assets\notify.png
-    LV_IMG_DECLARE(ui_img_229834011);     // assets\nt-0.png
-    LV_IMG_DECLARE(ui_img_229835036);     // assets\nt-1.png
-    LV_IMG_DECLARE(ui_img_229827613);     // assets\nt-2.png
-    LV_IMG_DECLARE(ui_img_229828638);     // assets\nt-3.png
-    LV_IMG_DECLARE(ui_img_229838359);     // assets\nt-4.png
-    LV_IMG_DECLARE(ui_img_229839384);     // assets\nt-5.png
-    LV_IMG_DECLARE(ui_img_229831961);     // assets\nt-6.png
-    LV_IMG_DECLARE(ui_img_229832986);     // assets\nt-7.png
-    LV_IMG_DECLARE(ui_img_penguin_png);   // assets\penguin.png
-    LV_IMG_DECLARE(ui_img_qr_png);        // assets\qr.png
-    LV_IMG_DECLARE(ui_img_setting_png);   // assets\setting.png
-    LV_IMG_DECLARE(ui_img_skype_png);     // assets\skype.png
-    LV_IMG_DECLARE(ui_img_sms_png);       // assets\sms.png
-    LV_IMG_DECLARE(ui_img_stars_png);     // assets\stars.png
-    LV_IMG_DECLARE(ui_img_telegram_png);  // assets\telegram.png
-    LV_IMG_DECLARE(ui_img_twitter_png);   // assets\twitter.png
-    LV_IMG_DECLARE(ui_img_viber_png);     // assets\viber.png
-    LV_IMG_DECLARE(ui_img_vkontakte_png); // assets\vkontakte.png
-    LV_IMG_DECLARE(ui_img_weibo_png);     // assets\weibo.png
-    LV_IMG_DECLARE(ui_img_whatsapp_png);  // assets\whatsapp.png
+    LV_IMG_DECLARE(ui_img_notify_png);        // assets\notify.png
+    LV_IMG_DECLARE(ui_img_229834011);         // assets\nt-0.png
+    LV_IMG_DECLARE(ui_img_229835036);         // assets\nt-1.png
+    LV_IMG_DECLARE(ui_img_229827613);         // assets\nt-2.png
+    LV_IMG_DECLARE(ui_img_229828638);         // assets\nt-3.png
+    LV_IMG_DECLARE(ui_img_229838359);         // assets\nt-4.png
+    LV_IMG_DECLARE(ui_img_229839384);         // assets\nt-5.png
+    LV_IMG_DECLARE(ui_img_229831961);         // assets\nt-6.png
+    LV_IMG_DECLARE(ui_img_229832986);         // assets\nt-7.png
+    LV_IMG_DECLARE(ui_img_penguin_png);       // assets\penguin.png
+    LV_IMG_DECLARE(ui_img_qr_png);            // assets\qr.png
+    LV_IMG_DECLARE(ui_img_setting_png);       // assets\setting.png
+    LV_IMG_DECLARE(ui_img_skype_png);         // assets\skype.png
+    LV_IMG_DECLARE(ui_img_sms_png);           // assets\sms.png
+    LV_IMG_DECLARE(ui_img_stars_png);         // assets\stars.png
+    LV_IMG_DECLARE(ui_img_telegram_png);      // assets\telegram.png
+    LV_IMG_DECLARE(ui_img_twitter_png);       // assets\twitter.png
+    LV_IMG_DECLARE(ui_img_viber_png);         // assets\viber.png
+    LV_IMG_DECLARE(ui_img_vkontakte_png);     // assets\vkontakte.png
+    LV_IMG_DECLARE(ui_img_weibo_png);         // assets\weibo.png
+    LV_IMG_DECLARE(ui_img_whatsapp_png);      // assets\whatsapp.png
+    LV_IMG_DECLARE(ui_img_play_pause_g_png);  // assets\play_pause_g.png
+    LV_IMG_DECLARE(ui_img_previous_g_png);    // assets\previous_g.png
+    LV_IMG_DECLARE(ui_img_next_g_png);        // assets\next_g.png
+    LV_IMG_DECLARE(ui_img_bluetooth_g_png);   // assets\bluetooth_g.png
+    LV_IMG_DECLARE(ui_img_search_g_png);      // assets\search_g.png
+    LV_IMG_DECLARE(ui_img_volupe_up_g_png);   // assets\volupe_up_g.png
+    LV_IMG_DECLARE(ui_img_volume_down_g_png); // assets\volume_down_g.png
+    LV_IMG_DECLARE(ui_img_qr_icon_png);       // assets\qr_icon.png
+    LV_IMG_DECLARE(ui_img_twitter_x_png);     // assets\twitter_x.png
+
+    LV_IMG_DECLARE(ui_img_battery_plugged_png); // assets\battery_plugged.png
+    LV_IMG_DECLARE(ui_img_ble_app_png);         // assets\ble_app.png
+    LV_IMG_DECLARE(ui_img_battery_state_png);   // assets\battery_state.png
+    LV_IMG_DECLARE(ui_img_answer_png);          // assets\answer.png
+    LV_IMG_DECLARE(ui_img_app_info_png);        // assets\app_info.png
+    LV_IMG_DECLARE(ui_img_smartwatch_png);      // assets\smartwatch.png
+    LV_IMG_DECLARE(ui_img_vol_up_png);          // assets\vol_up.png
+    LV_IMG_DECLARE(ui_img_vol_down_png);        // assets\vol_down.png
+    LV_IMG_DECLARE(ui_img_pay_png);             // assets\pay.png
+    LV_IMG_DECLARE(ui_img_web_png);             // assets\web.png
+
+    LV_IMG_DECLARE(ui_img_wechat_pay_png);
+    LV_IMG_DECLARE(ui_img_alipay_png);
+    LV_IMG_DECLARE(ui_img_paypal_png);
 
     LV_IMG_DECLARE(digital_preview);
+    LV_IMG_DECLARE(ui_img_alert_icon_png);
+    LV_IMG_DECLARE(ui_img_general_settings_png);
+    LV_IMG_DECLARE(ui_img_notifications_app_png);
+    LV_IMG_DECLARE(ui_img_weather_app_png);
 
     LV_FONT_DECLARE(ui_font_H1);
     LV_FONT_DECLARE(ui_font_Number_big);

@@ -25,6 +25,12 @@ void onMusicPrevious(lv_event_t * e);
 void onMusicNext(lv_event_t * e);
 void onStartSearch(lv_event_t * e);
 void onEndSearch(lv_event_t * e);
+void onVolumeUp(lv_event_t * e);
+void onVolumeDown(lv_event_t * e);
+void onAlertState(lv_event_t *e);
+void onFaceSelected(lv_event_t *e);
+void onMessageClick(lv_event_t *e);
+void onCaptureClick(lv_event_t *e);
 
 void onWatchfaceChange(lv_event_t * e);
 

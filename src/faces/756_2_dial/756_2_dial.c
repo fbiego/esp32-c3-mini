@@ -6,6 +6,8 @@
 
 #include "756_2_dial.h"
 
+#ifdef ENABLE_FACE_756_2_DIAL
+
 lv_obj_t *face_756_2_dial;
 lv_obj_t *face_756_2_dial_0_424;
 lv_obj_t *face_756_2_dial_2_15014;
@@ -123,7 +125,10 @@ const lv_img_dsc_t *face_756_2_dial_dial_img_20_105728_group[] = {
 };
 
 
-void init_face_756_2_dial(void){
+#endif
+
+void init_face_756_2_dial(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_t **)){
+#ifdef ENABLE_FACE_756_2_DIAL
     face_756_2_dial = lv_obj_create(NULL);
     lv_obj_clear_flag(face_756_2_dial, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_style_bg_color(face_756_2_dial, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -299,10 +304,19 @@ void init_face_756_2_dial(void){
     lv_obj_add_flag(face_756_2_dial_20_105728, LV_OBJ_FLAG_ADV_HITTEST );
     lv_obj_clear_flag(face_756_2_dial_20_105728, LV_OBJ_FLAG_SCROLLABLE );
 
+
+    callback("Red", &face_756_2_dial_dial_img_preview_0, &face_756_2_dial);
+
+#endif
 }
 
 void update_time_756_2_dial(int second, int minute, int hour, bool mode, bool am, int day, int month, int year, int weekday)
 {
+#ifdef ENABLE_FACE_756_2_DIAL
+    if (!face_756_2_dial)
+    {
+        return;
+    }
 	if (mode)
 	{
 		lv_obj_add_flag(face_756_2_dial_2_15014, LV_OBJ_FLAG_HIDDEN);
@@ -318,34 +332,87 @@ void update_time_756_2_dial(int second, int minute, int hour, bool mode, bool am
 	lv_img_set_src(face_756_2_dial_18_17160, face_756_2_dial_dial_img_17_17160_group[(day / 10) % 10]);
 	lv_img_set_src(face_756_2_dial_20_105728, face_756_2_dial_dial_img_20_105728_group[((weekday + 6) / 1) % 7]);
 
+#endif
 }
 
 void update_weather_756_2_dial(int temp, int icon)
 {
+#ifdef ENABLE_FACE_756_2_DIAL
+    if (!face_756_2_dial)
+    {
+        return;
+    }
 
+#endif
 }
 
 void update_status_756_2_dial(int battery, bool connection){
+#ifdef ENABLE_FACE_756_2_DIAL
+    if (!face_756_2_dial)
+    {
+        return;
+    }
 	lv_img_set_src(face_756_2_dial_3_18734, face_756_2_dial_dial_img_3_18734_group[(battery / (100 / 6)) % 6]);
 	lv_img_set_src(face_756_2_dial_5_22382, face_756_2_dial_dial_img_connection[(connection ? 0 : 1) % 2]);
 
+#endif
 }
 
 void update_activity_756_2_dial(int steps, int distance, int kcal)
 {
+#ifdef ENABLE_FACE_756_2_DIAL
+    if (!face_756_2_dial)
+    {
+        return;
+    }
 	lv_img_set_src(face_756_2_dial_13_22752, face_756_2_dial_dial_img_10_22752_group[(steps / 1) % 10]);
 	lv_img_set_src(face_756_2_dial_14_22752, face_756_2_dial_dial_img_10_22752_group[(steps / 10) % 10]);
 	lv_img_set_src(face_756_2_dial_15_22752, face_756_2_dial_dial_img_10_22752_group[(steps / 100) % 10]);
 	lv_img_set_src(face_756_2_dial_16_22752, face_756_2_dial_dial_img_10_22752_group[(steps / 1000) % 10]);
 
+#endif
 }
 
 void update_health_756_2_dial(int bpm, int oxygen)
 {
+#ifdef ENABLE_FACE_756_2_DIAL
+    if (!face_756_2_dial)
+    {
+        return;
+    }
 	lv_img_set_src(face_756_2_dial_10_22752, face_756_2_dial_dial_img_10_22752_group[(bpm / 1) % 10]);
 	lv_img_set_src(face_756_2_dial_11_22752, face_756_2_dial_dial_img_10_22752_group[(bpm / 10) % 10]);
 	lv_img_set_src(face_756_2_dial_12_22752, face_756_2_dial_dial_img_10_22752_group[(bpm / 100) % 10]);
 
+#endif
+}
+
+void update_all_756_2_dial(int second, int minute, int hour, bool mode, bool am, int day, int month, int year, int weekday, 
+    int temp, int icon, int battery, bool connection, int steps, int distance, int kcal, int bpm, int oxygen)
+{
+#ifdef ENABLE_FACE_756_2_DIAL
+    update_time_756_2_dial(second, minute, hour, mode, am, day, month, year, weekday);
+    update_weather_756_2_dial(temp, icon);
+    update_status_756_2_dial(battery, connection);
+    update_activity_756_2_dial(steps, distance, kcal);
+    update_health_756_2_dial(bpm, oxygen);
+#endif
+}
+
+void update_check_756_2_dial(lv_obj_t *root, int second, int minute, int hour, bool mode, bool am, int day, int month, int year, int weekday, 
+    int temp, int icon, int battery, bool connection, int steps, int distance, int kcal, int bpm, int oxygen)
+{
+#ifdef ENABLE_FACE_756_2_DIAL
+    if (root != face_756_2_dial)
+    {
+        return;
+    }
+    update_time_756_2_dial(second, minute, hour, mode, am, day, month, year, weekday);
+    update_weather_756_2_dial(temp, icon);
+    update_status_756_2_dial(battery, connection);
+    update_activity_756_2_dial(steps, distance, kcal);
+    update_health_756_2_dial(bpm, oxygen);
+#endif
 }
 
 

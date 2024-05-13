@@ -13,7 +13,11 @@ extern "C"
 #endif
 
 #include "lvgl.h"
+#include "app_hal.h"
 
+//#define ENABLE_FACE_TIX_RESIZED // (Tix) uncomment to enable or define it elsewhere
+
+#ifdef ENABLE_FACE_TIX_RESIZED
     extern lv_obj_t *face_tix_resized;
 	extern lv_obj_t *face_tix_resized_0_124;
 	extern lv_obj_t *face_tix_resized_1_46402;
@@ -73,14 +77,19 @@ extern "C"
 	LV_IMG_DECLARE(face_tix_resized_dial_img_preview_0);
 
 
+#endif
     void onFaceEvent(lv_event_t * e);
 
-    void init_face_tix_resized(void);
+    void init_face_tix_resized(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_t **));
     void update_time_tix_resized(int second, int minute, int hour, bool mode, bool am, int day, int month, int year, int weekday);
     void update_weather_tix_resized(int temp, int icon);
     void update_status_tix_resized(int battery, bool connection);
     void update_activity_tix_resized(int steps, int distance, int kcal);
     void update_health_tix_resized(int bpm, int oxygen);
+    void update_all_tix_resized(int second, int minute, int hour, bool mode, bool am, int day, int month, int year, int weekday, 
+                int temp, int icon, int battery, bool connection, int steps, int distance, int kcal, int bpm, int oxygen);
+    void update_check_tix_resized(lv_obj_t *root, int second, int minute, int hour, bool mode, bool am, int day, int month, int year, int weekday, 
+                int temp, int icon, int battery, bool connection, int steps, int distance, int kcal, int bpm, int oxygen);
 
 
 #ifdef __cplusplus

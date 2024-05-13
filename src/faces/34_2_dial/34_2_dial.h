@@ -13,7 +13,12 @@ extern "C"
 #endif
 
 #include "lvgl.h"
+#include "app_hal.h"
 
+
+//#define ENABLE_FACE_34_2_DIAL // (Shadow) uncomment to enable or define it elsewhere
+
+#ifdef ENABLE_FACE_34_2_DIAL
     extern lv_obj_t *face_34_2_dial;
 	extern lv_obj_t *face_34_2_dial_0_304;
 	extern lv_obj_t *face_34_2_dial_1_58396;
@@ -80,14 +85,19 @@ extern "C"
 	LV_IMG_DECLARE(face_34_2_dial_dial_img_preview_0);
 
 
+#endif
     void onFaceEvent(lv_event_t * e);
 
-    void init_face_34_2_dial(void);
+    void init_face_34_2_dial(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_t **));
     void update_time_34_2_dial(int second, int minute, int hour, bool mode, bool am, int day, int month, int year, int weekday);
     void update_weather_34_2_dial(int temp, int icon);
     void update_status_34_2_dial(int battery, bool connection);
     void update_activity_34_2_dial(int steps, int distance, int kcal);
     void update_health_34_2_dial(int bpm, int oxygen);
+    void update_all_34_2_dial(int second, int minute, int hour, bool mode, bool am, int day, int month, int year, int weekday, 
+                int temp, int icon, int battery, bool connection, int steps, int distance, int kcal, int bpm, int oxygen);
+    void update_check_34_2_dial(lv_obj_t *root, int second, int minute, int hour, bool mode, bool am, int day, int month, int year, int weekday, 
+                int temp, int icon, int battery, bool connection, int steps, int distance, int kcal, int bpm, int oxygen);
 
 
 #ifdef __cplusplus
