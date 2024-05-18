@@ -99,7 +99,10 @@ void onTimeoutChange(lv_event_t *e) {}
 
 void onBatteryChange(lv_event_t *e) {}
 
-void onMusicPlay(lv_event_t *e) {}
+void onMusicPlay(lv_event_t *e) 
+{
+    showError("Error", "This is a test error message\nClick the button below to close this window");
+}
 
 void onMusicPrevious(lv_event_t *e)
 {
@@ -128,6 +131,10 @@ void onAlertState(lv_event_t *e) {}
 void onWatchfaceChange(lv_event_t *e) {}
 
 void onFaceSelected(lv_event_t *e) {}
+
+void onGameOpened(){}
+
+void onGameClosed(){}
 
 void onMessageClick(lv_event_t *e)
 {
@@ -244,8 +251,10 @@ void hal_setup(void)
     lv_obj_scroll_to_y(ui_settingsList, 1, LV_ANIM_ON);
     lv_obj_scroll_to_y(ui_appList, 1, LV_ANIM_ON);
     lv_obj_scroll_to_y(ui_appInfoPanel, 1, LV_ANIM_ON);
+    lv_obj_scroll_to_y(ui_gameList, 1, LV_ANIM_ON);
     lv_obj_add_state(ui_Switch2, LV_STATE_CHECKED);
 
+    
     /* Tick init.
      * You have to call 'lv_tick_inc()' in periodically to inform LittelvGL about how much time were elapsed
      * Create an SDL thread to do this*/
@@ -275,13 +284,16 @@ void hal_loop(void)
             lv_label_set_text_fmt(ui_hourLabel, "%02d", hour);
             lv_label_set_text_fmt(ui_dayLabel, "%s", daysWk[weekday]);
             lv_label_set_text_fmt(ui_minuteLabel, "%02d", minute);
-            lv_label_set_text_fmt(ui_dateLabel, "%02d\n%s", day, months[month]);
+            lv_label_set_text_fmt(ui_dateLabel, "%02d\n%s", day, months[month - 1]);
             lv_label_set_text(ui_amPmLabel, "");
         }
         else
         {
             update_faces();
         }
+
+        // this works just okay on native, esp32 implementation is different
+        ui_games_update();
         
     }
 }

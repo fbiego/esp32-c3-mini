@@ -6,7 +6,7 @@
 #define ENABLE_FACE_75_2_DIAL // (Analog)
 // #define ENABLE_FACE_79_2_DIAL // (Blue)
 #define ENABLE_FACE_116_2_DIAL // (Outline)
-#define ENABLE_FACE_756_2_DIAL // (Red)
+// #define ENABLE_FACE_756_2_DIAL // (Red)
 // #define ENABLE_FACE_B_W_RESIZED // (B & W)
 // #define ENABLE_FACE_KENYA // (Kenya)
 #define ENABLE_FACE_PIXEL_RESIZED // (Pixel)

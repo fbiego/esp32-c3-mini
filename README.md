@@ -10,6 +10,8 @@ A demo LVGL Watch project for ESP32 C3 mini 240*240 touch display development bo
 
 ![Preview](preview.png?raw=true "preview")
 
+![Preview2](preview_2.png?raw=true "preview2")
+
 ## Screens
  - Time (Time, Date, Day, Weather[Icon, Temp]) + Custom Watchfaces
  - Weather (City,Icon, Temp, Update time) (1 week forecast [Day, Icon, Temp])
@@ -17,6 +19,7 @@ A demo LVGL Watch project for ESP32 C3 mini 240*240 touch display development bo
  - Settings (Brightness, Timeout, Battery, About)
  - Control (Music Control, Find Phone, Bluetooth State) (Camera Capture)
  - QR Codes
+ - A racing game
 
  ## Building
 

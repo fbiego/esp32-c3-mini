@@ -464,7 +464,7 @@ void update_time_pixel_resized(int second, int minute, int hour, bool mode, bool
 	lv_img_set_src(face_pixel_resized_22_72744, face_pixel_resized_dial_img_22_72744_group[((weekday + 6) / 1) % 7]);
 	lv_img_set_src(face_pixel_resized_23_59114, face_pixel_resized_dial_img_1_59114_group[(day / 1) % 10]);
 	lv_img_set_src(face_pixel_resized_24_59114, face_pixel_resized_dial_img_1_59114_group[(day / 10) % 10]);
-	lv_img_set_src(face_pixel_resized_27_87610, face_pixel_resized_dial_img_27_87610_group[(month / 1) % 12]);
+	lv_img_set_src(face_pixel_resized_27_87610, face_pixel_resized_dial_img_27_87610_group[((month - 1) / 1) % 12]);
 	lv_img_set_src(face_pixel_resized_28_97966, face_pixel_resized_dial_img_28_97966_group[(hour / 1) % 10]);
 	lv_img_set_src(face_pixel_resized_29_97966, face_pixel_resized_dial_img_28_97966_group[(hour / 10) % 10]);
 	lv_img_set_src(face_pixel_resized_30_97966, face_pixel_resized_dial_img_28_97966_group[(minute / 1) % 10]);

@@ -48,6 +48,10 @@ void ui_event_appListScreen(lv_event_t *e);
 lv_obj_t *ui_appListScreen;
 lv_obj_t *ui_appList;
 
+void ui_event_gameListScreen(lv_event_t *e);
+lv_obj_t *ui_gameListScreen;
+lv_obj_t *ui_gameList;
+
 void ui_event_notificationScreen(lv_event_t *e);
 lv_obj_t *ui_notificationScreen;
 lv_obj_t *ui_messagePanel;
@@ -88,6 +92,10 @@ lv_obj_t *ui_batteryLabel;
 lv_obj_t *ui_aboutPanel;
 lv_obj_t *ui_aboutIcon;
 lv_obj_t *ui_aboutText;
+void ui_event_kenyaPanel(lv_event_t *e);
+lv_obj_t *ui_kenyaPanel;
+lv_obj_t *ui_kenyaIcon;
+lv_obj_t *ui_kenyaText;
 void ui_event_controlScreen(lv_event_t *e);
 lv_obj_t *ui_controlScreen;
 lv_obj_t *ui_controlTitle;
@@ -98,13 +106,14 @@ lv_obj_t *ui_musicPrevButton;
 void ui_event_musicNextButton(lv_event_t *e);
 lv_obj_t *ui_musicNextButton;
 lv_obj_t *ui_btStateButton;
+lv_obj_t *ui_searchPanel;
 void ui_event_phoneSearchButton(lv_event_t *e);
 lv_obj_t *ui_phoneSearchButton;
 void ui_event_volumeUpButton(lv_event_t *e);
 lv_obj_t *ui_volumeUpButton;
 void ui_event_volumeDownButton(lv_event_t *e);
 lv_obj_t *ui_volumeDownButton;
-void ui_event_qrCodeButton( lv_event_t * e);
+void ui_event_qrCodeButton(lv_event_t *e);
 lv_obj_t *ui_qrCodeButton;
 
 void ui_event_appInfoScreen(lv_event_t *e);
@@ -121,6 +130,19 @@ lv_obj_t *ui_appBatteryPanel;
 lv_obj_t *ui_appBatteryIcon;
 lv_obj_t *ui_appBatteryText;
 lv_obj_t *ui_appBatteryLevel;
+
+void ui_event_findPhone(lv_event_t *e);
+lv_obj_t *ui_findPhoneScreen;
+lv_obj_t *ui_findTitle;
+void ui_event_findButton(lv_event_t *e);
+lv_obj_t *ui_findButton;
+lv_obj_t *ui_findButtonText;
+lv_obj_t *ui_findPanel;
+lv_obj_t *ui_findIcon;
+void ui_event_logoScreen(lv_event_t *e);
+lv_obj_t *ui_logoScreen;
+void ui_event_lvglLogo(lv_event_t *e);
+lv_obj_t *ui_lvglLogo;
 
 void ui_event_callScreen(lv_event_t *e);
 lv_obj_t *ui_callScreen;
@@ -144,22 +166,35 @@ lv_obj_t *ui_qrIcon;
 lv_obj_t *ui_qrImage;
 lv_obj_t *ui_qrLabel;
 
-lv_obj_t *ui_home;
+lv_obj_t *ui_errorWindow;
+lv_obj_t *ui_errorPanel;
+lv_obj_t *ui_errorTitle;
+lv_obj_t *ui_errorMessage;
+void ui_event_errorClose(lv_event_t *e);
+lv_obj_t *ui_errorClose;
+lv_obj_t *ui_errorCloseText;
 
+lv_obj_t *ui_home;
+lv_obj_t *ui_game;
 lv_obj_t *ui_faceSelect;
 
 bool toAppList;
 bool circular;
 int numFaces;
+int numGames;
 
 void ui_event____initial_actions0(lv_event_t *e);
 lv_obj_t *ui____initial_actions0;
 
 Face faces[MAX_FACES];
+Face games[MAX_GAMES];
+
+Drag logoEv;
+
 void registerWatchface_cb(const char *name, const lv_img_dsc_t *preview, lv_obj_t **watchface);
 void addNotificationList(int appId, const char *message, int index);
 void addForecast(int day, int temp, int icon);
-void addQrList(uint8_t id, const char* link);
+void addQrList(uint8_t id, const char *link);
 void setWeatherIcon(lv_obj_t *obj, int id, bool day);
 void setNotificationIcon(lv_obj_t *obj, int appId);
 void ui_update_watchfaces(int second, int minute, int hour, bool mode, bool am, int day, int month, int year, int weekday,
@@ -173,7 +208,7 @@ const lv_img_dsc_t *notificationIcons[] = {
     &ui_img_whatsapp_png,  // WhatsApp
     &ui_img_mail_png,      // Mail2
     &ui_img_line_png,      // Line
-    &ui_img_twitter_x_png,   // Twitter
+    &ui_img_twitter_x_png, // Twitter
     &ui_img_facebook_png,  // Facebook
     &ui_img_messenger_png, // Messenger
     &ui_img_instagram_png, // Instagram
@@ -187,15 +222,15 @@ const lv_img_dsc_t *notificationIcons[] = {
 };
 
 const lv_img_dsc_t *qrIcons[] = {
-      &ui_img_chrns_png,
-      &ui_img_wechat_png,
-      &ui_img_facebook_png,
-      &ui_img_penguin_png,
-      &ui_img_twitter_x_png,
-      &ui_img_whatsapp_png,
-      &ui_img_wechat_pay_png, //wechat pay
-      &ui_img_alipay_png, //alipay
-      &ui_img_paypal_png,//paypal
+    &ui_img_chrns_png,
+    &ui_img_wechat_png,
+    &ui_img_facebook_png,
+    &ui_img_penguin_png,
+    &ui_img_twitter_x_png,
+    &ui_img_whatsapp_png,
+    &ui_img_wechat_pay_png, // wechat pay
+    &ui_img_alipay_png,     // alipay
+    &ui_img_paypal_png,     // paypal
 };
 
 const lv_img_dsc_t *weatherIcons[] = {
@@ -273,6 +308,46 @@ void pulseCall_Animation(lv_obj_t *TargetObject, int delay)
       lv_anim_start(&PropertyAnimation_1);
 }
 
+void findPhone_Animation(lv_obj_t *TargetObject, int delay)
+{
+      ui_anim_user_data_t *PropertyAnimation_0_user_data = lv_mem_alloc(sizeof(ui_anim_user_data_t));
+      PropertyAnimation_0_user_data->target = TargetObject;
+      PropertyAnimation_0_user_data->val = -1;
+      lv_anim_t PropertyAnimation_0;
+      lv_anim_init(&PropertyAnimation_0);
+      lv_anim_set_time(&PropertyAnimation_0, 500);
+      lv_anim_set_user_data(&PropertyAnimation_0, PropertyAnimation_0_user_data);
+      lv_anim_set_custom_exec_cb(&PropertyAnimation_0, _ui_anim_callback_set_width);
+      lv_anim_set_values(&PropertyAnimation_0, 64, 110);
+      lv_anim_set_path_cb(&PropertyAnimation_0, lv_anim_path_linear);
+      lv_anim_set_delay(&PropertyAnimation_0, delay + 0);
+      lv_anim_set_deleted_cb(&PropertyAnimation_0, _ui_anim_callback_free_user_data);
+      lv_anim_set_playback_time(&PropertyAnimation_0, 500);
+      lv_anim_set_playback_delay(&PropertyAnimation_0, 0);
+      lv_anim_set_repeat_count(&PropertyAnimation_0, LV_ANIM_REPEAT_INFINITE);
+      lv_anim_set_repeat_delay(&PropertyAnimation_0, 0);
+      lv_anim_set_early_apply(&PropertyAnimation_0, false);
+      lv_anim_start(&PropertyAnimation_0);
+      ui_anim_user_data_t *PropertyAnimation_1_user_data = lv_mem_alloc(sizeof(ui_anim_user_data_t));
+      PropertyAnimation_1_user_data->target = TargetObject;
+      PropertyAnimation_1_user_data->val = -1;
+      lv_anim_t PropertyAnimation_1;
+      lv_anim_init(&PropertyAnimation_1);
+      lv_anim_set_time(&PropertyAnimation_1, 500);
+      lv_anim_set_user_data(&PropertyAnimation_1, PropertyAnimation_1_user_data);
+      lv_anim_set_custom_exec_cb(&PropertyAnimation_1, _ui_anim_callback_set_height);
+      lv_anim_set_values(&PropertyAnimation_1, 64, 110);
+      lv_anim_set_path_cb(&PropertyAnimation_1, lv_anim_path_linear);
+      lv_anim_set_delay(&PropertyAnimation_1, delay + 0);
+      lv_anim_set_deleted_cb(&PropertyAnimation_1, _ui_anim_callback_free_user_data);
+      lv_anim_set_playback_time(&PropertyAnimation_1, 500);
+      lv_anim_set_playback_delay(&PropertyAnimation_1, 0);
+      lv_anim_set_repeat_count(&PropertyAnimation_1, LV_ANIM_REPEAT_INFINITE);
+      lv_anim_set_repeat_delay(&PropertyAnimation_1, 0);
+      lv_anim_set_early_apply(&PropertyAnimation_1, false);
+      lv_anim_start(&PropertyAnimation_1);
+}
+
 ///////////////////// FUNCTIONS ////////////////////
 
 void ui_event____initial_actions0(lv_event_t *e)
@@ -282,6 +357,8 @@ void ui_event____initial_actions0(lv_event_t *e)
       if (event_code == LV_EVENT_SCREEN_LOAD_START)
       {
             pulseCall_Animation(ui_callIcon, 0);
+            // findPhone_Animation(ui_searchPanel, 0);
+            findPhone_Animation(ui_findPanel, 0);
       }
 }
 
@@ -326,6 +403,16 @@ void ui_event_appListScreen(lv_event_t *e)
       if (event_code == LV_EVENT_GESTURE && lv_indev_get_gesture_dir(lv_indev_get_act()) == LV_DIR_RIGHT)
       {
             _ui_screen_change(ui_home, LV_SCR_LOAD_ANIM_MOVE_RIGHT, 500, 0);
+      }
+}
+
+void ui_event_gameListScreen(lv_event_t *e)
+{
+      lv_event_code_t event_code = lv_event_get_code(e);
+      lv_obj_t *target = lv_event_get_target(e);
+      if (event_code == LV_EVENT_GESTURE && lv_indev_get_gesture_dir(lv_indev_get_act()) == LV_DIR_RIGHT)
+      {
+            _ui_screen_change(ui_appListScreen, LV_SCR_LOAD_ANIM_MOVE_RIGHT, 500, 0);
       }
 }
 
@@ -464,12 +551,27 @@ void ui_event_qrScreen(lv_event_t *e)
       lv_obj_t *target = lv_event_get_target(e);
       if (event_code == LV_EVENT_GESTURE && lv_indev_get_gesture_dir(lv_indev_get_act()) == LV_DIR_TOP)
       {
-            if (toAppList){
+            if (toAppList)
+            {
                   _ui_screen_change(ui_appListScreen, LV_SCR_LOAD_ANIM_MOVE_TOP, 500, 0);
-            } else {
+            }
+            else
+            {
                   _ui_screen_change(ui_controlScreen, LV_SCR_LOAD_ANIM_MOVE_TOP, 500, 0);
             }
-           
+      }
+}
+
+void ui_event_logoScreen(lv_event_t *e)
+{
+      lv_event_code_t event_code = lv_event_get_code(e);
+      lv_obj_t *target = lv_event_get_target(e);
+      if (event_code == LV_EVENT_GESTURE && lv_indev_get_gesture_dir(lv_indev_get_act()) == LV_DIR_RIGHT)
+      {
+            if (!logoEv.active)
+            {
+                  _ui_screen_change(ui_settingsScreen, LV_SCR_LOAD_ANIM_FADE_OUT, 500, 0);
+            }
       }
 }
 
@@ -507,6 +609,7 @@ void ui_event_scrollMode(lv_event_t *e)
             lv_obj_scroll_by(ui_appList, 0, circular ? 1 : -1, LV_ANIM_OFF);
             lv_obj_scroll_by(ui_messageList, 0, circular ? 1 : -1, LV_ANIM_OFF);
             lv_obj_scroll_by(ui_appInfoPanel, 0, circular ? 1 : -1, LV_ANIM_OFF);
+            lv_obj_scroll_by(ui_gameList, 0, circular ? 1 : -1, LV_ANIM_OFF);
       }
 }
 
@@ -562,6 +665,16 @@ void ui_event_batterySlider(lv_event_t *e)
       }
 }
 
+void ui_event_kenyaPanel(lv_event_t *e)
+{
+      lv_event_code_t event_code = lv_event_get_code(e);
+      lv_obj_t *target = lv_event_get_target(e);
+      if (event_code == LV_EVENT_CLICKED)
+      {
+            _ui_screen_change(ui_logoScreen, LV_SCR_LOAD_ANIM_FADE_ON, 500, 0);
+      }
+}
+
 void ui_event_controlScreen(lv_event_t *e)
 {
 
@@ -571,7 +684,13 @@ void ui_event_controlScreen(lv_event_t *e)
       {
             _ui_screen_change(ui_home, LV_SCR_LOAD_ANIM_MOVE_TOP, 500, 0);
             _ui_state_modify(ui_phoneSearchButton, LV_STATE_CHECKED, _UI_MODIFY_STATE_ADD);
+
             onEndSearch(e);
+      }
+      if (event_code == LV_EVENT_SCREEN_UNLOAD_START)
+      {
+            _ui_state_modify(ui_findButtonText, LV_STATE_CHECKED, _UI_MODIFY_STATE_REMOVE);
+            _ui_flag_modify(ui_searchPanel, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
       }
 }
 
@@ -635,11 +754,48 @@ void ui_event_phoneSearchButton(lv_event_t *e)
       lv_obj_t *target = lv_event_get_target(e);
       if (event_code == LV_EVENT_VALUE_CHANGED && !lv_obj_has_state(target, LV_STATE_CHECKED))
       {
+            _ui_flag_modify(ui_searchPanel, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_REMOVE);
             onStartSearch(e);
       }
       if (event_code == LV_EVENT_VALUE_CHANGED && lv_obj_has_state(target, LV_STATE_CHECKED))
       {
             onEndSearch(e);
+            _ui_flag_modify(ui_searchPanel, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
+      }
+}
+
+void ui_event_findButton(lv_event_t *e)
+{
+      lv_event_code_t event_code = lv_event_get_code(e);
+      lv_obj_t *target = lv_event_get_target(e);
+      if (event_code == LV_EVENT_VALUE_CHANGED && lv_obj_has_state(target, LV_STATE_CHECKED))
+      {
+            _ui_flag_modify(ui_findPanel, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_REMOVE);
+            _ui_label_set_property(ui_findButtonText, _UI_LABEL_PROPERTY_TEXT, "Stop");
+            onStartSearch(e);
+      }
+      if (event_code == LV_EVENT_VALUE_CHANGED && !lv_obj_has_state(target, LV_STATE_CHECKED))
+      {
+            _ui_flag_modify(ui_findPanel, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
+            _ui_label_set_property(ui_findButtonText, _UI_LABEL_PROPERTY_TEXT, "Start");
+            onEndSearch(e);
+      }
+}
+
+void ui_event_findPhone(lv_event_t *e)
+{
+      lv_event_code_t event_code = lv_event_get_code(e);
+      lv_obj_t *target = lv_event_get_target(e);
+      if (event_code == LV_EVENT_GESTURE && lv_indev_get_gesture_dir(lv_indev_get_act()) == LV_DIR_RIGHT)
+      {
+            _ui_screen_change(ui_appListScreen, LV_SCR_LOAD_ANIM_MOVE_RIGHT, 500, 0);
+      }
+
+      if (event_code == LV_EVENT_SCREEN_UNLOAD_START)
+      {
+            _ui_label_set_property(ui_findButtonText, _UI_LABEL_PROPERTY_TEXT, "Start");
+            _ui_state_modify(ui_findButton, LV_STATE_CHECKED, _UI_MODIFY_STATE_REMOVE);
+            _ui_flag_modify(ui_findPanel, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
       }
 }
 
@@ -675,7 +831,8 @@ void ui_event_volumeDownButton(lv_event_t *e)
       }
 }
 
-void ui_event_qrCodeButton( lv_event_t * e) {
+void ui_event_qrCodeButton(lv_event_t *e)
+{
       lv_disp_t *display = lv_disp_get_default();
       lv_obj_t *actScr = lv_disp_get_scr_act(display);
       if (actScr != ui_controlScreen)
@@ -683,12 +840,13 @@ void ui_event_qrCodeButton( lv_event_t * e) {
             return;
       }
       lv_event_code_t event_code = lv_event_get_code(e);
-      lv_obj_t * target = lv_event_get_target(e);
-      if ( event_code == LV_EVENT_CLICKED) {
+      lv_obj_t *target = lv_event_get_target(e);
+      if (event_code == LV_EVENT_CLICKED)
+      {
             toAppList = false;
             _ui_state_modify(ui_phoneSearchButton, LV_STATE_CHECKED, _UI_MODIFY_STATE_ADD);
             onEndSearch(e);
-            lv_scr_load_anim( ui_qrScreen, LV_SCR_LOAD_ANIM_MOVE_BOTTOM, 500, 0, false);
+            lv_scr_load_anim(ui_qrScreen, LV_SCR_LOAD_ANIM_MOVE_BOTTOM, 500, 0, false);
       }
 }
 
@@ -707,6 +865,7 @@ void ui_event_faceSelected(lv_event_t *e)
       {
             if (index >= numFaces)
             {
+                  showError("Watchface Error", "Watchface out of bounds");
                   return;
             }
             ui_home = *faces[index].watchface;
@@ -774,6 +933,12 @@ void onAppListClicked(lv_event_t *e)
             break;
       case 5:
             _ui_screen_change(ui_faceSelect, LV_SCR_LOAD_ANIM_FADE_ON, 500, 0);
+            break;
+      case 6:
+            _ui_screen_change(ui_findPhoneScreen, LV_SCR_LOAD_ANIM_MOVE_LEFT, 500, 0);
+            break;
+      case 7:
+            _ui_screen_change(ui_gameListScreen, LV_SCR_LOAD_ANIM_MOVE_LEFT, 500, 0);
             break;
       }
 }
@@ -865,11 +1030,88 @@ void onFaceEvent(lv_event_t *e)
       watchfaceEvents(e);
 }
 
+void ui_event_lvglLogo(lv_event_t *e)
+{
+      lv_event_code_t event_code = lv_event_get_code(e);
+      lv_obj_t *target = lv_event_get_target(e);
+      lv_indev_t *indev = lv_indev_get_act();
+      if (event_code == LV_EVENT_PRESSING)
+      {
+            int vectX = indev->proc.types.pointer.act_point.x - logoEv.x;
+            int vectY = indev->proc.types.pointer.act_point.y - logoEv.y;
+
+            lv_obj_set_x(ui_lvglLogo, vectX);
+            lv_obj_set_y(ui_lvglLogo, vectY);
+      }
+
+      if (event_code == LV_EVENT_RELEASED)
+      {
+            // logoReleased(e);
+            logoEv.active = false;
+            lv_obj_set_x(ui_lvglLogo, 0);
+            lv_obj_set_y(ui_lvglLogo, 0);
+      }
+      if (event_code == LV_EVENT_PRESSED)
+      {
+            // logoPressed(e);
+            logoEv.active = true;
+            logoEv.x = indev->proc.types.pointer.act_point.x;
+            logoEv.y = indev->proc.types.pointer.act_point.y;
+      }
+}
+
+void ui_event_gameSelected(lv_event_t *e)
+{
+      lv_event_code_t event_code = lv_event_get_code(e);
+      lv_obj_t *target = lv_event_get_target(e);
+      int index = (int)lv_event_get_user_data(e);
+
+      lv_disp_t *display = lv_disp_get_default();
+      lv_obj_t *actScr = lv_disp_get_scr_act(display);
+
+      if (actScr != ui_gameListScreen)
+      {
+            return;
+      }
+
+      if (event_code == LV_EVENT_CLICKED)
+      {
+            if (index >= numGames)
+            {
+                  showError("Game Error", "Could not lauch the game, index out of bounds");
+                  return;
+            }
+            // ui_game = *games[index].watchface;
+            if (!*games[index].watchface)
+            {
+                  showError("Game Error", "Game root object not initialized");
+                  return;
+            }
+            lv_scr_load_anim(*games[index].watchface, LV_SCR_LOAD_ANIM_MOVE_LEFT, 500, 0, false);
+            // lv_scr_load_anim(ui_raceScreen, LV_SCR_LOAD_ANIM_MOVE_LEFT, 500, 0, false);
+      }
+}
+
+void ui_gameExit()
+{
+      lv_scr_load_anim(ui_gameListScreen, LV_SCR_LOAD_ANIM_MOVE_RIGHT, 500, 0, false);
+}
+
+void ui_event_errorClose( lv_event_t * e)
+{
+      lv_event_code_t event_code = lv_event_get_code(e);
+      lv_obj_t * target = lv_event_get_target(e);
+      if ( event_code == LV_EVENT_CLICKED) {
+            _ui_flag_modify( ui_errorWindow, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
+      }
+}
 
 ///////////////////// HELPERS ////////////////////
 
-uint8_t getQRIndex(uint8_t id){
-      if (id > 8){
+uint8_t getQRIndex(uint8_t id)
+{
+      if (id > 8)
+      {
             return 0;
       }
       return id;
@@ -877,7 +1119,8 @@ uint8_t getQRIndex(uint8_t id){
 
 uint8_t getWeatherIconIndex(uint8_t id)
 {
-      if (id > 7){
+      if (id > 7)
+      {
             return 0;
       }
       return id;
@@ -979,6 +1222,49 @@ void add_appList(const char *appName, int index, const void *img)
       lv_obj_set_style_text_font(ui_appListLabel, &lv_font_montserrat_20, LV_PART_MAIN | LV_STATE_DEFAULT);
 
       lv_obj_add_event_cb(ui_appListPanel, onAppListClicked, LV_EVENT_CLICKED, (void *)index);
+}
+
+void add_gameList(const char *appName, int index, const void *img)
+{
+      lv_obj_t *ui_gameListPanel = lv_obj_create(ui_gameList);
+      lv_obj_set_width(ui_gameListPanel, 200);
+      lv_obj_set_height(ui_gameListPanel, 64);
+      lv_obj_set_align(ui_gameListPanel, LV_ALIGN_CENTER);
+      lv_obj_clear_flag(ui_gameListPanel, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+      lv_obj_set_style_radius(ui_gameListPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_bg_color(ui_gameListPanel, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_bg_opa(ui_gameListPanel, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_border_color(ui_gameListPanel, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_border_opa(ui_gameListPanel, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_border_width(ui_gameListPanel, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_border_side(ui_gameListPanel, LV_BORDER_SIDE_BOTTOM, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_pad_left(ui_gameListPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_pad_right(ui_gameListPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_pad_top(ui_gameListPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_pad_bottom(ui_gameListPanel, 5, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+      lv_obj_t *ui_gameListIcon = lv_img_create(ui_gameListPanel);
+      lv_img_set_src(ui_gameListIcon, img);
+      lv_obj_set_width(ui_gameListIcon, LV_SIZE_CONTENT);  /// 1
+      lv_obj_set_height(ui_gameListIcon, LV_SIZE_CONTENT); /// 1
+      lv_obj_set_x(ui_gameListIcon, -74);
+      lv_obj_set_y(ui_gameListIcon, 2);
+      lv_obj_set_align(ui_gameListIcon, LV_ALIGN_CENTER);
+      lv_obj_add_flag(ui_gameListIcon, LV_OBJ_FLAG_ADV_HITTEST);  /// Flags
+      lv_obj_clear_flag(ui_gameListIcon, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+      lv_img_set_zoom(ui_gameListIcon, 150);
+
+      lv_obj_t *ui_gameListLabel = lv_label_create(ui_gameListPanel);
+      lv_obj_set_width(ui_gameListLabel, 160);
+      lv_obj_set_height(ui_gameListLabel, LV_SIZE_CONTENT); /// 1
+      lv_obj_set_x(ui_gameListLabel, 54);
+      lv_obj_set_y(ui_gameListLabel, 3);
+      lv_obj_set_align(ui_gameListLabel, LV_ALIGN_LEFT_MID);
+      lv_label_set_text(ui_gameListLabel, appName);
+      lv_label_set_long_mode(ui_gameListLabel, LV_LABEL_LONG_CLIP);
+      lv_obj_set_style_text_font(ui_gameListLabel, &lv_font_montserrat_20, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+      lv_obj_add_event_cb(ui_gameListPanel, ui_event_gameSelected, LV_EVENT_CLICKED, (void *)index);
 }
 
 void addWatchface(const char *name, const lv_img_dsc_t *src, int index)
@@ -1112,7 +1398,7 @@ void addNotificationList(int appId, const char *message, int index)
       lv_obj_add_event_cb(notificationItem, ui_event_messageClick, LV_EVENT_CLICKED, (void *)index);
 }
 
-void addQrList(uint8_t id, const char* link)
+void addQrList(uint8_t id, const char *link)
 {
       ui_qrItem = lv_obj_create(ui_qrPanel);
       lv_obj_set_width(ui_qrItem, 200);
@@ -1153,7 +1439,8 @@ void addQrList(uint8_t id, const char* link)
       lv_obj_set_style_text_font(ui_qrLabel, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
 }
 
-void addAppInfo(const void *src, const char *txt){
+void addAppInfo(const void *src, const char *txt)
+{
       lv_obj_t *ui_appDetailsPanel = lv_obj_create(ui_appInfoPanel);
       lv_obj_set_width(ui_appDetailsPanel, 190);
       lv_obj_set_height(ui_appDetailsPanel, 50);
@@ -1202,6 +1489,20 @@ void registerWatchface_cb(const char *name, const lv_img_dsc_t *preview, lv_obj_
       numFaces++;
 }
 
+void registerGame_cb(const char *name, const lv_img_dsc_t *icon, lv_obj_t **game)
+{
+      if (numGames >= MAX_GAMES)
+      {
+            return;
+      }
+      games[numGames].name = name;
+      games[numGames].preview = icon;
+      games[numGames].watchface = game;
+      // addGame
+      add_gameList(games[numGames].name, numGames, games[numGames].preview);
+      numGames++;
+}
+
 void init_face_select()
 {
       ui_faceSelect = lv_obj_create(NULL);
@@ -1223,6 +1524,20 @@ void init_face_select()
       lv_obj_set_style_pad_bottom(ui_faceSelect, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
       lv_obj_set_style_pad_row(ui_faceSelect, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
       lv_obj_set_style_pad_column(ui_faceSelect, 15, LV_PART_MAIN | LV_STATE_DEFAULT);
+}
+
+void showError(const char* title, const char *message)
+{
+      lv_disp_t *display = lv_disp_get_default();
+      lv_obj_t *actScr = lv_disp_get_scr_act(display);
+
+      // attach the error windows to current screen
+      lv_obj_set_parent(ui_errorWindow, actScr);
+
+      lv_label_set_text(ui_errorTitle, title);
+      lv_label_set_text(ui_errorMessage, message);
+      lv_obj_clear_flag(ui_errorWindow, LV_OBJ_FLAG_HIDDEN );   // show the error
+      lv_obj_scroll_to_y(ui_errorWindow, 0, LV_ANIM_ON);
 
 }
 
@@ -1481,12 +1796,42 @@ void ui_appListScreen_screen_init(void)
       add_appList("Notifications", 0, &ui_img_notifications_app_png);
       add_appList("Weather", 1, &ui_img_weather_app_png);
       add_appList("App info", 3, &ui_img_app_info_png);
+      add_appList("Games", 7, &ui_img_game_icon_png);
       add_appList("Watchfaces", 5, &ui_img_smartwatch_png);
       add_appList("QR Codes", 4, &ui_img_qr_icon_png);
+      add_appList("Find Phone", 6, &ui_img_search_png);
       add_appList("Settings", 2, &ui_img_general_settings_png);
 
       lv_obj_add_event_cb(ui_appList, onScroll, LV_EVENT_SCROLL, NULL);
       lv_obj_add_event_cb(ui_appListScreen, ui_event_appListScreen, LV_EVENT_ALL, NULL);
+}
+
+void ui_gameListScreen_screen_init(void)
+{
+      ui_gameListScreen = lv_obj_create(NULL);
+      lv_obj_clear_flag(ui_gameListScreen, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+      lv_obj_set_style_bg_color(ui_gameListScreen, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_bg_opa(ui_gameListScreen, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+      ui_gameList = lv_obj_create(ui_gameListScreen);
+      lv_obj_set_width(ui_gameList, 240);
+      lv_obj_set_height(ui_gameList, 240);
+      lv_obj_set_align(ui_gameList, LV_ALIGN_TOP_MID);
+      lv_obj_set_flex_flow(ui_gameList, LV_FLEX_FLOW_COLUMN);
+      lv_obj_set_flex_align(ui_gameList, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+      lv_obj_set_scrollbar_mode(ui_gameList, LV_SCROLLBAR_MODE_OFF);
+      lv_obj_set_scroll_dir(ui_gameList, LV_DIR_VER);
+      lv_obj_set_style_radius(ui_gameList, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_bg_color(ui_gameList, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_bg_opa(ui_gameList, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_border_width(ui_gameList, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_pad_left(ui_gameList, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_pad_right(ui_gameList, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_pad_top(ui_gameList, 50, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_pad_bottom(ui_gameList, 70, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+      lv_obj_add_event_cb(ui_gameList, onScroll, LV_EVENT_SCROLL, NULL);
+      lv_obj_add_event_cb(ui_gameListScreen, ui_event_gameListScreen, LV_EVENT_ALL, NULL);
 }
 
 void ui_notificationScreen_screen_init(void)
@@ -1863,6 +2208,43 @@ void ui_settingsScreen_screen_init(void)
       lv_obj_set_y(ui_aboutText, 7);
       lv_label_set_text(ui_aboutText, "v1.0 (fbiego)\nESP32 C3 Mini\n11:22:33:44:55:66");
 
+      ui_kenyaPanel = lv_obj_create(ui_settingsList);
+      lv_obj_set_width(ui_kenyaPanel, 200);
+      lv_obj_set_height(ui_kenyaPanel, LV_SIZE_CONTENT); /// 64
+      lv_obj_set_align(ui_kenyaPanel, LV_ALIGN_CENTER);
+      lv_obj_clear_flag(ui_kenyaPanel, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+      lv_obj_set_style_radius(ui_kenyaPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_bg_color(ui_kenyaPanel, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_bg_opa(ui_kenyaPanel, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_border_color(ui_kenyaPanel, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_border_opa(ui_kenyaPanel, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_border_width(ui_kenyaPanel, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_border_side(ui_kenyaPanel, LV_BORDER_SIDE_BOTTOM, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_pad_left(ui_kenyaPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_pad_right(ui_kenyaPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_pad_top(ui_kenyaPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_pad_bottom(ui_kenyaPanel, 5, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+      ui_kenyaIcon = lv_img_create(ui_kenyaPanel);
+      lv_img_set_src(ui_kenyaIcon, &ui_img_kenya_png);
+      lv_obj_set_width(ui_kenyaIcon, LV_SIZE_CONTENT);  /// 1
+      lv_obj_set_height(ui_kenyaIcon, LV_SIZE_CONTENT); /// 1
+      lv_obj_set_x(ui_kenyaIcon, -5);
+      lv_obj_set_y(ui_kenyaIcon, 2);
+      lv_obj_add_flag(ui_kenyaIcon, LV_OBJ_FLAG_ADV_HITTEST);  /// Flags
+      lv_obj_clear_flag(ui_kenyaIcon, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+      lv_img_set_zoom(ui_kenyaIcon, 150);
+
+      ui_kenyaText = lv_label_create(ui_kenyaPanel);
+      lv_obj_set_width(ui_kenyaText, 130);
+      lv_obj_set_height(ui_kenyaText, LV_SIZE_CONTENT); /// 1
+      lv_obj_set_x(ui_kenyaText, 60);
+      lv_obj_set_y(ui_kenyaText, 7);
+      lv_label_set_recolor(ui_kenyaText, true);
+      lv_label_set_text(ui_kenyaText, "Made with #f54278 love#\nin Kenya\nusing LVGL");
+
+      lv_obj_add_event_cb(ui_kenyaPanel, ui_event_kenyaPanel, LV_EVENT_ALL, NULL);
+
       lv_obj_add_event_cb(ui_settingsList, onScroll, LV_EVENT_SCROLL, NULL);
       lv_obj_add_event_cb(ui_brightnessSlider, ui_event_brightnessSlider, LV_EVENT_ALL, NULL);
       lv_obj_add_event_cb(ui_Switch2, ui_event_scrollMode, LV_EVENT_ALL, NULL);
@@ -1881,119 +2263,132 @@ void ui_controlScreen_screen_init(void)
 
       ui_musicPlayButton = lv_img_create(ui_controlScreen);
       lv_img_set_src(ui_musicPlayButton, &ui_img_play_png);
-      lv_obj_set_width( ui_musicPlayButton, LV_SIZE_CONTENT);  /// 1
-      lv_obj_set_height( ui_musicPlayButton, LV_SIZE_CONTENT);   /// 1
-      lv_obj_set_align( ui_musicPlayButton, LV_ALIGN_CENTER );
-      lv_obj_add_flag( ui_musicPlayButton, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_ADV_HITTEST );   /// Flags
-      lv_obj_clear_flag( ui_musicPlayButton, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
-      lv_img_set_zoom(ui_musicPlayButton,200);
-      lv_obj_set_style_radius(ui_musicPlayButton, 5, LV_PART_MAIN| LV_STATE_PRESSED);
-      lv_obj_set_style_bg_color(ui_musicPlayButton, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_PRESSED );
-      lv_obj_set_style_bg_opa(ui_musicPlayButton, 255, LV_PART_MAIN| LV_STATE_PRESSED);
+      lv_obj_set_width(ui_musicPlayButton, LV_SIZE_CONTENT);  /// 1
+      lv_obj_set_height(ui_musicPlayButton, LV_SIZE_CONTENT); /// 1
+      lv_obj_set_align(ui_musicPlayButton, LV_ALIGN_CENTER);
+      lv_obj_add_flag(ui_musicPlayButton, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_ADV_HITTEST); /// Flags
+      lv_obj_clear_flag(ui_musicPlayButton, LV_OBJ_FLAG_SCROLLABLE);                        /// Flags
+      lv_img_set_zoom(ui_musicPlayButton, 200);
+      lv_obj_set_style_radius(ui_musicPlayButton, 5, LV_PART_MAIN | LV_STATE_PRESSED);
+      lv_obj_set_style_bg_color(ui_musicPlayButton, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_PRESSED);
+      lv_obj_set_style_bg_opa(ui_musicPlayButton, 255, LV_PART_MAIN | LV_STATE_PRESSED);
 
       ui_musicPrevButton = lv_img_create(ui_controlScreen);
       lv_img_set_src(ui_musicPrevButton, &ui_img_1592976543);
-      lv_obj_set_width( ui_musicPrevButton, LV_SIZE_CONTENT);  /// 1
-      lv_obj_set_height( ui_musicPrevButton, LV_SIZE_CONTENT);   /// 1
-      lv_obj_set_x( ui_musicPrevButton, -75 );
-      lv_obj_set_y( ui_musicPrevButton, 0 );
-      lv_obj_set_align( ui_musicPrevButton, LV_ALIGN_CENTER );
-      lv_obj_add_flag( ui_musicPrevButton, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_ADV_HITTEST );   /// Flags
-      lv_obj_clear_flag( ui_musicPrevButton, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
-      lv_img_set_zoom(ui_musicPrevButton,200);
-      lv_obj_set_style_radius(ui_musicPrevButton, 5, LV_PART_MAIN| LV_STATE_PRESSED);
-      lv_obj_set_style_bg_color(ui_musicPrevButton, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_PRESSED );
-      lv_obj_set_style_bg_opa(ui_musicPrevButton, 255, LV_PART_MAIN| LV_STATE_PRESSED);
+      lv_obj_set_width(ui_musicPrevButton, LV_SIZE_CONTENT);  /// 1
+      lv_obj_set_height(ui_musicPrevButton, LV_SIZE_CONTENT); /// 1
+      lv_obj_set_x(ui_musicPrevButton, -75);
+      lv_obj_set_y(ui_musicPrevButton, 0);
+      lv_obj_set_align(ui_musicPrevButton, LV_ALIGN_CENTER);
+      lv_obj_add_flag(ui_musicPrevButton, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_ADV_HITTEST); /// Flags
+      lv_obj_clear_flag(ui_musicPrevButton, LV_OBJ_FLAG_SCROLLABLE);                        /// Flags
+      lv_img_set_zoom(ui_musicPrevButton, 200);
+      lv_obj_set_style_radius(ui_musicPrevButton, 5, LV_PART_MAIN | LV_STATE_PRESSED);
+      lv_obj_set_style_bg_color(ui_musicPrevButton, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_PRESSED);
+      lv_obj_set_style_bg_opa(ui_musicPrevButton, 255, LV_PART_MAIN | LV_STATE_PRESSED);
 
       ui_musicNextButton = lv_img_create(ui_controlScreen);
       lv_img_set_src(ui_musicNextButton, &ui_img_2138854088);
-      lv_obj_set_width( ui_musicNextButton, LV_SIZE_CONTENT);  /// 1
-      lv_obj_set_height( ui_musicNextButton, LV_SIZE_CONTENT);   /// 1
-      lv_obj_set_x( ui_musicNextButton, 75 );
-      lv_obj_set_y( ui_musicNextButton, 0 );
-      lv_obj_set_align( ui_musicNextButton, LV_ALIGN_CENTER );
-      lv_obj_add_flag( ui_musicNextButton, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_ADV_HITTEST );   /// Flags
-      lv_obj_clear_flag( ui_musicNextButton, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
-      lv_img_set_zoom(ui_musicNextButton,200);
-      lv_obj_set_style_radius(ui_musicNextButton, 5, LV_PART_MAIN| LV_STATE_PRESSED);
-      lv_obj_set_style_bg_color(ui_musicNextButton, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_PRESSED );
-      lv_obj_set_style_bg_opa(ui_musicNextButton, 255, LV_PART_MAIN| LV_STATE_PRESSED);
+      lv_obj_set_width(ui_musicNextButton, LV_SIZE_CONTENT);  /// 1
+      lv_obj_set_height(ui_musicNextButton, LV_SIZE_CONTENT); /// 1
+      lv_obj_set_x(ui_musicNextButton, 75);
+      lv_obj_set_y(ui_musicNextButton, 0);
+      lv_obj_set_align(ui_musicNextButton, LV_ALIGN_CENTER);
+      lv_obj_add_flag(ui_musicNextButton, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_ADV_HITTEST); /// Flags
+      lv_obj_clear_flag(ui_musicNextButton, LV_OBJ_FLAG_SCROLLABLE);                        /// Flags
+      lv_img_set_zoom(ui_musicNextButton, 200);
+      lv_obj_set_style_radius(ui_musicNextButton, 5, LV_PART_MAIN | LV_STATE_PRESSED);
+      lv_obj_set_style_bg_color(ui_musicNextButton, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_PRESSED);
+      lv_obj_set_style_bg_opa(ui_musicNextButton, 255, LV_PART_MAIN | LV_STATE_PRESSED);
 
       ui_btStateButton = lv_img_create(ui_controlScreen);
       lv_img_set_src(ui_btStateButton, &ui_img_bluetooth_g_png);
-      lv_obj_set_width( ui_btStateButton, LV_SIZE_CONTENT);  /// 1
-      lv_obj_set_height( ui_btStateButton, LV_SIZE_CONTENT);   /// 1
-      lv_obj_set_x( ui_btStateButton, 0 );
-      lv_obj_set_y( ui_btStateButton, -100 );
-      lv_obj_set_align( ui_btStateButton, LV_ALIGN_CENTER );
-      lv_obj_add_state( ui_btStateButton, LV_STATE_CHECKED );     /// States
-      lv_obj_add_flag( ui_btStateButton, LV_OBJ_FLAG_CHECKABLE | LV_OBJ_FLAG_ADV_HITTEST );   /// Flags
-      lv_obj_clear_flag( ui_btStateButton, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
-      lv_img_set_zoom(ui_btStateButton,200);
-      lv_obj_set_style_img_recolor(ui_btStateButton, lv_color_hex(0x000000), LV_PART_MAIN| LV_STATE_CHECKED);
-      lv_obj_set_style_img_recolor_opa(ui_btStateButton, 230, LV_PART_MAIN| LV_STATE_CHECKED);
-      lv_obj_set_style_radius(ui_btStateButton, 5, LV_PART_MAIN| LV_STATE_PRESSED);
-      lv_obj_set_style_bg_color(ui_btStateButton, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_PRESSED );
-      lv_obj_set_style_bg_opa(ui_btStateButton, 255, LV_PART_MAIN| LV_STATE_PRESSED);
+      lv_obj_set_width(ui_btStateButton, LV_SIZE_CONTENT);  /// 1
+      lv_obj_set_height(ui_btStateButton, LV_SIZE_CONTENT); /// 1
+      lv_obj_set_x(ui_btStateButton, 0);
+      lv_obj_set_y(ui_btStateButton, -100);
+      lv_obj_set_align(ui_btStateButton, LV_ALIGN_CENTER);
+      lv_obj_add_state(ui_btStateButton, LV_STATE_CHECKED);                               /// States
+      lv_obj_add_flag(ui_btStateButton, LV_OBJ_FLAG_CHECKABLE | LV_OBJ_FLAG_ADV_HITTEST); /// Flags
+      lv_obj_clear_flag(ui_btStateButton, LV_OBJ_FLAG_SCROLLABLE);                        /// Flags
+      lv_img_set_zoom(ui_btStateButton, 200);
+      lv_obj_set_style_img_recolor(ui_btStateButton, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_CHECKED);
+      lv_obj_set_style_img_recolor_opa(ui_btStateButton, 230, LV_PART_MAIN | LV_STATE_CHECKED);
+      lv_obj_set_style_radius(ui_btStateButton, 5, LV_PART_MAIN | LV_STATE_PRESSED);
+      lv_obj_set_style_bg_color(ui_btStateButton, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_PRESSED);
+      lv_obj_set_style_bg_opa(ui_btStateButton, 255, LV_PART_MAIN | LV_STATE_PRESSED);
+
+      ui_searchPanel = lv_obj_create(ui_controlScreen);
+      lv_obj_set_width(ui_searchPanel, 40);
+      lv_obj_set_height(ui_searchPanel, 40);
+      lv_obj_set_x(ui_searchPanel, 40);
+      lv_obj_set_y(ui_searchPanel, -60);
+      lv_obj_set_align(ui_searchPanel, LV_ALIGN_CENTER);
+      lv_obj_add_flag(ui_searchPanel, LV_OBJ_FLAG_HIDDEN);       /// Flags
+      lv_obj_clear_flag(ui_searchPanel, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+      lv_obj_set_style_radius(ui_searchPanel, 96, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_bg_color(ui_searchPanel, lv_color_hex(0xFF6910), LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_bg_opa(ui_searchPanel, 100, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_border_width(ui_searchPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
 
       ui_phoneSearchButton = lv_img_create(ui_controlScreen);
       lv_img_set_src(ui_phoneSearchButton, &ui_img_search_png);
-      lv_obj_set_width( ui_phoneSearchButton, LV_SIZE_CONTENT);  /// 1
-      lv_obj_set_height( ui_phoneSearchButton, LV_SIZE_CONTENT);   /// 1
-      lv_obj_set_x( ui_phoneSearchButton, 40 );
-      lv_obj_set_y( ui_phoneSearchButton, -60 );
-      lv_obj_set_align( ui_phoneSearchButton, LV_ALIGN_CENTER );
-      lv_obj_add_state( ui_phoneSearchButton, LV_STATE_CHECKED );     /// States
-      lv_obj_add_flag( ui_phoneSearchButton, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_CHECKABLE | LV_OBJ_FLAG_ADV_HITTEST );   /// Flags
-      lv_obj_clear_flag( ui_phoneSearchButton, LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SCROLLABLE );    /// Flags
-      lv_img_set_zoom(ui_phoneSearchButton,200);
-      lv_obj_set_style_img_recolor(ui_phoneSearchButton, lv_color_hex(0x000000), LV_PART_MAIN| LV_STATE_CHECKED);
-      lv_obj_set_style_img_recolor_opa(ui_phoneSearchButton, 230, LV_PART_MAIN| LV_STATE_CHECKED);
-      lv_obj_set_style_radius(ui_phoneSearchButton, 5, LV_PART_MAIN| LV_STATE_PRESSED);
-      lv_obj_set_style_bg_color(ui_phoneSearchButton, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_PRESSED );
-      lv_obj_set_style_bg_opa(ui_phoneSearchButton, 255, LV_PART_MAIN| LV_STATE_PRESSED);
+      lv_obj_set_width(ui_phoneSearchButton, LV_SIZE_CONTENT);  /// 1
+      lv_obj_set_height(ui_phoneSearchButton, LV_SIZE_CONTENT); /// 1
+      lv_obj_set_x(ui_phoneSearchButton, 40);
+      lv_obj_set_y(ui_phoneSearchButton, -60);
+      lv_obj_set_align(ui_phoneSearchButton, LV_ALIGN_CENTER);
+      lv_obj_add_state(ui_phoneSearchButton, LV_STATE_CHECKED);                                                       /// States
+      lv_obj_add_flag(ui_phoneSearchButton, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_CHECKABLE | LV_OBJ_FLAG_ADV_HITTEST); /// Flags
+      lv_obj_clear_flag(ui_phoneSearchButton, LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SCROLLABLE);                   /// Flags
+      lv_img_set_zoom(ui_phoneSearchButton, 200);
+      lv_obj_set_style_img_recolor(ui_phoneSearchButton, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_CHECKED);
+      lv_obj_set_style_img_recolor_opa(ui_phoneSearchButton, 230, LV_PART_MAIN | LV_STATE_CHECKED);
+      lv_obj_set_style_radius(ui_phoneSearchButton, 5, LV_PART_MAIN | LV_STATE_PRESSED);
+      lv_obj_set_style_bg_color(ui_phoneSearchButton, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_PRESSED);
+      lv_obj_set_style_bg_opa(ui_phoneSearchButton, 255, LV_PART_MAIN | LV_STATE_PRESSED);
 
       ui_volumeUpButton = lv_img_create(ui_controlScreen);
-      lv_img_set_src(ui_volumeUpButton, &ui_img_vol_up_png);
-      lv_obj_set_width( ui_volumeUpButton, LV_SIZE_CONTENT);  /// 1
-      lv_obj_set_height( ui_volumeUpButton, LV_SIZE_CONTENT);   /// 1
-      lv_obj_set_x( ui_volumeUpButton, 40 );
-      lv_obj_set_y( ui_volumeUpButton, 60 );
-      lv_obj_set_align( ui_volumeUpButton, LV_ALIGN_CENTER );
-      lv_obj_add_flag( ui_volumeUpButton, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_ADV_HITTEST );   /// Flags
-      lv_obj_clear_flag( ui_volumeUpButton, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
-      lv_img_set_zoom(ui_volumeUpButton,200);
-      lv_obj_set_style_radius(ui_volumeUpButton, 5, LV_PART_MAIN| LV_STATE_PRESSED);
-      lv_obj_set_style_bg_color(ui_volumeUpButton, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_PRESSED );
-      lv_obj_set_style_bg_opa(ui_volumeUpButton, 255, LV_PART_MAIN| LV_STATE_PRESSED);
+      lv_img_set_src(ui_volumeUpButton, &ui_img_vol_down_png);
+      lv_obj_set_width(ui_volumeUpButton, LV_SIZE_CONTENT);  /// 1
+      lv_obj_set_height(ui_volumeUpButton, LV_SIZE_CONTENT); /// 1
+      lv_obj_set_x(ui_volumeUpButton, 40);
+      lv_obj_set_y(ui_volumeUpButton, 60);
+      lv_obj_set_align(ui_volumeUpButton, LV_ALIGN_CENTER);
+      lv_obj_add_flag(ui_volumeUpButton, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_ADV_HITTEST); /// Flags
+      lv_obj_clear_flag(ui_volumeUpButton, LV_OBJ_FLAG_SCROLLABLE);                        /// Flags
+      lv_img_set_zoom(ui_volumeUpButton, 200);
+      lv_obj_set_style_radius(ui_volumeUpButton, 5, LV_PART_MAIN | LV_STATE_PRESSED);
+      lv_obj_set_style_bg_color(ui_volumeUpButton, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_PRESSED);
+      lv_obj_set_style_bg_opa(ui_volumeUpButton, 255, LV_PART_MAIN | LV_STATE_PRESSED);
 
       ui_volumeDownButton = lv_img_create(ui_controlScreen);
-      lv_img_set_src(ui_volumeDownButton, &ui_img_vol_down_png);
-      lv_obj_set_width( ui_volumeDownButton, LV_SIZE_CONTENT);  /// 1
-      lv_obj_set_height( ui_volumeDownButton, LV_SIZE_CONTENT);   /// 1
-      lv_obj_set_x( ui_volumeDownButton, -40 );
-      lv_obj_set_y( ui_volumeDownButton, 60 );
-      lv_obj_set_align( ui_volumeDownButton, LV_ALIGN_CENTER );
-      lv_obj_add_flag( ui_volumeDownButton, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_ADV_HITTEST );   /// Flags
-      lv_obj_clear_flag( ui_volumeDownButton, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
-      lv_img_set_zoom(ui_volumeDownButton,200);
-      lv_obj_set_style_radius(ui_volumeDownButton, 5, LV_PART_MAIN| LV_STATE_PRESSED);
-      lv_obj_set_style_bg_color(ui_volumeDownButton, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_PRESSED );
-      lv_obj_set_style_bg_opa(ui_volumeDownButton, 255, LV_PART_MAIN| LV_STATE_PRESSED);
+      lv_img_set_src(ui_volumeDownButton, &ui_img_vol_up_png);
+      lv_obj_set_width(ui_volumeDownButton, LV_SIZE_CONTENT);  /// 1
+      lv_obj_set_height(ui_volumeDownButton, LV_SIZE_CONTENT); /// 1
+      lv_obj_set_x(ui_volumeDownButton, -40);
+      lv_obj_set_y(ui_volumeDownButton, 60);
+      lv_obj_set_align(ui_volumeDownButton, LV_ALIGN_CENTER);
+      lv_obj_add_flag(ui_volumeDownButton, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_ADV_HITTEST); /// Flags
+      lv_obj_clear_flag(ui_volumeDownButton, LV_OBJ_FLAG_SCROLLABLE);                        /// Flags
+      lv_img_set_zoom(ui_volumeDownButton, 200);
+      lv_obj_set_style_radius(ui_volumeDownButton, 5, LV_PART_MAIN | LV_STATE_PRESSED);
+      lv_obj_set_style_bg_color(ui_volumeDownButton, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_PRESSED);
+      lv_obj_set_style_bg_opa(ui_volumeDownButton, 255, LV_PART_MAIN | LV_STATE_PRESSED);
 
       ui_qrCodeButton = lv_img_create(ui_controlScreen);
       lv_img_set_src(ui_qrCodeButton, &ui_img_pay_png);
-      lv_obj_set_width( ui_qrCodeButton, LV_SIZE_CONTENT);  /// 1
-      lv_obj_set_height( ui_qrCodeButton, LV_SIZE_CONTENT);   /// 1
-      lv_obj_set_x( ui_qrCodeButton, -40 );
-      lv_obj_set_y( ui_qrCodeButton, -60 );
-      lv_obj_set_align( ui_qrCodeButton, LV_ALIGN_CENTER );
-      lv_obj_add_flag( ui_qrCodeButton, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_ADV_HITTEST );   /// Flags
-      lv_obj_clear_flag( ui_qrCodeButton, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
-      lv_img_set_zoom(ui_qrCodeButton,200);
-      lv_obj_set_style_radius(ui_qrCodeButton, 5, LV_PART_MAIN| LV_STATE_PRESSED);
-      lv_obj_set_style_bg_color(ui_qrCodeButton, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_PRESSED );
-      lv_obj_set_style_bg_opa(ui_qrCodeButton, 255, LV_PART_MAIN| LV_STATE_PRESSED);
+      lv_obj_set_width(ui_qrCodeButton, LV_SIZE_CONTENT);  /// 1
+      lv_obj_set_height(ui_qrCodeButton, LV_SIZE_CONTENT); /// 1
+      lv_obj_set_x(ui_qrCodeButton, -40);
+      lv_obj_set_y(ui_qrCodeButton, -60);
+      lv_obj_set_align(ui_qrCodeButton, LV_ALIGN_CENTER);
+      lv_obj_add_flag(ui_qrCodeButton, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_ADV_HITTEST); /// Flags
+      lv_obj_clear_flag(ui_qrCodeButton, LV_OBJ_FLAG_SCROLLABLE);                        /// Flags
+      lv_img_set_zoom(ui_qrCodeButton, 200);
+      lv_obj_set_style_radius(ui_qrCodeButton, 5, LV_PART_MAIN | LV_STATE_PRESSED);
+      lv_obj_set_style_bg_color(ui_qrCodeButton, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_PRESSED);
+      lv_obj_set_style_bg_opa(ui_qrCodeButton, 255, LV_PART_MAIN | LV_STATE_PRESSED);
 
       lv_obj_add_event_cb(ui_musicPlayButton, ui_event_musicPlayButton, LV_EVENT_ALL, NULL);
       lv_obj_add_event_cb(ui_musicPrevButton, ui_event_musicPrevButton, LV_EVENT_ALL, NULL);
@@ -2266,6 +2661,7 @@ void ui_cameraScreen_screen_init()
       lv_obj_set_align(ui_cameraButton, LV_ALIGN_CENTER);
       lv_obj_add_flag(ui_cameraButton, LV_OBJ_FLAG_SCROLL_ON_FOCUS); /// Flags
       lv_obj_clear_flag(ui_cameraButton, LV_OBJ_FLAG_SCROLLABLE);    /// Flags
+      lv_obj_set_style_radius(ui_cameraButton, 20, LV_PART_MAIN | LV_STATE_DEFAULT);
       lv_obj_add_event_cb(ui_cameraButton, ui_event_captureClick, LV_EVENT_CLICKED, NULL);
 
       ui_cameraButtonLabel = lv_label_create(ui_cameraButton);
@@ -2312,6 +2708,90 @@ void ui_qrScreen_screen_init(void)
       lv_obj_add_event_cb(ui_qrScreen, ui_event_qrScreen, LV_EVENT_ALL, NULL);
 }
 
+void ui_findPhone_screen_init(void)
+{
+      ui_findPhoneScreen = lv_obj_create(NULL);
+      lv_obj_clear_flag(ui_findPhoneScreen, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+      lv_obj_set_style_bg_color(ui_findPhoneScreen, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_bg_opa(ui_findPhoneScreen, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+      ui_findTitle = lv_label_create(ui_findPhoneScreen);
+      lv_obj_set_width(ui_findTitle, 150);
+      lv_obj_set_height(ui_findTitle, LV_SIZE_CONTENT); /// 1
+      lv_obj_set_x(ui_findTitle, 0);
+      lv_obj_set_y(ui_findTitle, 24);
+      lv_obj_set_align(ui_findTitle, LV_ALIGN_TOP_MID);
+      lv_label_set_text(ui_findTitle, "Find Phone");
+      lv_obj_set_style_text_align(ui_findTitle, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_text_font(ui_findTitle, &lv_font_montserrat_20, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_border_color(ui_findTitle, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_border_opa(ui_findTitle, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_border_width(ui_findTitle, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_border_side(ui_findTitle, LV_BORDER_SIDE_BOTTOM, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+      ui_findButton = lv_btn_create(ui_findPhoneScreen);
+      lv_obj_set_width(ui_findButton, 100);
+      lv_obj_set_height(ui_findButton, 40);
+      lv_obj_set_x(ui_findButton, 0);
+      lv_obj_set_y(ui_findButton, 77);
+      lv_obj_set_align(ui_findButton, LV_ALIGN_CENTER);
+      lv_obj_add_flag(ui_findButton, LV_OBJ_FLAG_CHECKABLE | LV_OBJ_FLAG_SCROLL_ON_FOCUS); /// Flags
+      lv_obj_clear_flag(ui_findButton, LV_OBJ_FLAG_SCROLLABLE);                            /// Flags
+      lv_obj_set_style_radius(ui_findButton, 20, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+      ui_findButtonText = lv_label_create(ui_findButton);
+      lv_obj_set_width(ui_findButtonText, LV_SIZE_CONTENT);  /// 1
+      lv_obj_set_height(ui_findButtonText, LV_SIZE_CONTENT); /// 1
+      lv_obj_set_align(ui_findButtonText, LV_ALIGN_CENTER);
+      lv_label_set_text(ui_findButtonText, "Start");
+      lv_obj_set_style_text_font(ui_findButtonText, &lv_font_montserrat_16, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+      ui_findPanel = lv_obj_create(ui_findPhoneScreen);
+      lv_obj_set_width(ui_findPanel, 64);
+      lv_obj_set_height(ui_findPanel, 64);
+      lv_obj_set_x(ui_findPanel, 0);
+      lv_obj_set_y(ui_findPanel, -10);
+      lv_obj_set_align(ui_findPanel, LV_ALIGN_CENTER);
+      lv_obj_add_flag(ui_findPanel, LV_OBJ_FLAG_HIDDEN);       /// Flags
+      lv_obj_clear_flag(ui_findPanel, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+      lv_obj_set_style_radius(ui_findPanel, 64, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_bg_color(ui_findPanel, lv_color_hex(0xFF6910), LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_bg_opa(ui_findPanel, 100, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_border_width(ui_findPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+      ui_findIcon = lv_img_create(ui_findPhoneScreen);
+      lv_img_set_src(ui_findIcon, &ui_img_search_png);
+      lv_obj_set_width(ui_findIcon, LV_SIZE_CONTENT);  /// 1
+      lv_obj_set_height(ui_findIcon, LV_SIZE_CONTENT); /// 1
+      lv_obj_set_x(ui_findIcon, -1);
+      lv_obj_set_y(ui_findIcon, -10);
+      lv_obj_set_align(ui_findIcon, LV_ALIGN_CENTER);
+      lv_obj_add_flag(ui_findIcon, LV_OBJ_FLAG_ADV_HITTEST);  /// Flags
+      lv_obj_clear_flag(ui_findIcon, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+
+      lv_obj_add_event_cb(ui_findButton, ui_event_findButton, LV_EVENT_ALL, NULL);
+      lv_obj_add_event_cb(ui_findPhoneScreen, ui_event_findPhone, LV_EVENT_ALL, NULL);
+}
+
+void ui_logoScreen_screen_init(void)
+{
+      ui_logoScreen = lv_obj_create(NULL);
+      lv_obj_clear_flag(ui_logoScreen, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+      lv_obj_set_style_bg_color(ui_logoScreen, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_bg_opa(ui_logoScreen, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+      ui_lvglLogo = lv_img_create(ui_logoScreen);
+      lv_img_set_src(ui_lvglLogo, &ui_img_lvgl_logo_png);
+      lv_obj_set_width(ui_lvglLogo, LV_SIZE_CONTENT);  /// 1
+      lv_obj_set_height(ui_lvglLogo, LV_SIZE_CONTENT); /// 1
+      lv_obj_set_align(ui_lvglLogo, LV_ALIGN_CENTER);
+      lv_obj_add_flag(ui_lvglLogo, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_ADV_HITTEST); /// Flags
+      lv_obj_clear_flag(ui_lvglLogo, LV_OBJ_FLAG_SCROLLABLE);                        /// Flags
+
+      lv_obj_add_event_cb(ui_lvglLogo, ui_event_lvglLogo, LV_EVENT_ALL, NULL);
+      lv_obj_add_event_cb(ui_logoScreen, ui_event_logoScreen, LV_EVENT_ALL, NULL);
+}
+
 void ui_watchfaces_init(void)
 {
       numFaces = 0;
@@ -2330,7 +2810,6 @@ void ui_watchfaces_init(void)
       init_face_smart_resized(registerWatchface_cb);
       init_face_tix_resized(registerWatchface_cb);
       init_face_wfb_resized(registerWatchface_cb);
-
 }
 
 void ui_update_watchfaces(int second, int minute, int hour, bool mode, bool am, int day, int month, int year, int weekday,
@@ -2351,6 +2830,97 @@ void ui_update_watchfaces(int second, int minute, int hour, bool mode, bool am, 
       update_check_wfb_resized(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
 }
 
+void ui_games_init(void)
+{
+      numGames = 0;
+      ui_raceScreen_screen_init(registerGame_cb);
+}
+
+void ui_games_update(void)
+{
+      ui_raceScreen_screen_loop();
+}
+
+void ui_errorWindow_init(void)
+{
+      ui_errorWindow = lv_obj_create(ui_clockScreen);
+      lv_obj_set_width(ui_errorWindow, 240);
+      lv_obj_set_height(ui_errorWindow, 240);
+      lv_obj_set_align(ui_errorWindow, LV_ALIGN_CENTER);
+      lv_obj_set_scrollbar_mode(ui_errorWindow, LV_SCROLLBAR_MODE_OFF);
+      lv_obj_add_flag(ui_errorWindow, LV_OBJ_FLAG_HIDDEN );   /// Flags
+      lv_obj_clear_flag(ui_errorWindow, LV_OBJ_FLAG_GESTURE_BUBBLE );    /// block gesture events when active
+      lv_obj_set_scroll_dir(ui_errorWindow, LV_DIR_VER);
+      lv_obj_set_style_radius(ui_errorWindow, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_bg_color(ui_errorWindow, lv_color_hex(0xB10000), LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_bg_opa(ui_errorWindow, 150, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_border_width(ui_errorWindow, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_pad_left(ui_errorWindow, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_pad_right(ui_errorWindow, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_pad_top(ui_errorWindow, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_pad_bottom(ui_errorWindow, 60, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+      ui_errorPanel = lv_obj_create(ui_errorWindow);
+      lv_obj_set_width(ui_errorPanel, 167);
+      lv_obj_set_height(ui_errorPanel, LV_SIZE_CONTENT); /// 139
+      lv_obj_set_x(ui_errorPanel, 0);
+      lv_obj_set_y(ui_errorPanel, 60);
+      lv_obj_set_align(ui_errorPanel, LV_ALIGN_TOP_MID);
+      lv_obj_set_flex_flow(ui_errorPanel, LV_FLEX_FLOW_COLUMN);
+      lv_obj_set_flex_align(ui_errorPanel, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+      lv_obj_clear_flag(ui_errorPanel, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+      lv_obj_set_style_bg_color(ui_errorPanel, lv_color_hex(0x080404), LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_bg_opa(ui_errorPanel, 235, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_border_color(ui_errorPanel, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_border_opa(ui_errorPanel, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_border_width(ui_errorPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_pad_left(ui_errorPanel, 5, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_pad_right(ui_errorPanel, 5, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_pad_top(ui_errorPanel, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_pad_bottom(ui_errorPanel, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+      ui_errorTitle = lv_label_create(ui_errorPanel);
+      lv_obj_set_width(ui_errorTitle, 140);
+      lv_obj_set_height(ui_errorTitle, LV_SIZE_CONTENT); /// 1
+      lv_obj_set_align(ui_errorTitle, LV_ALIGN_TOP_MID);
+      lv_label_set_long_mode(ui_errorTitle, LV_LABEL_LONG_SCROLL_CIRCULAR);
+      lv_label_set_text(ui_errorTitle, "Error");
+      lv_obj_set_style_text_align(ui_errorTitle, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_text_font(ui_errorTitle, &lv_font_montserrat_16, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_border_color(ui_errorTitle, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_border_opa(ui_errorTitle, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_border_width(ui_errorTitle, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_border_side(ui_errorTitle, LV_BORDER_SIDE_BOTTOM, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_pad_left(ui_errorTitle, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_pad_right(ui_errorTitle, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_pad_top(ui_errorTitle, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_pad_bottom(ui_errorTitle, 5, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+      ui_errorMessage = lv_label_create(ui_errorPanel);
+      lv_obj_set_width(ui_errorMessage, 140);
+      lv_obj_set_height(ui_errorMessage, LV_SIZE_CONTENT); /// 1
+      lv_obj_set_align(ui_errorMessage, LV_ALIGN_CENTER);
+      lv_label_set_text(ui_errorMessage, "Error message");
+      lv_obj_set_style_text_font(ui_errorMessage, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+      ui_errorClose = lv_btn_create(ui_errorPanel);
+      lv_obj_set_width(ui_errorClose, 100);
+      lv_obj_set_height(ui_errorClose, LV_SIZE_CONTENT); /// 40
+      lv_obj_set_align(ui_errorClose, LV_ALIGN_BOTTOM_MID);
+      lv_obj_add_flag(ui_errorClose, LV_OBJ_FLAG_SCROLL_ON_FOCUS); /// Flags
+      lv_obj_clear_flag(ui_errorClose, LV_OBJ_FLAG_SCROLLABLE);    /// Flags
+      lv_obj_set_style_radius(ui_errorClose, 20, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+      ui_errorCloseText = lv_label_create(ui_errorClose);
+      lv_obj_set_width(ui_errorCloseText, LV_SIZE_CONTENT);  /// 1
+      lv_obj_set_height(ui_errorCloseText, LV_SIZE_CONTENT); /// 1
+      lv_obj_set_align(ui_errorCloseText, LV_ALIGN_CENTER);
+      lv_label_set_text(ui_errorCloseText, "Close");
+      lv_obj_set_style_text_font(ui_errorCloseText, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+      lv_obj_add_event_cb(ui_errorClose, ui_event_errorClose, LV_EVENT_ALL, NULL);
+}
+
 void ui_init(void)
 {
       lv_disp_t *dispp = lv_disp_get_default();
@@ -2361,19 +2931,26 @@ void ui_init(void)
       ui_weatherScreen_screen_init();
       ui_notificationScreen_screen_init();
       ui_appListScreen_screen_init();
+      ui_gameListScreen_screen_init();
       ui_settingsScreen_screen_init();
       ui_controlScreen_screen_init();
       ui_appInfoScreen_screen_init();
       ui_callScreen_screen_init();
       ui_qrScreen_screen_init();
 
+      ui_findPhone_screen_init();
+      ui_logoScreen_screen_init();
+
       ui_cameraScreen_screen_init();
+
+      ui_errorWindow_init();
 
       init_face_select();
       ui_watchfaces_init();
 
-      ui_home = ui_clockScreen;
+      ui_games_init();
 
+      ui_home = ui_clockScreen;
 
       ui____initial_actions0 = lv_obj_create(NULL);
       lv_obj_add_event_cb(ui____initial_actions0, ui_event____initial_actions0, LV_EVENT_ALL, NULL);

@@ -7,6 +7,7 @@
 #define _C3_WATCH_UI_H
 
 #define MAX_FACES 15
+#define MAX_GAMES 5
 
 #ifdef __cplusplus
 extern "C"
@@ -16,6 +17,8 @@ extern "C"
 #include "lvgl.h"
 
 #include "ui_events.h"
+
+#include "games/racing/racing.h"
 
     void pulseCall_Animation(lv_obj_t *TargetObject, int delay);
     void ui_event_clockScreen(lv_event_t *e);
@@ -52,6 +55,10 @@ extern "C"
     extern lv_obj_t *ui_appListScreen;
     extern lv_obj_t *ui_appList;
 
+    void ui_event_gameListScreen(lv_event_t *e);
+    extern lv_obj_t *ui_gameListScreen;
+    extern lv_obj_t *ui_gameList;
+
     void ui_event_alertStateSwitch(lv_event_t *e);
     extern lv_obj_t *ui_alertStateLabel;
     extern lv_obj_t *ui_alertStateSwitch;
@@ -84,6 +91,10 @@ extern "C"
     extern lv_obj_t *ui_aboutPanel;
     extern lv_obj_t *ui_aboutIcon;
     extern lv_obj_t *ui_aboutText;
+    void ui_event_kenyaPanel(lv_event_t *e);
+    extern lv_obj_t *ui_kenyaPanel;
+    extern lv_obj_t *ui_kenyaIcon;
+    extern lv_obj_t *ui_kenyaText;
     void ui_event_controlScreen(lv_event_t *e);
     extern lv_obj_t *ui_controlScreen;
     void ui_event_musicPlayButton(lv_event_t *e);
@@ -93,6 +104,7 @@ extern "C"
     void ui_event_musicNextButton(lv_event_t *e);
     extern lv_obj_t *ui_musicNextButton;
     extern lv_obj_t *ui_btStateButton;
+    extern lv_obj_t *ui_searchPanel;
     void ui_event_phoneSearchButton(lv_event_t *e);
     extern lv_obj_t *ui_phoneSearchButton;
     void ui_event_volumeUpButton(lv_event_t *e);
@@ -117,6 +129,19 @@ extern "C"
     extern lv_obj_t *ui_appBatteryText;
     extern lv_obj_t *ui_appBatteryLevel;
 
+    void ui_event_findPhone(lv_event_t *e);
+    extern lv_obj_t *ui_findPhoneScreen;
+    extern lv_obj_t *ui_findTitle;
+    void ui_event_findButton(lv_event_t *e);
+    extern lv_obj_t *ui_findButton;
+    extern lv_obj_t *ui_findButtonText;
+    extern lv_obj_t *ui_findPanel;
+    extern lv_obj_t *ui_findIcon;
+    void ui_event_logoScreen(lv_event_t *e);
+    extern lv_obj_t *ui_logoScreen;
+    void ui_event_lvglLogo(lv_event_t *e);
+    extern lv_obj_t *ui_lvglLogo;
+
     void ui_event_callScreen(lv_event_t *e);
     extern lv_obj_t *ui_callScreen;
     extern lv_obj_t *ui_callIcon;
@@ -139,12 +164,21 @@ extern "C"
     extern lv_obj_t *ui_qrImage;
     extern lv_obj_t *ui_qrLabel;
 
+    extern lv_obj_t *ui_errorWindow;
+    extern lv_obj_t *ui_errorPanel;
+    extern lv_obj_t *ui_errorTitle;
+    extern lv_obj_t *ui_errorMessage;
+    void ui_event_errorClose(lv_event_t *e);
+    extern lv_obj_t *ui_errorClose;
+    extern lv_obj_t *ui_errorCloseText;
+
     extern lv_obj_t *ui_home;
     extern lv_obj_t *ui_faceSelect;
 
     extern bool toAppList;
     extern bool circular;
     extern int numFaces;
+    extern int numGames;
 
     void ui_event____initial_actions0(lv_event_t *e);
     extern lv_obj_t *ui____initial_actions0;
@@ -156,7 +190,17 @@ extern "C"
         lv_obj_t **watchface;
     } Face;
 
+    typedef struct DragEvent
+    {
+        bool dragging;
+        bool active;
+        int x;
+        int y;
+    } Drag;
+
     extern Face faces[MAX_FACES];
+    extern Face games[MAX_GAMES];
+
     void registerWatchface_cb(const char *name, const lv_img_dsc_t *preview, lv_obj_t **watchface);
     void ui_update_watchfaces(int second, int minute, int hour, bool mode, bool am, int day, int month, int year, int weekday,
                               int temp, int icon, int battery, bool connection, int steps, int distance, int kcal, int bpm, int oxygen);
@@ -166,6 +210,8 @@ extern "C"
     void addQrList(uint8_t id, const char *link);
     void setWeatherIcon(lv_obj_t *obj, int id, bool day);
     void setNotificationIcon(lv_obj_t *obj, int appId);
+    void ui_games_update(void);
+    void showError(const char *title, const char *message);
 
     LV_IMG_DECLARE(ui_img_753022056);      // assets\night-sky.png
     LV_IMG_DECLARE(ui_img_602195540);      // assets\dy-6.png
@@ -240,6 +286,9 @@ extern "C"
     LV_IMG_DECLARE(ui_img_vol_down_png);        // assets\vol_down.png
     LV_IMG_DECLARE(ui_img_pay_png);             // assets\pay.png
     LV_IMG_DECLARE(ui_img_web_png);             // assets\web.png
+    LV_IMG_DECLARE(ui_img_kenya_png);           // assets\kenya.png
+    LV_IMG_DECLARE(ui_img_lvgl_logo_png);       // assets\lvgl_logo.png
+    LV_IMG_DECLARE(ui_img_game_icon_png);       // assets\game_icon.png
 
     LV_IMG_DECLARE(ui_img_wechat_pay_png);
     LV_IMG_DECLARE(ui_img_alipay_png);

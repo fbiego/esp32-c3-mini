@@ -163,6 +163,11 @@ lv_obj_t *lastActScr;
 
 bool circular = false;
 bool alertSwitch = false;
+bool gameActive = false;
+
+
+TaskHandle_t gameHandle = NULL;
+
 
 String qrLinks[9];
 
@@ -172,7 +177,6 @@ void setTimeout(int i);
 
 void hal_setup(void);
 void hal_loop(void);
-
 
 void update_faces();
 
@@ -563,10 +567,43 @@ void onVolumeDown(lv_event_t *e)
   watch.musicControl(VOLUME_DOWN);
 }
 
-void updateQrLinks(){
+void updateQrLinks()
+{
   lv_obj_clean(ui_qrPanel);
-  for (int i = 0; i < 9; i++){
+  for (int i = 0; i < 9; i++)
+  {
     addQrList(i, qrLinks[i].c_str());
+  }
+}
+
+void gameLoop(void *pvParameters)
+{
+  for (;;)
+  {
+    ui_games_update();
+    vTaskDelay(10 / portTICK_PERIOD_MS); 
+  }
+}
+
+void onGameOpened()
+{
+  gameActive = true;
+
+  if (gameHandle == NULL)
+  {
+    // create task to run the game loop
+    xTaskCreate(gameLoop, "Game Task", 8192, NULL, 1, &gameHandle);
+  }
+}
+
+void onGameClosed()
+{
+  gameActive = false;
+
+  if (gameHandle != NULL)
+  {
+    vTaskDelete(gameHandle);
+    gameHandle = NULL;
   }
 }
 
@@ -623,22 +660,26 @@ void dataCallback(uint8_t *data, int length)
   //   Serial.printf("%02X ", data[i]);
   // }
   // Serial.println();
-  if (length > 5){
-    if (data[0] == 0xAB && data[3] == 0xFF && data[4] == 0xA8){
+  if (length > 5)
+  {
+    if (data[0] == 0xAB && data[3] == 0xFF && data[4] == 0xA8)
+    {
       uint8_t index = data[5];
       String link = "";
-      for (int i = 6; i < length; i++){
+      for (int i = 6; i < length; i++)
+      {
         link += char(data[i]);
       }
       Timber.i("QR data received at index %d", index);
       Timber.i(link);
-      if (index > 0 && index < 9){
+      if (index > 0 && index < 9)
+      {
         qrLinks[index] = link;
       }
-      if (index == 8){
+      if (index == 8)
+      {
         // updateQrLinks();
       }
-      
     }
   }
 }
@@ -735,7 +776,7 @@ void hal_setup()
   lv_obj_scroll_to_y(ui_settingsList, 1, LV_ANIM_ON);
   lv_obj_scroll_to_y(ui_appList, 1, LV_ANIM_ON);
   lv_obj_scroll_to_y(ui_appInfoPanel, 1, LV_ANIM_ON);
-  
+  lv_obj_scroll_to_y(ui_gameList, 1, LV_ANIM_ON);
 
   if (tm > 4)
   {
@@ -782,73 +823,82 @@ void hal_loop()
 {
 
   lv_timer_handler(); /* let the GUI do its work */
-  delay(5);
 
-  watch.loop();
-
-  if (ui_home == ui_clockScreen)
+  if (gameActive)
   {
-    lv_label_set_text(ui_hourLabel, watch.getHourZ().c_str());
-    lv_label_set_text(ui_dayLabel, watch.getTime("%A").c_str());
-    lv_label_set_text(ui_minuteLabel, watch.getTime("%M").c_str());
-    lv_label_set_text(ui_dateLabel, watch.getTime("%d\n%B").c_str());
-    lv_label_set_text(ui_amPmLabel, watch.getAmPmC(false).c_str());
+    // run only game in loop?
+    // ui_games_update(); // not smooth, use separate task instead. see gameLoop()
   }
   else
   {
-    update_faces();
-  }
+    // skip when game running
+    delay(5);
+    watch.loop();
 
-  lv_disp_t *display = lv_disp_get_default();
-  lv_obj_t *actScr = lv_disp_get_scr_act(display);
-  if (actScr != ui_home)
-  {
-  }
-
-  if (actScr == ui_appInfoScreen)
-  {
-    lv_label_set_text_fmt(ui_appBatteryText, "Battery - %d%%", watch.getPhoneBattery());
-    lv_bar_set_value(ui_appBatteryLevel, watch.getPhoneBattery(), LV_ANIM_OFF);
-    if (watch.isPhoneCharging())
+    if (ui_home == ui_clockScreen)
     {
-      lv_img_set_src(ui_appBatteryIcon, &ui_img_battery_plugged_png);
+      lv_label_set_text(ui_hourLabel, watch.getHourZ().c_str());
+      lv_label_set_text(ui_dayLabel, watch.getTime("%A").c_str());
+      lv_label_set_text(ui_minuteLabel, watch.getTime("%M").c_str());
+      lv_label_set_text(ui_dateLabel, watch.getTime("%d\n%B").c_str());
+      lv_label_set_text(ui_amPmLabel, watch.getAmPmC(false).c_str());
     }
     else
     {
-      lv_img_set_src(ui_appBatteryIcon, &ui_img_battery_state_png);
+      update_faces();
     }
-  }
 
-  if (alertTimer.active)
-  {
-    if (alertTimer.time + alertTimer.duration < millis())
+    lv_disp_t *display = lv_disp_get_default();
+    lv_obj_t *actScr = lv_disp_get_scr_act(display);
+    if (actScr != ui_home)
     {
-      alertTimer.active = false;
-      lv_obj_add_flag(ui_alertPanel, LV_OBJ_FLAG_HIDDEN);
     }
-  }
 
-  if (screenTimer.active)
-  {
-    uint8_t lvl = lv_slider_get_value(ui_brightnessSlider);
-    tft.setBrightness(lvl);
-
-    if (screenTimer.duration < 0)
+    if (actScr == ui_appInfoScreen)
     {
-      // Timber.w("Always On active");
-      screenTimer.active = false;
+      lv_label_set_text_fmt(ui_appBatteryText, "Battery - %d%%", watch.getPhoneBattery());
+      lv_bar_set_value(ui_appBatteryLevel, watch.getPhoneBattery(), LV_ANIM_OFF);
+      if (watch.isPhoneCharging())
+      {
+        lv_img_set_src(ui_appBatteryIcon, &ui_img_battery_plugged_png);
+      }
+      else
+      {
+        lv_img_set_src(ui_appBatteryIcon, &ui_img_battery_state_png);
+      }
     }
-    else if (watch.isCameraReady())
-    {
-      screenTimer.active = false;
-    }
-    else if (screenTimer.time + screenTimer.duration < millis())
-    {
-      Timber.w("Screen timeout");
-      screenTimer.active = false;
 
-      tft.setBrightness(0);
-      lv_disp_load_scr(ui_home);
+    if (alertTimer.active)
+    {
+      if (alertTimer.time + alertTimer.duration < millis())
+      {
+        alertTimer.active = false;
+        lv_obj_add_flag(ui_alertPanel, LV_OBJ_FLAG_HIDDEN);
+      }
+    }
+
+    if (screenTimer.active)
+    {
+      uint8_t lvl = lv_slider_get_value(ui_brightnessSlider);
+      tft.setBrightness(lvl);
+
+      if (screenTimer.duration < 0)
+      {
+        // Timber.w("Always On active");
+        screenTimer.active = false;
+      }
+      else if (watch.isCameraReady())
+      {
+        screenTimer.active = false;
+      }
+      else if (screenTimer.time + screenTimer.duration < millis())
+      {
+        Timber.w("Screen timeout");
+        screenTimer.active = false;
+
+        tft.setBrightness(0);
+        lv_disp_load_scr(ui_home);
+      }
     }
   }
 }
@@ -882,7 +932,6 @@ void update_faces()
   int bpm = 76;
   int oxygen = 97;
 
-  ui_update_watchfaces(second, minute, hour, mode, am, day, month, year, weekday, 
-                temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
-
+  ui_update_watchfaces(second, minute, hour, mode, am, day, month, year, weekday,
+                       temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
 }
