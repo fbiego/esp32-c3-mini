@@ -82,8 +82,8 @@ CarP plBuf;
 bool haveCrashed(CarP car1, CarP car2)
 {
     // Calculate the absolute differences in x and y coordinates
-    int dx = abs(car1.x - car2.x);
-    int dy = abs(car1.y - car2.y);
+    int dx = LV_ABS(car1.x - car2.x);
+    int dy = LV_ABS(car1.y - car2.y);
 
     // Check if the differences are less than the minimum required distances
     // x 28  y 58
@@ -540,9 +540,9 @@ void ui_raceScreen_screen_loop()
         }
         if (((int)npcProgress % NPC_CAR_HEIGHT) == 0 && gen)
         {
-            npc1.x = (rand() % 100) + NPC_CAR_X_OFFSET;
+            npc1.x = (lv_rand(0, 99) % 100) + NPC_CAR_X_OFFSET;
             lv_obj_set_x(ui_carNPC1, npc1.x);
-            lv_img_set_src(ui_carNPC1, carIcons[rand() % 3]);
+            lv_img_set_src(ui_carNPC1, carIcons[lv_rand(0, 2) % 3]);
             gen = false;
         }
 
