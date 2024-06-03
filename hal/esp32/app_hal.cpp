@@ -43,16 +43,6 @@
 
 #include <lvgl.h>
 #include "ui/ui.h"
-// #include "faces/34_2_dial/34_2_dial.h"
-// #include "faces/75_2_dial/75_2_dial.h"
-// // #include "faces/79_2_dial/79_2_dial.h"
-// #include "faces/radar/radar.h"
-// // #include "faces/116_2_dial/116_2_dial.h"
-// #include "faces/756_2_dial/756_2_dial.h"
-
-// // #include "faces/tix_resized/tix_resized.h"
-// #include "faces/pixel_resized/pixel_resized.h"
-// #include "faces/smart_resized/smart_resized.h"
 
 #include "main.h"
 
@@ -165,11 +155,7 @@ bool circular = false;
 bool alertSwitch = false;
 bool gameActive = false;
 
-
 TaskHandle_t gameHandle = NULL;
-
-
-String qrLinks[9];
 
 void showAlert();
 bool isDay();
@@ -179,6 +165,7 @@ void hal_setup(void);
 void hal_loop(void);
 
 void update_faces();
+void updateQrLinks();
 
 /* Display flushing */
 void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
@@ -199,8 +186,18 @@ void my_touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
   bool touched;
   uint8_t gesture;
   uint16_t touchX, touchY;
-
-  touched = touch.getTouch(&touchX, &touchY, &gesture);
+  RemoteTouch rt = watch.getTouch(); // remote touch
+  if (rt.state)
+  {
+    // use remote touch when active
+    touched = rt.state;
+    touchX = rt.x;
+    touchY = rt.y;
+  }
+  else
+  {
+    touched = touch.getTouch(&touchX, &touchY, &gesture);
+  }
 
   if (!touched)
   {
@@ -339,6 +336,11 @@ void configCallback(Config config, uint32_t a, uint32_t b)
     Serial.print(" Version: ");
     Serial.println(watch.getAppVersion());
     lv_label_set_text_fmt(ui_appDetailsText, "Chronos app\nv%s (%d)", watch.getAppVersion().c_str(), a);
+    break;
+  case CF_QR:
+    if (a == 1){
+      updateQrLinks();
+    }
     break;
   }
 }
@@ -572,7 +574,7 @@ void updateQrLinks()
   lv_obj_clean(ui_qrPanel);
   for (int i = 0; i < 9; i++)
   {
-    addQrList(i, qrLinks[i].c_str());
+    addQrList(i, watch.getQrAt(i).c_str());
   }
 }
 
@@ -581,7 +583,7 @@ void gameLoop(void *pvParameters)
   for (;;)
   {
     ui_games_update();
-    vTaskDelay(10 / portTICK_PERIOD_MS); 
+    vTaskDelay(10 / portTICK_PERIOD_MS);
   }
 }
 
@@ -660,28 +662,6 @@ void dataCallback(uint8_t *data, int length)
   //   Serial.printf("%02X ", data[i]);
   // }
   // Serial.println();
-  if (length > 5)
-  {
-    if (data[0] == 0xAB && data[3] == 0xFF && data[4] == 0xA8)
-    {
-      uint8_t index = data[5];
-      String link = "";
-      for (int i = 6; i < length; i++)
-      {
-        link += char(data[i]);
-      }
-      Timber.i("QR data received at index %d", index);
-      Timber.i(link);
-      if (index > 0 && index < 9)
-      {
-        qrLinks[index] = link;
-      }
-      if (index == 8)
-      {
-        // updateQrLinks();
-      }
-    }
-  }
 }
 
 void logCallback(Level level, unsigned long time, String message)
@@ -708,7 +688,6 @@ void hal_setup()
   tft.init();
   tft.initDMA();
   tft.startWrite();
-
   touch.begin();
   lv_init();
 
@@ -812,8 +791,6 @@ void hal_setup()
   screenTimer.time = millis();
 
   setTimeout(tm);
-
-  qrLinks[0] = "https://chronos.ke/";
 
   Timber.i("Setup done");
   Timber.i(about);
