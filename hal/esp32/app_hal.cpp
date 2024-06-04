@@ -688,6 +688,7 @@ void hal_setup()
   tft.init();
   tft.initDMA();
   tft.startWrite();
+  tft.fillScreen(TFT_BLACK);
   touch.begin();
   lv_init();
 

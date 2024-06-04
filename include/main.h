@@ -50,6 +50,26 @@
 
 #define BL 3
 
+#elif ESPS3
+
+// touch
+#define I2C_SDA 6
+#define I2C_SCL 7
+#define TP_INT 5
+#define TP_RST 13
+
+// display
+#define SPI SPI2_HOST
+
+#define SCLK 10
+#define MOSI 11
+#define MISO 12
+#define DC 8
+#define CS 9
+#define RST 14
+
+#define BL 2
+
 #else
 
 // touch
