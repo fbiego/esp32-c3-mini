@@ -1,9 +1,10 @@
 # esp32-c3-mini
 A demo LVGL Watch project for ESP32 C3 mini 240*240 touch display development board. Can also be built natively to test the LVGL UI.
 
-## Video
+## Videos
 
 > [`Demo video`](https://youtu.be/u96OkjxC0Ro)
+
 > [`Watchfaces demo`](https://youtu.be/lvRsTp9v6_k)
 
 
@@ -38,11 +39,13 @@ A demo LVGL Watch project for ESP32 C3 mini 240*240 touch display development bo
 
 ## Boards
 
-https://www.aliexpress.com/item/1005006451631422.html
+![Boards](boards.png?raw=true "boards")
 
-https://www.waveshare.com/product/esp32-s3-touch-lcd-1.28.htm
+> C3 Mini: https://www.aliexpress.com/item/1005006451631422.html
 
-https://www.waveshare.com/esp32-s3-touch-lcd-1.69.htm
+> Waveshare S3 1.28: https://www.waveshare.com/product/esp32-s3-touch-lcd-1.28.htm
+
+> Waveshare S3 1.69: https://www.waveshare.com/esp32-s3-touch-lcd-1.69.htm
 
  #### Watchfaces
 

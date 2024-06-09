@@ -2812,6 +2812,16 @@ void ui_watchfaces_init(void)
       init_face_smart_resized(registerWatchface_cb);
       init_face_tix_resized(registerWatchface_cb);
       init_face_wfb_resized(registerWatchface_cb);
+
+      init_face_174(registerWatchface_cb);
+      init_face_228(registerWatchface_cb);
+      init_face_1041(registerWatchface_cb);
+      init_face_1167(registerWatchface_cb);
+      init_face_1169(registerWatchface_cb);
+      init_face_2051(registerWatchface_cb);
+      init_face_2151(registerWatchface_cb);
+      init_face_3589(registerWatchface_cb);
+
 }
 
 void ui_update_watchfaces(int second, int minute, int hour, bool mode, bool am, int day, int month, int year, int weekday,
@@ -2830,6 +2840,15 @@ void ui_update_watchfaces(int second, int minute, int hour, bool mode, bool am, 
       update_check_smart_resized(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
       update_check_tix_resized(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
       update_check_wfb_resized(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
+
+      update_check_174(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
+      update_check_228(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
+      update_check_1041(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
+      update_check_1167(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
+      update_check_1169(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
+      update_check_2051(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
+      update_check_2151(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
+      update_check_3589(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
 }
 
 void ui_games_init(void)
