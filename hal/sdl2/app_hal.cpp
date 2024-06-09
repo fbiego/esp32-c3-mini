@@ -160,7 +160,7 @@ void onCaptureClick(lv_event_t *e)
 
 void setupWeather()
 {
-    lv_obj_set_style_bg_img_src(ui_weatherScreen, &ui_img_753022056, LV_PART_MAIN | LV_STATE_DEFAULT);
+    // lv_obj_set_style_bg_img_src(ui_weatherScreen, &ui_img_753022056, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_clear_flag(ui_weatherPanel, LV_OBJ_FLAG_HIDDEN);
     lv_obj_add_flag(ui_forecastPanel, LV_OBJ_FLAG_HIDDEN);

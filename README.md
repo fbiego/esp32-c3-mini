@@ -3,8 +3,9 @@ A demo LVGL Watch project for ESP32 C3 mini 240*240 touch display development bo
 
 ## Video
 
-[`Demo video`](https://youtu.be/u96OkjxC0Ro)
-[`Watchfaces demo`](https://youtu.be/lvRsTp9v6_k)
+> [`Demo video`](https://youtu.be/u96OkjxC0Ro)
+> [`Watchfaces demo`](https://youtu.be/lvRsTp9v6_k)
+
 
 ## Screens Preview
 
@@ -34,6 +35,14 @@ A demo LVGL Watch project for ESP32 C3 mini 240*240 touch display development bo
 
  The prebuilt native applications have been included in the [`test folder`](test/), however you might still require SDL installed before running them.
 
+
+## Boards
+
+https://www.aliexpress.com/item/1005006451631422.html
+
+https://www.waveshare.com/product/esp32-s3-touch-lcd-1.28.htm
+
+https://www.waveshare.com/esp32-s3-touch-lcd-1.69.htm
 
  #### Watchfaces
 

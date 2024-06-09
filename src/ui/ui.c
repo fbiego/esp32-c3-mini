@@ -1546,12 +1546,14 @@ void ui_clockScreen_screen_init(void)
 {
       ui_clockScreen = lv_obj_create(NULL);
       lv_obj_clear_flag(ui_clockScreen, LV_OBJ_FLAG_SCROLLABLE); /// Flags
-      lv_obj_set_style_radius(ui_clockScreen, 120, LV_PART_MAIN | LV_STATE_DEFAULT);
-      lv_obj_set_style_bg_img_src(ui_clockScreen, &ui_img_753022056, LV_PART_MAIN | LV_STATE_DEFAULT);
-      lv_obj_set_style_outline_color(ui_clockScreen, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
-      lv_obj_set_style_outline_opa(ui_clockScreen, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-      lv_obj_set_style_outline_width(ui_clockScreen, 55, LV_PART_MAIN | LV_STATE_DEFAULT);
-      lv_obj_set_style_outline_pad(ui_clockScreen, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_bg_color(ui_clockScreen, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_bg_opa(ui_clockScreen, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+      // lv_obj_set_style_radius(ui_clockScreen, 120, LV_PART_MAIN | LV_STATE_DEFAULT);
+      // lv_obj_set_style_bg_img_src(ui_clockScreen, &ui_img_753022056, LV_PART_MAIN | LV_STATE_DEFAULT);
+      // lv_obj_set_style_outline_color(ui_clockScreen, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+      // lv_obj_set_style_outline_opa(ui_clockScreen, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+      // lv_obj_set_style_outline_width(ui_clockScreen, 55, LV_PART_MAIN | LV_STATE_DEFAULT);
+      // lv_obj_set_style_outline_pad(ui_clockScreen, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
 
       ui_hourLabel = lv_label_create(ui_clockScreen);
       lv_obj_set_width(ui_hourLabel, 151);
@@ -1661,19 +1663,19 @@ void ui_weatherScreen_screen_init(void)
 {
       ui_weatherScreen = lv_obj_create(NULL);
       lv_obj_clear_flag(ui_weatherScreen, LV_OBJ_FLAG_SCROLLABLE); /// Flags
-      lv_obj_set_style_radius(ui_weatherScreen, 120, LV_PART_MAIN | LV_STATE_DEFAULT);
+      // lv_obj_set_style_radius(ui_weatherScreen, 120, LV_PART_MAIN | LV_STATE_DEFAULT);
       lv_obj_set_style_bg_color(ui_weatherScreen, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
       lv_obj_set_style_bg_opa(ui_weatherScreen, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-      lv_obj_set_style_bg_img_src(ui_weatherScreen, &ui_img_857483832, LV_PART_MAIN | LV_STATE_DEFAULT);
-      lv_obj_set_style_bg_img_opa(ui_weatherScreen, 150, LV_PART_MAIN | LV_STATE_DEFAULT);
-      lv_obj_set_style_outline_color(ui_weatherScreen, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
-      lv_obj_set_style_outline_opa(ui_weatherScreen, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-      lv_obj_set_style_outline_width(ui_weatherScreen, 55, LV_PART_MAIN | LV_STATE_DEFAULT);
-      lv_obj_set_style_outline_pad(ui_weatherScreen, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      // lv_obj_set_style_bg_img_src(ui_weatherScreen, &ui_img_857483832, LV_PART_MAIN | LV_STATE_DEFAULT);
+      // lv_obj_set_style_bg_img_opa(ui_weatherScreen, 150, LV_PART_MAIN | LV_STATE_DEFAULT);
+      // lv_obj_set_style_outline_color(ui_weatherScreen, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+      // lv_obj_set_style_outline_opa(ui_weatherScreen, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+      // lv_obj_set_style_outline_width(ui_weatherScreen, 55, LV_PART_MAIN | LV_STATE_DEFAULT);
+      // lv_obj_set_style_outline_pad(ui_weatherScreen, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
 
       ui_weatherPanel = lv_obj_create(ui_weatherScreen);
-      lv_obj_set_width(ui_weatherPanel, 240);
-      lv_obj_set_height(ui_weatherPanel, 240);
+      lv_obj_set_width(ui_weatherPanel, lv_pct(100));
+      lv_obj_set_height(ui_weatherPanel, lv_pct(100));
       lv_obj_set_align(ui_weatherPanel, LV_ALIGN_CENTER);
       lv_obj_add_flag(ui_weatherPanel, LV_OBJ_FLAG_HIDDEN);       /// Flags
       lv_obj_clear_flag(ui_weatherPanel, LV_OBJ_FLAG_SCROLLABLE); /// Flags
@@ -1721,9 +1723,9 @@ void ui_weatherScreen_screen_init(void)
       lv_obj_set_style_text_align(ui_weatherUpdateTime, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
 
       ui_forecastPanel = lv_obj_create(ui_weatherScreen);
-      lv_obj_set_width(ui_forecastPanel, 240);
-      lv_obj_set_height(ui_forecastPanel, 240);
-      lv_obj_set_style_radius(ui_forecastPanel, 120, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_width(ui_forecastPanel, lv_pct(100));
+      lv_obj_set_height(ui_forecastPanel, lv_pct(100));
+      // lv_obj_set_style_radius(ui_forecastPanel, 120, LV_PART_MAIN | LV_STATE_DEFAULT);
       lv_obj_set_align(ui_forecastPanel, LV_ALIGN_CENTER);
       lv_obj_set_scrollbar_mode(ui_forecastPanel, LV_SCROLLBAR_MODE_OFF);
       lv_obj_set_scroll_dir(ui_forecastPanel, LV_DIR_VER);
@@ -1777,8 +1779,8 @@ void ui_appListScreen_screen_init(void)
       lv_obj_set_style_bg_opa(ui_appListScreen, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
       ui_appList = lv_obj_create(ui_appListScreen);
-      lv_obj_set_width(ui_appList, 240);
-      lv_obj_set_height(ui_appList, 240);
+      lv_obj_set_width(ui_appList, lv_pct(100));
+      lv_obj_set_height(ui_appList, lv_pct(100));
       lv_obj_set_align(ui_appList, LV_ALIGN_TOP_MID);
       lv_obj_set_flex_flow(ui_appList, LV_FLEX_FLOW_COLUMN);
       lv_obj_set_flex_align(ui_appList, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
@@ -1814,8 +1816,8 @@ void ui_gameListScreen_screen_init(void)
       lv_obj_set_style_bg_opa(ui_gameListScreen, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
       ui_gameList = lv_obj_create(ui_gameListScreen);
-      lv_obj_set_width(ui_gameList, 240);
-      lv_obj_set_height(ui_gameList, 240);
+      lv_obj_set_width(ui_gameList, lv_pct(100));
+      lv_obj_set_height(ui_gameList, lv_pct(100));
       lv_obj_set_align(ui_gameList, LV_ALIGN_TOP_MID);
       lv_obj_set_flex_flow(ui_gameList, LV_FLEX_FLOW_COLUMN);
       lv_obj_set_flex_align(ui_gameList, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
@@ -1842,8 +1844,8 @@ void ui_notificationScreen_screen_init(void)
       lv_obj_set_style_bg_opa(ui_notificationScreen, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
       ui_messagePanel = lv_obj_create(ui_notificationScreen);
-      lv_obj_set_width(ui_messagePanel, 240);
-      lv_obj_set_height(ui_messagePanel, 240);
+      lv_obj_set_width(ui_messagePanel, lv_pct(100));
+      lv_obj_set_height(ui_messagePanel, lv_pct(100));
       lv_obj_set_align(ui_messagePanel, LV_ALIGN_TOP_MID);
       lv_obj_set_flex_flow(ui_messagePanel, LV_FLEX_FLOW_COLUMN);
       lv_obj_set_flex_align(ui_messagePanel, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
@@ -1879,8 +1881,8 @@ void ui_notificationScreen_screen_init(void)
       lv_label_set_text(ui_messageContent, "Download from Google Play to sync time and receive notifications");
 
       ui_messageList = lv_obj_create(ui_notificationScreen);
-      lv_obj_set_width(ui_messageList, 240);
-      lv_obj_set_height(ui_messageList, 240);
+      lv_obj_set_width(ui_messageList, lv_pct(100));
+      lv_obj_set_height(ui_messageList, lv_pct(100));
       lv_obj_set_align(ui_messageList, LV_ALIGN_TOP_MID);
       lv_obj_set_flex_flow(ui_messageList, LV_FLEX_FLOW_COLUMN);
       lv_obj_set_flex_align(ui_messageList, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
@@ -1910,8 +1912,8 @@ void ui_settingsScreen_screen_init(void)
       lv_obj_set_style_bg_opa(ui_settingsScreen, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
       ui_settingsList = lv_obj_create(ui_settingsScreen);
-      lv_obj_set_width(ui_settingsList, 240);
-      lv_obj_set_height(ui_settingsList, 240);
+      lv_obj_set_width(ui_settingsList, lv_pct(100));
+      lv_obj_set_height(ui_settingsList, lv_pct(100));
       lv_obj_set_align(ui_settingsList, LV_ALIGN_TOP_MID);
       lv_obj_set_flex_flow(ui_settingsList, LV_FLEX_FLOW_COLUMN);
       lv_obj_set_flex_align(ui_settingsList, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
@@ -2408,8 +2410,8 @@ void ui_appInfoScreen_screen_init(void)
       lv_obj_set_style_bg_opa(ui_appInfoScreen, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
       ui_appInfoPanel = lv_obj_create(ui_appInfoScreen);
-      lv_obj_set_width(ui_appInfoPanel, 240);
-      lv_obj_set_height(ui_appInfoPanel, 240);
+      lv_obj_set_width(ui_appInfoPanel, lv_pct(100));
+      lv_obj_set_height(ui_appInfoPanel, lv_pct(100));
       lv_obj_set_align(ui_appInfoPanel, LV_ALIGN_CENTER);
       lv_obj_set_flex_flow(ui_appInfoPanel, LV_FLEX_FLOW_COLUMN);
       lv_obj_set_flex_align(ui_appInfoPanel, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
@@ -2604,8 +2606,8 @@ void ui_cameraScreen_screen_init()
       lv_obj_set_style_bg_opa(ui_cameraScreen, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
       ui_cameraPanel = lv_obj_create(ui_cameraScreen);
-      lv_obj_set_width(ui_cameraPanel, 240);
-      lv_obj_set_height(ui_cameraPanel, 240);
+      lv_obj_set_width(ui_cameraPanel, lv_pct(100));
+      lv_obj_set_height(ui_cameraPanel, lv_pct(100));
       lv_obj_set_align(ui_cameraPanel, LV_ALIGN_CENTER);
       lv_obj_clear_flag(ui_cameraPanel, LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SCROLLABLE); /// Flags
       lv_obj_set_style_bg_color(ui_cameraPanel, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -2677,8 +2679,8 @@ void ui_qrScreen_screen_init(void)
       lv_obj_clear_flag(ui_qrScreen, LV_OBJ_FLAG_SCROLLABLE); /// Flags
 
       ui_qrPanel = lv_obj_create(ui_qrScreen);
-      lv_obj_set_width(ui_qrPanel, 240);
-      lv_obj_set_height(ui_qrPanel, 240);
+      lv_obj_set_width(ui_qrPanel, lv_pct(100));
+      lv_obj_set_height(ui_qrPanel, lv_pct(100));
       lv_obj_set_align(ui_qrPanel, LV_ALIGN_CENTER);
       lv_obj_set_flex_flow(ui_qrPanel, LV_FLEX_FLOW_ROW);
       lv_obj_set_flex_align(ui_qrPanel, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
@@ -2844,8 +2846,8 @@ void ui_games_update(void)
 void ui_errorWindow_init(void)
 {
       ui_errorWindow = lv_obj_create(ui_clockScreen);
-      lv_obj_set_width(ui_errorWindow, 240);
-      lv_obj_set_height(ui_errorWindow, 240);
+      lv_obj_set_width(ui_errorWindow, lv_pct(100));
+      lv_obj_set_height(ui_errorWindow, lv_pct(100));
       lv_obj_set_align(ui_errorWindow, LV_ALIGN_CENTER);
       lv_obj_set_scrollbar_mode(ui_errorWindow, LV_SCROLLBAR_MODE_OFF);
       lv_obj_add_flag(ui_errorWindow, LV_OBJ_FLAG_HIDDEN );   /// Flags

@@ -89,18 +89,18 @@ public:
 
       // ※ 以下の設定値はパネル毎に一般的な初期値が設定さ BUSYが接続されているピン番号 (-1 = disable)れていますので、不明な項目はコメントアウトして試してみてください。
 
-      cfg.memory_width = 240;   // ドライバICがサポートしている最大の幅
-      cfg.memory_height = 240;  // ドライバICがサポートしている最大の高さ
-      cfg.panel_width = 240;    // 実際に表示可能な幅
-      cfg.panel_height = 240;   // 実際に表示可能な高さ
-      cfg.offset_x = 0;         // パネルのX方向オフセット量
-      cfg.offset_y = 0;         // パネルのY方向オフセット量
+      cfg.memory_width = WIDTH;   // ドライバICがサポートしている最大の幅
+      cfg.memory_height = HEIGHT;  // ドライバICがサポートしている最大の高さ
+      cfg.panel_width = WIDTH;    // 実際に表示可能な幅
+      cfg.panel_height = HEIGHT;   // 実際に表示可能な高さ
+      cfg.offset_x = OFFSET_X;         // パネルのX方向オフセット量
+      cfg.offset_y = OFFSET_Y;         // パネルのY方向オフセット量
       cfg.offset_rotation = 0;  // 值在旋转方向的偏移0~7（4~7是倒置的）
       cfg.dummy_read_pixel = 8; // 在读取像素之前读取的虚拟位数
       cfg.dummy_read_bits = 1;  // 读取像素以外的数据之前的虚拟读取位数
       cfg.readable = false;     // 如果可以读取数据，则设置为 true
       cfg.invert = true;        // 如果面板的明暗反转，则设置为 true
-      cfg.rgb_order = false;    // 如果面板的红色和蓝色被交换，则设置为 true
+      cfg.rgb_order = RGB_ORDER;    // 如果面板的红色和蓝色被交换，则设置为 true
       cfg.dlen_16bit = false;   // 对于以 16 位单位发送数据长度的面板，设置为 true
       cfg.bus_shared = false;   // 如果总线与 SD 卡共享，则设置为 true（使用 drawJpgFile 等执行总线控制）
 
@@ -137,8 +137,8 @@ CST816D touch(I2C_SDA, I2C_SCL, TP_RST, TP_INT);
 ChronosESP32 watch("Chronos C3");
 Preferences prefs;
 
-static const uint32_t screenWidth = 240;
-static const uint32_t screenHeight = 240;
+static const uint32_t screenWidth = WIDTH;
+static const uint32_t screenHeight = HEIGHT;
 
 static lv_disp_draw_buf_t draw_buf;
 static lv_color_t buf[2][screenWidth * buf_size];
@@ -423,14 +423,14 @@ void onWeatherLoad(lv_event_t *e)
   }
   weatherUpdate = false;
 
-  if (isDay())
-  {
-    lv_obj_set_style_bg_img_src(ui_weatherScreen, &ui_img_857483832, LV_PART_MAIN | LV_STATE_DEFAULT);
-  }
-  else
-  {
-    lv_obj_set_style_bg_img_src(ui_weatherScreen, &ui_img_753022056, LV_PART_MAIN | LV_STATE_DEFAULT);
-  }
+  // if (isDay())
+  // {
+  //   lv_obj_set_style_bg_img_src(ui_weatherScreen, &ui_img_857483832, LV_PART_MAIN | LV_STATE_DEFAULT);
+  // }
+  // else
+  // {
+  //   lv_obj_set_style_bg_img_src(ui_weatherScreen, &ui_img_753022056, LV_PART_MAIN | LV_STATE_DEFAULT);
+  // }
   lv_obj_clear_flag(ui_weatherPanel, LV_OBJ_FLAG_HIDDEN);
   lv_obj_add_flag(ui_forecastPanel, LV_OBJ_FLAG_HIDDEN);
   if (watch.getWeatherCount() > 0)

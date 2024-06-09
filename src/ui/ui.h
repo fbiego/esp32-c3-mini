@@ -213,10 +213,10 @@ extern "C"
     void ui_games_update(void);
     void showError(const char *title, const char *message);
 
-    LV_IMG_DECLARE(ui_img_753022056);      // assets\night-sky.png
+    // LV_IMG_DECLARE(ui_img_753022056);      // assets\night-sky.png
     LV_IMG_DECLARE(ui_img_602195540);      // assets\dy-6.png
     LV_IMG_DECLARE(ui_img_wechat_png);     // assets\wechat.png
-    LV_IMG_DECLARE(ui_img_857483832);      // assets\day-sky.png
+    // LV_IMG_DECLARE(ui_img_857483832);      // assets\day-sky.png
     LV_IMG_DECLARE(ui_img_602206286);      // assets\dy-0.png
     LV_IMG_DECLARE(ui_img_chrns_png);      // assets\chrns.png
     LV_IMG_DECLARE(ui_img_brightness_png); // assets\brightness.png
