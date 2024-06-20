@@ -213,27 +213,6 @@ extern "C"
     void ui_games_update(void);
     void showError(const char *title, const char *message);
 
-    // Required Watch face declarations.
-
-    void init_face_174(void (*registerWatchface_cb)());
-    void init_face_228(void (*registerWatchface_cb)());
-    void init_face_1041(void (*registerWatchface_cb)());
-    void init_face_1167(void (*registerWatchface_cb)());
-    void init_face_1169(void (*registerWatchface_cb)());
-    void init_face_2051(void (*registerWatchface_cb)());
-    void init_face_2151(void (*registerWatchface_cb)());
-    void init_face_3589(void (*registerWatchface_cb)());
-
-    void update_check_174(lv_obj_t *ui_home, int second, int minute, int hour, int mode, int am, int day, int month, int year, int weekday, float temp, int icon, int battery, int connection, int steps, float distance, int kcal, int bpm, int oxygen);
-    void update_check_228(lv_obj_t *ui_home, int second, int minute, int hour, int mode, int am, int day, int month, int year, int weekday, float temp, int icon, int battery, int connection, int steps, float distance, int kcal, int bpm, int oxygen);
-    void update_check_1041(lv_obj_t *ui_home, int second, int minute, int hour, int mode, int am, int day, int month, int year, int weekday, float temp, int icon, int battery, int connection, int steps, float distance, int kcal, int bpm, int oxygen);
-    void update_check_1167(lv_obj_t *ui_home, int second, int minute, int hour, int mode, int am, int day, int month, int year, int weekday, float temp, int icon, int battery, int connection, int steps, float distance, int kcal, int bpm, int oxygen);
-    void update_check_1169(lv_obj_t *ui_home, int second, int minute, int hour, int mode, int am, int day, int month, int year, int weekday, float temp, int icon, int battery, int connection, int steps, float distance, int kcal, int bpm, int oxygen);
-    void update_check_2051(lv_obj_t *ui_home, int second, int minute, int hour, int mode, int am, int day, int month, int year, int weekday, float temp, int icon, int battery, int connection, int steps, float distance, int kcal, int bpm, int oxygen);
-    void update_check_2151(lv_obj_t *ui_home, int second, int minute, int hour, int mode, int am, int day, int month, int year, int weekday, float temp, int icon, int battery, int connection, int steps, float distance, int kcal, int bpm, int oxygen);
-    void update_check_3589(lv_obj_t *ui_home, int second, int minute, int hour, int mode, int am, int day, int month, int year, int weekday, float temp, int icon, int battery, int connection, int steps, float distance, int kcal, int bpm, int oxygen);
-
-
     // LV_IMG_DECLARE(ui_img_753022056);      // assets\night-sky.png
     LV_IMG_DECLARE(ui_img_602195540);      // assets\dy-6.png
     LV_IMG_DECLARE(ui_img_wechat_png);     // assets\wechat.png
