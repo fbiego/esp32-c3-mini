@@ -19,6 +19,15 @@
 #include "./faces/tix_resized/tix_resized.h"
 #include "./faces/wfb_resized/wfb_resized.h"
 
+#include "./faces/174/174.h"
+#include "./faces/228/228.h"
+#include "./faces/1041/1041.h"
+#include "./faces/1167/1167.h"
+#include "./faces/1169/1169.h"
+#include "./faces/2051/2051.h"
+#include "./faces/2151/2151.h"
+#include "./faces/3589/3589.h"
+
 ///////////////////// VARIABLES ////////////////////
 void pulseCall_Animation(lv_obj_t *TargetObject, int delay);
 void ui_event_clockScreen(lv_event_t *e);
