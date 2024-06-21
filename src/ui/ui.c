@@ -5,7 +5,6 @@
 
 #include "ui.h"
 #include "ui_helpers.h"
-#include "app_hal.h"
 
 #include "./faces/34_2_dial/34_2_dial.h"
 #include "./faces/75_2_dial/75_2_dial.h"
@@ -19,6 +18,15 @@
 #include "./faces/smart_resized/smart_resized.h"
 #include "./faces/tix_resized/tix_resized.h"
 #include "./faces/wfb_resized/wfb_resized.h"
+
+#include "./faces/174/174.h"
+#include "./faces/228/228.h"
+#include "./faces/1041/1041.h"
+#include "./faces/1167/1167.h"
+#include "./faces/1169/1169.h"
+#include "./faces/2051/2051.h"
+#include "./faces/2151/2151.h"
+#include "./faces/3589/3589.h"
 
 ///////////////////// VARIABLES ////////////////////
 void pulseCall_Animation(lv_obj_t *TargetObject, int delay);
@@ -2800,134 +2808,56 @@ void ui_watchfaces_init(void)
       numFaces = 0;
       registerWatchface_cb("Default", &digital_preview, &ui_clockScreen); // register the default watchface
 
-      // Register other watchfaces by initializing them and passing the register callback
-#ifdef ENABLE_FACE_34_2_DIAL
+      // register other watchfaces by initializing them and passing the register callback
       init_face_34_2_dial(registerWatchface_cb);
-#endif
-#ifdef ENABLE_FACE_75_2_DIAL
       init_face_75_2_dial(registerWatchface_cb);
-#endif
-#ifdef ENABLE_FACE_79_2_DIAL
       init_face_79_2_dial(registerWatchface_cb);
-#endif
-#ifdef ENABLE_FACE_116_2_DIAL
       init_face_116_2_dial(registerWatchface_cb);
-#endif
-#ifdef ENABLE_FACE_756_2_DIAL
       init_face_756_2_dial(registerWatchface_cb);
-#endif
-#ifdef ENABLE_FACE_B_W_RESIZED
       init_face_b_w_resized(registerWatchface_cb);
-#endif
-#ifdef ENABLE_FACE_KENYA
       init_face_kenya(registerWatchface_cb);
-#endif
-#ifdef ENABLE_FACE_PIXEL_RESIZED
       init_face_pixel_resized(registerWatchface_cb);
-#endif
-#ifdef ENABLE_FACE_RADAR
       init_face_radar(registerWatchface_cb);
-#endif
-#ifdef ENABLE_FACE_SMART_RESIZED
       init_face_smart_resized(registerWatchface_cb);
-#endif
-#ifdef ENABLE_FACE_TIX_RESIZED
       init_face_tix_resized(registerWatchface_cb);
-#endif
-#ifdef ENABLE_FACE_WFB_RESIZED
       init_face_wfb_resized(registerWatchface_cb);
-#endif
 
-#ifdef ENABLE_FACE_174
       init_face_174(registerWatchface_cb);
-#endif
-#ifdef ENABLE_FACE_228
       init_face_228(registerWatchface_cb);
-#endif
-#ifdef ENABLE_FACE_1041
       init_face_1041(registerWatchface_cb);
-#endif
-#ifdef ENABLE_FACE_1167
       init_face_1167(registerWatchface_cb);
-#endif
-#ifdef ENABLE_FACE_1169
       init_face_1169(registerWatchface_cb);
-#endif
-#ifdef ENABLE_FACE_2051
       init_face_2051(registerWatchface_cb);
-#endif
-#ifdef ENABLE_FACE_2151
       init_face_2151(registerWatchface_cb);
-#endif
-#ifdef ENABLE_FACE_3589
       init_face_3589(registerWatchface_cb);
-#endif
+
 }
 
 void ui_update_watchfaces(int second, int minute, int hour, bool mode, bool am, int day, int month, int year, int weekday,
                           int temp, int icon, int battery, bool connection, int steps, int distance, int kcal, int bpm, int oxygen)
 {
-#ifdef ENABLE_FACE_34_2_DIAL
-      update_check_34_2_dial(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
-#endif
-#ifdef ENABLE_FACE_75_2_DIAL
-      update_check_75_2_dial(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
-#endif
-#ifdef ENABLE_FACE_79_2_DIAL
-      update_check_79_2_dial(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
-#endif
-#ifdef ENABLE_FACE_116_2_DIAL
-      update_check_116_2_dial(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
-#endif
-#ifdef ENABLE_FACE_756_2_DIAL
-      update_check_756_2_dial(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
-#endif
-#ifdef ENABLE_FACE_B_W_RESIZED
-      update_check_b_w_resized(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
-#endif
-#ifdef ENABLE_FACE_KENYA
-      update_check_kenya(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
-#endif
-#ifdef ENABLE_FACE_PIXEL_RESIZED
-      update_check_pixel_resized(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
-#endif
-#ifdef ENABLE_FACE_RADAR
-      update_check_radar(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
-#endif
-#ifdef ENABLE_FACE_SMART_RESIZED
-      update_check_smart_resized(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
-#endif
-#ifdef ENABLE_FACE_TIX_RESIZED
-      update_check_tix_resized(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
-#endif
-#ifdef ENABLE_FACE_WFB_RESIZED
-      update_check_wfb_resized(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
-#endif
 
-#ifdef ENABLE_FACE_174
+      update_check_34_2_dial(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
+      update_check_75_2_dial(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
+      update_check_79_2_dial(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
+      update_check_116_2_dial(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
+      update_check_756_2_dial(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
+      update_check_b_w_resized(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
+      update_check_kenya(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
+      update_check_pixel_resized(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
+      update_check_radar(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
+      update_check_smart_resized(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
+      update_check_tix_resized(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
+      update_check_wfb_resized(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
+
       update_check_174(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
-#endif
-#ifdef ENABLE_FACE_228
       update_check_228(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
-#endif
-#ifdef ENABLE_FACE_1041
       update_check_1041(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
-#endif
-#ifdef ENABLE_FACE_1167
       update_check_1167(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
-#endif
-#ifdef ENABLE_FACE_1169
       update_check_1169(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
-#endif
-#ifdef ENABLE_FACE_2051
       update_check_2051(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
-#endif
-#ifdef ENABLE_FACE_2151
       update_check_2151(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
-#endif
-#ifdef ENABLE_FACE_3589
       update_check_3589(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
-#endif
 }
 
 void ui_games_init(void)
