@@ -18,6 +18,7 @@ void onNotificationsOpen(lv_event_t * e);
 void onBrightnessChange(lv_event_t * e);
 void onScrollMode(lv_event_t * e);
 void onTimeoutChange(lv_event_t * e);
+void onLanguageChange(lv_event_t * e);
 void onBatteryChange(lv_event_t * e);
 void onEndSearch(lv_event_t * e);
 void onMusicPlay(lv_event_t * e);
@@ -29,6 +30,7 @@ void onVolumeUp(lv_event_t * e);
 void onVolumeDown(lv_event_t * e);
 void onAlertState(lv_event_t *e);
 void onFaceSelected(lv_event_t *e);
+void onCustomFaceSelected(int pathIndex);
 void onMessageClick(lv_event_t *e);
 void onCaptureClick(lv_event_t *e);
 

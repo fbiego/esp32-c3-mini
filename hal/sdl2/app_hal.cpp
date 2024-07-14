@@ -128,13 +128,23 @@ void onAutoNavigation(lv_event_t *e) {}
 
 void onAlertState(lv_event_t *e) {}
 
+void onLanguageChange(lv_event_t *e)
+{
+
+}
+
+
 void onWatchfaceChange(lv_event_t *e) {}
 
 void onFaceSelected(lv_event_t *e) {}
 
+void onCustomFaceSelected(int pathIndex) {}
+
 void onGameOpened(){}
 
 void onGameClosed(){}
+
+bool loadCustomFace(const char *file) {}
 
 void onMessageClick(lv_event_t *e)
 {
@@ -197,6 +207,22 @@ void setupNotifications()
     lv_obj_add_flag(ui_messagePanel, LV_OBJ_FLAG_HIDDEN);
 }
 
+void setupFiles()
+{
+
+    // addListDrive("C:/", 16777216, 8456213);
+    // addListDrive("D:/", 6456326, 456213);
+
+    addListDir("watchface");
+    addListDir("extracted");
+    addListDir("bluetooth");
+
+    addListFile("kenya.bin", 152453);
+    addListFile("kenya.wf", 453);
+    addListFile("list.txt", 2453);
+}
+
+
 void hal_setup(void)
 {
 // Workaround for sdl2 `-m32` crash
@@ -238,6 +264,8 @@ void hal_setup(void)
 
     setupNotifications();
     setupWeather();
+
+    setupFiles();
 
     // int wf = 4; // load watchface 4
     // if (wf >= numFaces)

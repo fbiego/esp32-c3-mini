@@ -33,19 +33,26 @@
 #define LGFX_USE_V1
 #include "Arduino.h"
 #include <LovyanGFX.hpp>
-#include "CST816D.h"
 #include <ESP32Time.h>
 #include <NimBLEDevice.h>
 #include <ChronosESP32.h>
 #include <Timber.h>
 #include <Preferences.h>
+#include <ArduinoJson.h>
 #include "app_hal.h"
 
 #include <lvgl.h>
 #include "ui/ui.h"
 
+#include "ui/custom_face.h"
+
 #include "main.h"
 
+#include "FS.h"
+#include "FFat.h"
+
+#define FLASH FFat
+#define F_NAME "FATFS"
 #define buf_size 10
 
 class LGFX : public lgfx::LGFX_Device
@@ -54,6 +61,7 @@ class LGFX : public lgfx::LGFX_Device
   lgfx::Panel_GC9A01 _panel_instance;
   lgfx::Light_PWM _light_instance;
   lgfx::Bus_SPI _bus_instance;
+  lgfx::Touch_CST816S _touch_instance;
 
 public:
   LGFX(void)
@@ -90,19 +98,19 @@ public:
       // ※ 以下の設定値はパネル毎に一般的な初期値が設定さ BUSYが接続されているピン番号 (-1 = disable)れていますので、不明な項目はコメントアウトして試してみてください。
 
       cfg.memory_width = WIDTH;   // ドライバICがサポートしている最大の幅
-      cfg.memory_height = HEIGHT;  // ドライバICがサポートしている最大の高さ
+      cfg.memory_height = HEIGHT; // ドライバICがサポートしている最大の高さ
       cfg.panel_width = WIDTH;    // 実際に表示可能な幅
-      cfg.panel_height = HEIGHT;   // 実際に表示可能な高さ
-      cfg.offset_x = OFFSET_X;         // パネルのX方向オフセット量
-      cfg.offset_y = OFFSET_Y;         // パネルのY方向オフセット量
-      cfg.offset_rotation = 0;  // 值在旋转方向的偏移0~7（4~7是倒置的）
-      cfg.dummy_read_pixel = 8; // 在读取像素之前读取的虚拟位数
-      cfg.dummy_read_bits = 1;  // 读取像素以外的数据之前的虚拟读取位数
-      cfg.readable = false;     // 如果可以读取数据，则设置为 true
-      cfg.invert = true;        // 如果面板的明暗反转，则设置为 true
-      cfg.rgb_order = RGB_ORDER;    // 如果面板的红色和蓝色被交换，则设置为 true
-      cfg.dlen_16bit = false;   // 对于以 16 位单位发送数据长度的面板，设置为 true
-      cfg.bus_shared = false;   // 如果总线与 SD 卡共享，则设置为 true（使用 drawJpgFile 等执行总线控制）
+      cfg.panel_height = HEIGHT;  // 実際に表示可能な高さ
+      cfg.offset_x = OFFSET_X;    // パネルのX方向オフセット量
+      cfg.offset_y = OFFSET_Y;    // パネルのY方向オフセット量
+      cfg.offset_rotation = 0;    // 值在旋转方向的偏移0~7（4~7是倒置的）
+      cfg.dummy_read_pixel = 8;   // 在读取像素之前读取的虚拟位数
+      cfg.dummy_read_bits = 1;    // 读取像素以外的数据之前的虚拟读取位数
+      cfg.readable = false;       // 如果可以读取数据，则设置为 true
+      cfg.invert = true;          // 如果面板的明暗反转，则设置为 true
+      cfg.rgb_order = RGB_ORDER;  // 如果面板的红色和蓝色被交换，则设置为 true
+      cfg.dlen_16bit = false;     // 对于以 16 位单位发送数据长度的面板，设置为 true
+      cfg.bus_shared = false;     // 如果总线与 SD 卡共享，则设置为 true（使用 drawJpgFile 等执行总线控制）
 
       _panel_instance.config(cfg);
     }
@@ -119,21 +127,33 @@ public:
       _panel_instance.setLight(&_light_instance); // Sets the backlight to the panel.
     }
 
+    { // タッチスクリーン制御の設定を行います。（必要なければ削除）
+      auto cfg = _touch_instance.config();
+
+      cfg.x_min = 0;        // タッチスクリーンから得られる最小のX値(生の値)
+      cfg.x_max = WIDTH;    // タッチスクリーンから得られる最大のX値(生の値)
+      cfg.y_min = 0;        // タッチスクリーンから得られる最小のY値(生の値)
+      cfg.y_max = HEIGHT;   // タッチスクリーンから得られる最大のY値(生の値)
+      cfg.pin_int = TP_INT; // INTが接続されているピン番号
+      // cfg.pin_rst = TP_RST;
+      cfg.bus_shared = false;  // 画面と共通のバスを使用している場合 trueを設定
+      cfg.offset_rotation = 0; // 表示とタッチの向きのが一致しない場合の調整 0~7の値で設定
+      cfg.i2c_port = 0;        // 使用するI2Cを選択 (0 or 1)
+      cfg.i2c_addr = 0x15;     // I2Cデバイスアドレス番号
+      cfg.pin_sda = I2C_SDA;   // SDAが接続されているピン番号
+      cfg.pin_scl = I2C_SCL;   // SCLが接続されているピン番号
+      cfg.freq = 400000;       // I2Cクロックを設定
+
+      _touch_instance.config(cfg);
+      _panel_instance.setTouch(&_touch_instance); // タッチスクリーンをパネルにセットします。
+    }
+
     setPanel(&_panel_instance); // 使用するパネルをセットします。
-                                //    { // バックライト制御の設定を行います。(必要なければ削除）
-                                //    auto cfg = _light_instance.config();// バックライト設定用の構造体を取得します。
-                                //    cfg.pin_bl = 8;             // バックライトが接続されているピン番号 BL
-                                //    cfg.invert = false;          // バックライトの輝度を反転させる場合 true
-                                //    cfg.freq   = 44100;          // バックライトのPWM周波数
-                                //    cfg.pwm_channel = 7;         // 使用するPWMのチャンネル番号
-                                //    _light_instance.config(cfg);
-                                //    _panel_instance.setLight(&_light_instance);//バックライトをパネルにセットします。
-                                //    }
   }
 };
 
 LGFX tft;
-CST816D touch(I2C_SDA, I2C_SCL, TP_RST, TP_INT);
+
 ChronosESP32 watch("Chronos C3");
 Preferences prefs;
 
@@ -155,6 +175,21 @@ bool circular = false;
 bool alertSwitch = false;
 bool gameActive = false;
 
+String customFacePaths[15];
+int customFaceIndex;
+
+// watchface transfer
+int cSize, pos, recv;
+uint32_t total, currentRecv;
+bool last;
+String fName;
+uint8_t buf1[1024];
+uint8_t buf2[1024];
+static bool writeFile = false, transfer = false, wSwitch = true;
+static int wLen1 = 0, wLen2 = 0;
+bool start = false;
+int lastCustom;
+
 TaskHandle_t gameHandle = NULL;
 
 void showAlert();
@@ -166,6 +201,22 @@ void hal_loop(void);
 
 void update_faces();
 void updateQrLinks();
+
+void flashDrive_cb(lv_event_t *e);
+void driveList_cb(lv_event_t *e);
+
+void checkLocal();
+void registerWatchface_cb(const char *name, const lv_img_dsc_t *preview, lv_obj_t **watchface);
+void registerCustomFace(const char *name, const lv_img_dsc_t *preview, lv_obj_t **watchface, String path);
+
+String hexString(uint8_t *arr, size_t len, bool caps = false, String separator = "");
+
+bool loadCustomFace(String file);
+bool deleteCustomFace(String file);
+bool readDialBytes(const char *path, uint8_t *data, size_t offset, size_t size);
+bool isKnown(uint8_t id);
+void parseDial(const char *path);
+bool lvImgHeader(uint8_t *byteArray, uint8_t cf, uint16_t w, uint16_t h);
 
 /* Display flushing */
 void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
@@ -196,7 +247,7 @@ void my_touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
   }
   else
   {
-    touched = touch.getTouch(&touchX, &touchY, &gesture);
+    touched = tft.getTouch(&touchX, &touchY);
   }
 
   if (!touched)
@@ -215,9 +266,489 @@ void my_touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
   }
 }
 
+String heapUsage()
+{
+	String usage;
+	uint32_t total = ESP.getHeapSize();
+	uint32_t free = ESP.getFreeHeap();
+	usage += "Total: " + String(total);
+	usage += "\tFree: " + String(free);
+	usage += "\t" + String(((total - free) * 1.0) / total * 100, 2) + "%";
+	return usage;
+}
+
+
+void *sd_open_cb(struct _lv_fs_drv_t *drv, const char *path, lv_fs_mode_t mode)
+{
+  char buf[256];
+  sprintf(buf, "/%s", path);
+  // Serial.print("path : ");
+  // Serial.println(buf);
+
+  File f;
+
+  if (mode == LV_FS_MODE_WR)
+  {
+    f = FLASH.open(buf, FILE_WRITE);
+  }
+  else if (mode == LV_FS_MODE_RD)
+  {
+    f = FLASH.open(buf);
+  }
+  else if (mode == (LV_FS_MODE_WR | LV_FS_MODE_RD))
+  {
+    f = FLASH.open(buf, FILE_WRITE);
+  }
+
+  if (!f)
+  {
+    return NULL; // Return NULL if the file failed to open
+  }
+
+  File *fp = new File(f); // Allocate the File object on the heap
+  return (void *)fp;      // Return the pointer to the allocated File object
+}
+
+lv_fs_res_t sd_read_cb(struct _lv_fs_drv_t *drv, void *file_p, void *buf, uint32_t btr, uint32_t *br)
+{
+  lv_fs_res_t res = LV_FS_RES_NOT_IMP;
+  File *fp = (File *)file_p;
+  uint8_t *buffer = (uint8_t *)buf;
+
+  // Serial.print("name sd_read_cb : ");
+  // Serial.println(fp->name());
+  *br = fp->read(buffer, btr);
+
+  res = LV_FS_RES_OK;
+  return res;
+}
+
+lv_fs_res_t sd_seek_cb(struct _lv_fs_drv_t *drv, void *file_p, uint32_t pos, lv_fs_whence_t whence)
+{
+  lv_fs_res_t res = LV_FS_RES_OK;
+  File *fp = (File *)file_p;
+
+  uint32_t actual_pos;
+
+  switch (whence)
+  {
+  case LV_FS_SEEK_SET:
+    actual_pos = pos;
+    break;
+  case LV_FS_SEEK_CUR:
+    actual_pos = fp->position() + pos;
+    break;
+  case LV_FS_SEEK_END:
+    actual_pos = fp->size() + pos;
+    break;
+  default:
+    return LV_FS_RES_INV_PARAM; // Invalid parameter
+  }
+
+  if (!fp->seek(actual_pos))
+  {
+    return LV_FS_RES_UNKNOWN; // Seek failed
+  }
+
+  // Serial.print("name sd_seek_cb : ");
+  // Serial.println(fp->name());
+
+  return res;
+}
+
+lv_fs_res_t sd_tell_cb(struct _lv_fs_drv_t *drv, void *file_p, uint32_t *pos_p)
+{
+  lv_fs_res_t res = LV_FS_RES_NOT_IMP;
+  File *fp = (File *)file_p;
+
+  *pos_p = fp->position();
+  // Serial.print("name in sd_tell_cb : ");
+  // Serial.println(fp->name());
+  res = LV_FS_RES_OK;
+  return res;
+}
+
+lv_fs_res_t sd_close_cb(struct _lv_fs_drv_t *drv, void *file_p) {
+    File *fp = (File *)file_p;
+
+    fp->close();
+    // delete fp;  // Free the allocated memory
+
+    return LV_FS_RES_OK;
+}
+
+
+void checkLocal()
+{
+
+  File root = FLASH.open("/");
+  if (!root)
+  {
+    Serial.println("- failed to open directory");
+    return;
+  }
+  if (!root.isDirectory())
+  {
+    Serial.println(" - not a directory");
+    return;
+  }
+
+  File file = root.openNextFile();
+  while (file)
+  {
+    if (file.isDirectory())
+    {
+    }
+    else
+    {
+      // addListFile(file.name(), file.size());
+      String nm = String(file.name());
+      if (nm.endsWith(".jsn"))
+      {
+        // load watchface elements
+        nm = "/" + nm;
+        registerCustomFace(nm.c_str(), &ui_img_custom_preview_png, &face_custom_root, nm);
+      }
+    }
+    file = root.openNextFile();
+  }
+}
+
+String readFile(const char *path)
+{
+  String result;
+  File file = FLASH.open(path);
+  if (!file || file.isDirectory())
+  {
+    Serial.println("- failed to open file for reading");
+    return result;
+  }
+
+  Serial.println("- read from file:");
+  while (file.available())
+  {
+    result += (char)file.read();
+  }
+  file.close();
+  return result;
+}
+
+void deleteFile(const char *path)
+{
+  Serial.printf("Deleting file: %s\r\n", path);
+  if (FLASH.remove(path))
+  {
+    Serial.println("- file deleted");
+  }
+  else
+  {
+    Serial.println("- delete failed");
+  }
+}
+
+bool setupFS()
+{
+
+  if (!FLASH.begin(true, "/ffat", MAX_FILE_OPEN))
+  {
+    FLASH.format();
+
+    return false;
+  }
+
+  static lv_fs_drv_t sd_drv;
+  lv_fs_drv_init(&sd_drv);
+  sd_drv.cache_size = 512;
+
+  sd_drv.letter = 'S';
+  sd_drv.open_cb = sd_open_cb;
+  sd_drv.close_cb = sd_close_cb;
+  sd_drv.read_cb = sd_read_cb;
+  sd_drv.seek_cb = sd_seek_cb;
+  sd_drv.tell_cb = sd_tell_cb;
+  lv_fs_drv_register(&sd_drv);
+
+  checkLocal();
+
+  return true;
+}
+
+void listDir(const char *dirname, uint8_t levels)
+{
+
+  lv_obj_clean(ui_fileManagerPanel);
+
+  addListBack(driveList_cb);
+
+  File root = FLASH.open(dirname);
+  if (!root)
+  {
+    Serial.println("- failed to open directory");
+    return;
+  }
+  if (!root.isDirectory())
+  {
+    Serial.println(" - not a directory");
+    return;
+  }
+
+  File file = root.openNextFile();
+  while (file)
+  {
+    if (file.isDirectory())
+    {
+      addListDir(file.name());
+      // if (levels)
+      // {
+      //   listDir(file.path(), levels - 1);
+      // }
+    }
+    else
+    {
+      addListFile(file.name(), file.size());
+    }
+    file = root.openNextFile();
+  }
+}
+
+void flashDrive_cb(lv_event_t *e)
+{
+  lv_disp_t *display = lv_disp_get_default();
+  lv_obj_t *actScr = lv_disp_get_scr_act(display);
+  if (actScr != ui_filesScreen)
+  {
+    return;
+  }
+
+  listDir("/", 0);
+}
+
+void sdDrive_cb(lv_event_t *e)
+{
+  lv_disp_t *display = lv_disp_get_default();
+  lv_obj_t *actScr = lv_disp_get_scr_act(display);
+  if (actScr != ui_filesScreen)
+  {
+    return;
+  }
+
+  showError("Error", "SD card is currently unavaliable");
+}
+
+void driveList_cb(lv_event_t *e)
+{
+  lv_obj_clean(ui_fileManagerPanel);
+
+  addListDrive(F_NAME, FLASH.totalBytes(), FLASH.usedBytes(), flashDrive_cb);
+  addListDrive("SD card", 0, 0, sdDrive_cb); // dummy SD card drive
+}
+
+bool loadCustomFace(String file)
+{
+  String path = file;
+  if (!path.startsWith("/"))
+  {
+    path = "/" + path;
+  }
+  String read = readFile(path.c_str());
+  JsonDocument face;
+  DeserializationError err = deserializeJson(face, read);
+  if (!err)
+  {
+    if (!face.containsKey("elements"))
+    {
+      return false;
+    }
+    String name = face["name"].as<String>();
+    JsonArray elements = face["elements"].as<JsonArray>();
+    int sz = elements.size();
+
+    Serial.print(sz);
+    Serial.println(" elements");
+
+    invalidate_all();
+    lv_obj_clean(face_custom_root);
+
+    for (int i = 0; i < sz; i++)
+    {
+      JsonObject element = elements[i];
+      int id = element["id"].as<int>();
+      int x = element["x"].as<int>();
+      int y = element["y"].as<int>();
+      int pvX = element["pvX"].as<int>();
+      int pvY = element["pvY"].as<int>();
+      String image = element["image"].as<String>();
+      JsonArray group = element["group"].as<JsonArray>();
+
+      const char *group_arr[20];
+      int group_size = group.size();
+      for (int j = 0; j < group_size && j < 20; j++)
+      {
+        group_arr[j] = group[j].as<const char *>();
+      }
+
+      add_item(face_custom_root, id, x, y, pvX, pvY, image.c_str(), group_arr, group_size);
+    }
+
+    return true;
+  }
+  else
+  {
+    Serial.println("Deserialize failed");
+  }
+
+  return false;
+}
+
+bool deleteCustomFace(String file)
+{
+  String path = file;
+  if (!path.startsWith("/"))
+  {
+    path = "/" + path;
+  }
+  String read = readFile(path.c_str());
+  JsonDocument face;
+  DeserializationError err = deserializeJson(face, read);
+  if (!err)
+  {
+    if (!face.containsKey("assets"))
+    {
+      return false;
+    }
+    
+    JsonArray assets = face["assets"].as<JsonArray>();
+    int sz = assets.size();
+
+    for (int j = 0; j < sz; j++)
+    {
+      deleteFile(assets[j].as<const char*>());
+    }
+
+    deleteFile(path.c_str());
+
+    return true;
+  }
+  else
+  {
+    Serial.println("Deserialize failed");
+  }
+
+  return false;
+}
+
+void registerCustomFace(const char *name, const lv_img_dsc_t *preview, lv_obj_t **watchface, String path)
+{
+  if (numFaces >= MAX_FACES)
+  {
+    return;
+  }
+  faces[numFaces].name = name;
+  faces[numFaces].preview = preview;
+  faces[numFaces].watchface = watchface;
+
+  faces[numFaces].customIndex = customFaceIndex;
+  faces[numFaces].custom = true;
+
+  addWatchface(faces[numFaces].name, faces[numFaces].preview, numFaces);
+
+  customFacePaths[customFaceIndex] = path;
+  customFaceIndex++;
+
+  Timber.i("Custom Watchface: %s registered at %d", name, numFaces);
+  numFaces++;
+}
+
+void onCustomDelete(lv_event_t *e)
+{
+  int index = (int)lv_event_get_user_data(e);
+
+  Serial.println("Delete custom watchface");
+  Serial.println(customFacePaths[index]);
+  showError("Delete", "The watchface will be deleted from storage, ESP32 will restart after deletion");
+  if (deleteCustomFace(customFacePaths[index])){
+    lv_scr_load_anim(ui_appListScreen, LV_SCR_LOAD_ANIM_MOVE_RIGHT, 500, 0, false);
+    ESP.restart();
+  } else {
+    showError("Error", "Failed to delete watchface");
+  }
+
+}
+
+void addFaceList(lv_obj_t *parent, Face face)
+{
+
+  lv_obj_t *ui_faceItemPanel = lv_obj_create(parent);
+  lv_obj_set_width(ui_faceItemPanel, 240);
+  lv_obj_set_height(ui_faceItemPanel, 50);
+  lv_obj_set_align(ui_faceItemPanel, LV_ALIGN_CENTER);
+  lv_obj_clear_flag(ui_faceItemPanel, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+  lv_obj_set_style_radius(ui_faceItemPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_color(ui_faceItemPanel, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_opa(ui_faceItemPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_border_color(ui_faceItemPanel, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_border_opa(ui_faceItemPanel, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_border_width(ui_faceItemPanel, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_border_side(ui_faceItemPanel, LV_BORDER_SIDE_BOTTOM, LV_PART_MAIN | LV_STATE_DEFAULT);
+  // lv_obj_set_style_bg_color(ui_faceItemPanel, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_PRESSED);
+  // lv_obj_set_style_bg_opa(ui_faceItemPanel, 100, LV_PART_MAIN | LV_STATE_PRESSED);
+
+  lv_obj_t *ui_faceItemIcon = lv_img_create(ui_faceItemPanel);
+  lv_img_set_src(ui_faceItemIcon, &ui_img_clock_png);
+  lv_obj_set_width(ui_faceItemIcon, LV_SIZE_CONTENT);  /// 1
+  lv_obj_set_height(ui_faceItemIcon, LV_SIZE_CONTENT); /// 1
+  lv_obj_set_x(ui_faceItemIcon, 10);
+  lv_obj_set_y(ui_faceItemIcon, 0);
+  lv_obj_set_align(ui_faceItemIcon, LV_ALIGN_LEFT_MID);
+  lv_obj_add_flag(ui_faceItemIcon, LV_OBJ_FLAG_ADV_HITTEST);  /// Flags
+  lv_obj_clear_flag(ui_faceItemIcon, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+
+  lv_obj_t *ui_faceItemName = lv_label_create(ui_faceItemPanel);
+  lv_obj_set_width(ui_faceItemName, 117);
+  lv_obj_set_height(ui_faceItemName, LV_SIZE_CONTENT); /// 1
+  lv_obj_set_x(ui_faceItemName, 50);
+  lv_obj_set_y(ui_faceItemName, 0);
+  lv_obj_set_align(ui_faceItemName, LV_ALIGN_LEFT_MID);
+  lv_label_set_long_mode(ui_faceItemName, LV_LABEL_LONG_CLIP);
+  if (face.custom)
+  {
+    lv_label_set_text(ui_faceItemName, customFacePaths[face.customIndex].c_str());
+  }
+  else
+  {
+    lv_label_set_text(ui_faceItemName, face.name);
+  }
+
+  lv_obj_set_style_text_font(ui_faceItemName, &lv_font_montserrat_16, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+  lv_obj_t *ui_faceItemDelete = lv_img_create(ui_faceItemPanel);
+  lv_img_set_src(ui_faceItemDelete, &ui_img_bin_png);
+  lv_obj_set_width(ui_faceItemDelete, LV_SIZE_CONTENT);  /// 1
+  lv_obj_set_height(ui_faceItemDelete, LV_SIZE_CONTENT); /// 1
+  lv_obj_set_x(ui_faceItemDelete, -10);
+  lv_obj_set_y(ui_faceItemDelete, 0);
+  lv_obj_set_align(ui_faceItemDelete, LV_ALIGN_RIGHT_MID);
+  lv_obj_add_flag(ui_faceItemDelete, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_ADV_HITTEST); /// Flags
+  lv_obj_clear_flag(ui_faceItemDelete, LV_OBJ_FLAG_SCROLLABLE);                        /// Flags
+  lv_obj_set_style_radius(ui_faceItemDelete, 20, LV_PART_MAIN | LV_STATE_PRESSED);
+  lv_obj_set_style_bg_color(ui_faceItemDelete, lv_color_hex(0xF34235), LV_PART_MAIN | LV_STATE_PRESSED);
+  lv_obj_set_style_bg_opa(ui_faceItemDelete, 255, LV_PART_MAIN | LV_STATE_PRESSED);
+  lv_obj_set_style_border_color(ui_faceItemDelete, lv_color_hex(0xF34235), LV_PART_MAIN | LV_STATE_PRESSED);
+  lv_obj_set_style_border_opa(ui_faceItemDelete, 255, LV_PART_MAIN | LV_STATE_PRESSED);
+  lv_obj_set_style_border_width(ui_faceItemDelete, 2, LV_PART_MAIN | LV_STATE_PRESSED);
+
+  if (!face.custom)
+  {
+    lv_obj_add_flag(ui_faceItemDelete, LV_OBJ_FLAG_HIDDEN);
+
+  } else {
+    lv_obj_add_event_cb(ui_faceItemDelete, onCustomDelete, LV_EVENT_CLICKED, (void *)face.customIndex);
+  }
+}
+
 void connectionCallback(bool state)
 {
-  Timber.d("Connection change");
+  Timber.d(state ? "Connected" : "Disconnected");
   if (state)
   {
     lv_obj_clear_state(ui_btStateButton, LV_STATE_CHECKED);
@@ -269,6 +800,14 @@ void configCallback(Config config, uint32_t a, uint32_t b)
 {
   switch (config)
   {
+  case CF_RST:
+
+    Serial.println("Reset request, formating storage");
+    FLASH.format();
+    delay(2000);
+    ESP.restart();
+
+    break;
   case CF_WEATHER:
 
     if (a)
@@ -338,7 +877,8 @@ void configCallback(Config config, uint32_t a, uint32_t b)
     lv_label_set_text_fmt(ui_appDetailsText, "Chronos app\nv%s (%d)", watch.getAppVersion().c_str(), a);
     break;
   case CF_QR:
-    if (a == 1){
+    if (a == 1)
+    {
       updateQrLinks();
     }
     break;
@@ -478,6 +1018,28 @@ void onFaceSelected(lv_event_t *e)
   prefs.putInt("watchface", index);
 }
 
+void onCustomFaceSelected(int pathIndex)
+{
+
+  if (pathIndex < 0)
+  {
+    prefs.putString("custom", "");
+    return;
+  }
+  if (lv_obj_get_child_cnt(face_custom_root) > 0 && lastCustom == pathIndex){
+    ui_home = face_custom_root;
+  } else if (loadCustomFace(customFacePaths[pathIndex]))
+  {
+    lastCustom = pathIndex;
+    ui_home = face_custom_root;
+    
+  }
+
+  lv_scr_load_anim(ui_home, LV_SCR_LOAD_ANIM_FADE_ON, 500, 0, false);
+
+  prefs.putString("custom", customFacePaths[pathIndex]);
+}
+
 void onBatteryChange(lv_event_t *e)
 {
   uint8_t lvl = lv_slider_get_value(ui_batterySlider);
@@ -524,6 +1086,10 @@ void onTimeoutChange(lv_event_t *e)
 
   setTimeout(sel);
   prefs.putInt("timeout", sel);
+}
+
+void onLanguageChange(lv_event_t *e)
+{
 }
 
 void setTimeout(int i)
@@ -654,6 +1220,73 @@ void showAlert()
   }
 }
 
+void rawDataCallback(uint8_t *data, int len)
+{
+  if (data[0] == 0xB0)
+  {
+    // this is a chunk header data command
+    cSize = data[1] * 256 + data[2];                                                           // data chunk size
+    pos = data[3] * 256 + data[4];                                                             // position of the chunk, ideally sequential 0..
+    last = data[7] == 1;                                                                       // whether this is the last chunk (1) or not (0)
+    total = (data[8] * 256 * 256 * 256) + (data[9] * 256 * 256) + (data[10] * 256) + data[11]; // total size of the whole file
+    recv = 0;                                                                                  // counter for the chunk data
+
+    start = pos == 0;
+    if (pos == 0)
+    {
+      // this is the first chunk
+      transfer = true;
+      currentRecv = 0;
+
+      fName = "/" + String(total, HEX) + "-" + String(total) + ".cbn";
+    }
+  }
+  if (data[0] == 0xAF)
+  {
+    // this is the chunk data, line by line. The complete chunk will have several of these
+    // actual data starts from index 5
+    int ln = ((data[1] * 256 + data[2]) - 5); // byte 1 and 2 make up the (total size of data - 5)
+
+    if (wSwitch)
+    {
+      memcpy(buf1 + recv, data + 5, ln);
+    }
+    else
+    {
+      memcpy(buf2 + recv, data + 5, ln);
+    }
+
+    recv += ln; // increment the received chunk data size by current received size
+
+    currentRecv += ln; // track the progress
+
+    if (recv == cSize)
+    { // received expected? if data chunk size equals chunk receive size then chunk is complete
+      if (wSwitch)
+      {
+        wLen1 = cSize;
+      }
+      else
+      {
+        wLen2 = cSize;
+      }
+
+      wSwitch = !wSwitch;
+      writeFile = true;
+
+      pos++;
+      uint8_t lst = last ? 0x01 : 0x00;
+      uint8_t cmd[5] = {0xB0, 0x02, highByte(pos), lowByte(pos), lst};
+      watch.sendCommand(cmd, 5); // notify the app that we received the chunk, this will trigger transfer of next chunk
+    }
+
+    if (last)
+    {
+
+    }
+  }
+}
+
 void dataCallback(uint8_t *data, int length)
 {
   // Serial.println("Received Data");
@@ -674,6 +1307,25 @@ void my_log_cb(const char *buf)
   Serial.write(buf, strlen(buf));
 }
 
+void loadSplash()
+{
+  int w = 122;
+  int h = 130;
+  int xOffset = 63;
+  int yOffset = 55;
+  tft.fillScreen(TFT_BLACK);
+  tft.setBrightness(200);
+  for (int y = 0; y < h; y++)
+  {
+    for (int x = 0; x < w; x++)
+    {
+      tft.writePixel(x + xOffset, y + yOffset, uint16_t(splash[(((y * w) + x) * 2)] << 8 | splash[(((y * w) + x) * 2) + 1]));
+    }
+  }
+
+  delay(2000);
+}
+
 void hal_setup()
 {
 
@@ -689,7 +1341,10 @@ void hal_setup()
   tft.initDMA();
   tft.startWrite();
   tft.fillScreen(TFT_BLACK);
-  touch.begin();
+  loadSplash();
+
+  Serial.println(heapUsage());
+
   lv_init();
 
   lv_disp_draw_buf_init(&draw_buf, buf[0], buf[1], screenWidth * buf_size);
@@ -713,14 +1368,39 @@ void hal_setup()
 
   lv_log_register_print_cb(my_log_cb);
 
+  _lv_fs_init();
+
   ui_init();
 
+  Serial.println(heapUsage());
+
+  if (setupFS())
+  {
+    // driveList_cb(NULL);
+    Serial.println("Setup FS success");
+  }
+  else
+  {
+    Serial.println("Setup FS failed");
+    // showError(F_NAME, "Failed to mount the partition");
+  }
+  Serial.println(heapUsage());
+
   int wf = prefs.getInt("watchface", 0);
+  String custom = prefs.getString("custom", "");
   if (wf >= numFaces)
   {
     wf = 0; // default
   }
-  ui_home = *faces[wf].watchface; // load saved watchface power on
+  currentIndex = wf;
+  if (custom != "" && loadCustomFace(custom))
+  {
+    ui_home = face_custom_root;
+  }
+  else
+  {
+    ui_home = *faces[wf].watchface; // load saved watchface power on
+  }
   lv_disp_load_scr(ui_home);
 
   watch.setConnectionCallback(connectionCallback);
@@ -728,11 +1408,12 @@ void hal_setup()
   watch.setConfigurationCallback(configCallback);
   watch.setRingerCallback(ringerCallback);
   watch.setDataCallback(dataCallback);
+  watch.setRawDataCallback(rawDataCallback);
   watch.begin();
   watch.set24Hour(true);
   watch.setBattery(85);
 
-  String about = "v3.0 [fbiego]\nESP32 C3 Mini\n" + watch.getAddress();
+  String about = "v4.0 [fbiego]\nESP32 C3 Mini\n" + watch.getAddress();
   lv_label_set_text(ui_aboutText, about.c_str());
 
   // bool intro = prefs.getBool("intro", true);
@@ -793,6 +1474,15 @@ void hal_setup()
 
   setTimeout(tm);
 
+  if (lv_fs_is_ready('S'))
+  {
+    Serial.println("Drive S is ready");
+  }
+  else
+  {
+    Serial.println("Drive S is not ready");
+  }
+
   Timber.i("Setup done");
   Timber.i(about);
 }
@@ -800,16 +1490,9 @@ void hal_setup()
 void hal_loop()
 {
 
-  lv_timer_handler(); /* let the GUI do its work */
-
-  if (gameActive)
+  if (!transfer)
   {
-    // run only game in loop?
-    // ui_games_update(); // not smooth, use separate task instead. see gameLoop()
-  }
-  else
-  {
-    // skip when game running
+    lv_timer_handler(); /* let the GUI do its work */
     delay(5);
     watch.loop();
 
@@ -879,6 +1562,78 @@ void hal_loop()
       }
     }
   }
+
+  if (writeFile && transfer)
+  {
+    if (start)
+    {
+      tft.setBrightness(200);
+      tft.fillScreen(TFT_BLUE);
+
+      tft.drawRoundRect(70, 120, 100, 20, 5, TFT_WHITE);
+    }
+
+    writeFile = false;
+
+    File file = FLASH.open(fName, start ? FILE_WRITE : FILE_APPEND);
+    if (file)
+    {
+
+      if (!wSwitch)
+      {
+        file.write(buf1, wLen1);
+      }
+      else
+      {
+        file.write(buf2, wLen2);
+      }
+
+      file.close();
+
+      // Serial.print(last ? "Complete: " :  "");
+      // Serial.print("Receieved ");
+      // Serial.print(currentRecv);
+      // Serial.print("/");
+      // Serial.print(total);
+      // Serial.print("   ");
+      // Serial.println(hexString(cmd, 5, true, "-"));
+
+      if (total > 0)
+      {
+        int progress = (100 * currentRecv) / total;
+
+        // Serial.println(String(progress, 2) + "%");
+        tft.setTextColor(TFT_WHITE, TFT_BLUE);
+        tft.setTextSize(2);
+        tft.setCursor(80, 80);
+        tft.print(progress);
+        tft.print("%");
+
+        tft.fillRoundRect(70, 120, progress, 20, 5, TFT_WHITE);
+      }
+
+      if (last)
+      {
+        // the file transfer has ended
+        transfer = false;
+
+        tft.setTextColor(TFT_WHITE, TFT_BLUE);
+        tft.setTextSize(2);
+        tft.setCursor(60, 80);
+        tft.print("Processing");
+
+        parseDial(fName.c_str()); // process the file
+      }
+    }
+    else
+    {
+      Serial.println("- failed to open file for writing");
+
+      transfer = false;
+
+      ESP.restart();
+    }
+  }
 }
 
 bool isDay()
@@ -910,6 +1665,501 @@ void update_faces()
   int bpm = 76;
   int oxygen = 97;
 
-  ui_update_watchfaces(second, minute, hour, mode, am, day, month, year, weekday,
-                       temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
+  if (ui_home == face_custom_root)
+  {
+    update_time_custom(second, minute, hour, mode, am, day, month, year, weekday);
+  }
+  else
+  {
+
+    ui_update_watchfaces(second, minute, hour, mode, am, day, month, year, weekday,
+                         temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
+  }
+}
+
+bool readDialBytes(const char *path, uint8_t *data, size_t offset, size_t size)
+{
+  File file = FLASH.open(path, "r");
+  if (!file)
+  {
+    Serial.println("Failed to open file for reading");
+    return false;
+  }
+
+  if (!file.seek(offset))
+  {
+    Serial.println("Failed to seek file");
+    file.close();
+    return false;
+  }
+
+  int bytesRead = file.readBytes((char *)data, size);
+
+  if (bytesRead <= 0)
+  {
+    Serial.println("Error reading file");
+    file.close();
+    return false;
+  }
+
+  file.close();
+  return true;
+}
+
+bool isKnown(uint8_t id)
+{
+  if (id < 0x1E)
+  {
+    if (id != 0x04 || id != 0x05 || id != 0x12 || id != 0x18 || id != 0x20)
+    {
+      return true;
+    }
+  }
+  else
+  {
+    if (id == 0xFA || id == 0xFD)
+    {
+      return true;
+    }
+  }
+  return false;
+}
+
+String hexString(uint8_t *arr, size_t len, bool caps, String separator)
+{
+  String hexString = "";
+  for (size_t i = 0; i < len; i++)
+  {
+    char hex[3];
+    sprintf(hex, caps ? "%02X" : "%02x", arr[i]);
+    hexString += separator;
+    hexString += hex;
+  }
+  return hexString;
+}
+
+String longHexString(unsigned long l)
+{
+  char buffer[9];             // Assuming a 32-bit long, which requires 8 characters for hex representation and 1 for null terminator
+  sprintf(buffer, "%08x", l); // Format as 8-digit hex with leading zeros
+  return String(buffer);
+}
+
+void parseDial(const char *path)
+{
+
+  String name = longHexString(watch.getEpoch());
+
+  Serial.print("Parsing dial:");
+  Serial.println(path);
+
+  JsonDocument json;
+  JsonDocument elements;
+  JsonDocument assetFiles;
+  JsonArray elArray = elements.to<JsonArray>();
+  JsonArray assetArray = assetFiles.to<JsonArray>();
+
+  json["name"] = name;
+  json["file"] = String(path);
+
+  JsonDocument rsc;
+  int errors = 0;
+
+  uint8_t az[1];
+  if (!readDialBytes(path, az, 0, 1))
+  {
+    Serial.println("Failed to read watchface header");
+    errors++;
+  }
+  uint8_t j = az[0];
+
+  static uint8_t item[20];
+  static uint8_t table[512];
+
+  uint8_t lid = 0;
+  int a = 0;
+  int lan = 0;
+  int tp = 0;
+  int wt = 0;
+
+  for (int i = 0; i < j; i++)
+  {
+    if (i >= 60)
+    {
+      Serial.println("Too many watchface elements >= 60");
+      break;
+    }
+
+    JsonDocument element;
+
+    if (!readDialBytes(path, item, (i * 20) + 4, 20))
+    {
+      Serial.println("Failed to read element properties");
+      errors++;
+    }
+
+    uint8_t id = item[0];
+
+    element["id"] = id;
+
+    uint16_t xOff = item[5] * 256 + item[4];
+    uint16_t yOff = item[7] * 256 + item[6];
+
+    element["x"] = xOff;
+    element["y"] = yOff;
+
+    uint16_t xSz = item[9] * 256 + item[8];
+    uint16_t ySz = item[11] * 256 + item[10];
+
+    uint32_t clt = item[15] * 256 * 256 * 258 + item[14] * 256 * 256 + item[13] * 256 + item[12];
+    uint32_t dat = item[19] * 256 * 256 * 256 + item[18] * 256 * 256 + item[17] * 256 + item[16];
+
+    uint8_t id2 = item[1];
+
+    bool isG = (item[1] & 0x80) == 0x80;
+
+    if (id == 0x08)
+    {
+      isG = true;
+    }
+
+    uint8_t cmp = isG ? (item[1] & 0x7F) : 1;
+
+    int aOff = item[2];
+
+    bool isM = (item[3] & 0x80) == 0x80;
+    uint8_t cG = isM ? (item[3] & 0x7F) : 1;
+
+    if (!isKnown(id))
+    {
+      continue;
+    }
+
+    if (id == 0x16 && (item[1] == 0x06 || item[1] == 0x00))
+    {
+      // weather (-) label
+      continue;
+    }
+    if (isM)
+    {
+      lan++;
+    }
+
+    if (tp == 0x09 && id == 0x09)
+    {
+      a++;
+    }
+    else if (tp != id)
+    {
+      tp = id;
+      a++;
+    }
+    else if (lan == 1)
+    {
+      a++;
+    }
+
+    if (xSz == 0 || ySz == 0)
+    {
+      continue;
+    }
+
+    int z = i;
+    int rs = -1;
+
+    bool createFile = false;
+
+    if (rsc.containsKey(String(clt)))
+    {
+      z = rsc[String(clt)].as<int>();
+      rs = z;
+    }
+
+    bool drawable = (id == 0x0d) ? (lan == 1 || lan == 17 || lan == 33) : true;
+
+    JsonDocument grp;
+    JsonArray grpArr = grp.to<JsonArray>();
+
+    if (rs == -1 && drawable)
+    {
+      rsc[String(clt)] = i;
+
+      for (int aa = 0; aa < cmp; aa++)
+      {
+        unsigned long nm = (i * 10000) + (clt * 10) + aa;
+        grpArr.add("S:" + name + "_" + longHexString(nm) + ".bin");
+      }
+
+      if (id == 0x17)
+      {
+      }
+      else if (id == 0x0A)
+      {
+      }
+      else if (cmp == 1)
+      {
+      }
+      else
+      {
+      }
+
+      // save asset
+      createFile = true;
+    }
+    else if (id == 0x16 && id2 == 0x00)
+    {
+      // save asset
+      createFile = true;
+
+      for (int aa = 0; aa < cmp; aa++)
+      {
+        unsigned long nm = (z * 10000) + (clt * 10) + aa;
+        grpArr.add("S:" + name + "_" + longHexString(nm) + ".bin");
+      }
+    }
+    else
+    {
+
+      for (int aa = 0; aa < cmp; aa++)
+      {
+        unsigned long nm = (z * 10000) + (clt * 10) + aa;
+        grpArr.add("S:" + name + "_" + longHexString(nm) + ".bin");
+      }
+    }
+
+    if (cmp <= 1)
+    {
+      // grp is null
+      grpArr.clear();
+    }
+
+    if (id == 0x0A)
+    {
+      // if (connIC.count { it == '\n' } < 3) {
+      //     continue
+      // }
+    }
+
+    if (isM)
+    {
+      if (lan == cG)
+      {
+        lan = 0;
+      }
+      else if (id == 0x0d && (lan == 1 || lan == 32 || lan == 40 || lan == 17 || lan == 33))
+      {
+        yOff -= (ySz - aOff);
+        xOff -= aOff;
+      }
+      else
+      {
+        continue;
+      }
+    }
+    if (id == 0x17)
+    {
+      wt++;
+      if (wt != 1)
+      {
+        continue;
+      }
+    }
+
+    if (id == 0x16 && id2 == 0x06)
+    {
+      continue;
+    }
+
+    if (drawable)
+    {
+      element["pvX"] = aOff;
+      element["pvY"] = ySz - aOff;
+
+      unsigned long nm = (z * 10000) + (clt * 10) + 0;
+
+      element["image"] = "S:" + name + "_" + longHexString(nm) + ".bin";
+      element["group"] = grpArr;
+
+      elArray.add(element);
+    }
+
+    Serial.printf("i:%d, id:%d, xOff:%d, yOff:%d, xSz:%d, ySz:%d, clt:%d, dat:%d, cmp:%d\n", i, id, xOff, yOff, xSz, ySz, clt, dat, cmp);
+
+    if (!createFile)
+    {
+      continue;
+    }
+    uint8_t cf = (id == 0x09 && i == 0) || (id == 0x19) ? 0x04 : 0x05;
+    bool tr = cf == 0x05;
+
+    for (int b = 0; b < cmp; b++)
+    {
+      unsigned long nm = (z * 10000) + (clt * 10) + b;
+
+      String asset = "/" + name + "_" + longHexString(nm) + ".bin";
+      Serial.print("Create asset-> ");
+      Serial.print(asset);
+
+      assetArray.add(asset);
+
+      uint8_t header[4];
+
+      lvImgHeader(header, cf, xSz, ySz / cmp);
+
+      Serial.print("\t");
+      Serial.println(hexString(header, 4));
+
+      File ast = FLASH.open(asset.c_str(), FILE_WRITE);
+      if (ast)
+      {
+        ast.write(header, 4);
+
+        if (!readDialBytes(path, table, clt, 512))
+        {
+          Serial.println("Could not read color table bytes from file");
+          errors++;
+          break;
+        }
+
+        uint16_t yZ = uint16_t(ySz / cmp); // height of individual element
+
+        File file = FLASH.open(path, "r");
+        if (!file)
+        {
+          Serial.println("Failed to open file for reading");
+          errors++;
+          break;
+        }
+        int offset = (xSz * yZ) * b;
+
+        if (!file.seek(dat + offset))
+        {
+          Serial.println("Failed to seek file");
+          file.close();
+          errors++;
+          break;
+        }
+
+        int x = 0;
+        if (id == 0x19)
+        {
+          for (int z = 0; z < (xSz * yZ); z++)
+          {
+            uint8_t pixel[2];
+            pixel[0] = item[13];
+            pixel[1] = item[12];
+            ast.write(pixel, 2);
+          }
+        }
+        else
+        {
+          while (file.available())
+          {
+            uint16_t index = file.read();
+
+            uint8_t pixel[3];
+            if (tr)
+            {
+              pixel[0] = table[(index * 2) + 1];
+              pixel[1] = table[index * 2];
+              pixel[2] = (uint16_t(pixel[0] * 256 + pixel[1]) == 0) ? 0x00 : 0xFF; // alpha byte (black pixel [0] is transparent)
+              ast.write(pixel, 3);
+            }
+            else
+            {
+              pixel[0] = table[(index * 2) + 1];
+              pixel[1] = table[index * 2];
+
+              ast.write(pixel, 2);
+            }
+            x++;
+            if (x >= (xSz * yZ))
+            {
+              break;
+            }
+          }
+        }
+        file.close();
+
+        ast.close();
+      }
+      else
+      {
+        errors++;
+      }
+    }
+  }
+
+  json["elements"] = elements;
+  json["assets"] = assetFiles;
+
+  // serializeJsonPretty(json, Serial);
+
+  String jsnFile = "/" + name + ".jsn";
+  assetArray.add(jsnFile);
+  File jsn = FLASH.open(jsnFile, FILE_WRITE);
+
+  if (jsn)
+  {
+    serializeJsonPretty(json, jsn);
+    jsn.flush();
+    jsn.close();
+  }
+  else
+  {
+    errors++;
+  }
+
+  if (errors > 0)
+  {
+    // failed to parse watchface files
+    // probably delete assetfiles
+    Serial.print(errors);
+    Serial.println(" errors encountered when parsing watchface");
+    tft.fillScreen(TFT_RED);
+    tft.setTextColor(TFT_WHITE, TFT_RED);
+    tft.setTextSize(2);
+    tft.setCursor(80, 80);
+    tft.print("Failed");
+  }
+  else
+  {
+    // success
+    // probably delete source file
+
+    tft.fillScreen(TFT_GREEN);
+    tft.setTextColor(TFT_WHITE, TFT_GREEN);
+    tft.setTextSize(2);
+    tft.setCursor(80, 80);
+    tft.print("Success");
+
+    deleteFile(path);
+    Serial.println("Watchface parsed successfully");
+
+    prefs.putString("custom", jsnFile);
+
+    
+  }
+  delay(500);
+  ESP.restart();
+}
+
+bool lvImgHeader(uint8_t *byteArray, uint8_t cf, uint16_t w, uint16_t h)
+{
+  // Ensure the input values fit within the specified bit field sizes
+  if (cf >= (1 << 5) || w >= (1 << 11) || h >= (1 << 11))
+  {
+    // Invalid input values
+    return false;
+  }
+
+  uint32_t header = (cf & 0x1F) | (0 << 5) | (0 << 8) | ((w & 0x07FF) << 10) | ((h & 0x07FF) << 21);
+
+  // Convert the 32-bit integer to bytes in little-endian format
+  byteArray[0] = header & 0xFF;
+  byteArray[1] = (header >> 8) & 0xFF;
+  byteArray[2] = (header >> 16) & 0xFF;
+  byteArray[3] = (header >> 24) & 0xFF;
+
+  return true;
 }

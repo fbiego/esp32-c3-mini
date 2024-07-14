@@ -16,12 +16,13 @@ A demo LVGL Watch project for ESP32 C3 mini 240*240 touch display development bo
 
 ## Screens
  - Time (Time, Date, Day, Weather[Icon, Temp]) + Custom Watchfaces
+ - Installable custom watchfaces from Chronos app
  - Weather (City,Icon, Temp, Update time) (1 week forecast [Day, Icon, Temp])
  - Notifications (Icon, Time, Text) (List [Icon, Text] - 10 notifications) (Incoming call)
  - Settings (Brightness, Timeout, Battery, About)
  - Control (Music Control, Find Phone, Bluetooth State) (Camera Capture)
  - QR Codes
- - A racing game
+ - A racing game (Need to enable)
 
  ## Building
 
@@ -45,28 +46,45 @@ A demo LVGL Watch project for ESP32 C3 mini 240*240 touch display development bo
 - Waveshare S3 1.28: https://www.waveshare.com/product/esp32-s3-touch-lcd-1.28.htm
 - Waveshare S3 1.69: https://www.waveshare.com/esp32-s3-touch-lcd-1.69.htm
 
- #### Watchfaces
+ ## Watchfaces
 
-| | | |
-| -- | -- | -- |
-| !["Analog"](src/faces/75_2_dial/watchface.png?raw=true "75_2_dial") | !["Shadow"](src/faces/34_2_dial/watchface.png?raw=true "34_2_dial") | !["Blue"](src/faces/79_2_dial/watchface.png?raw=true "79_2_dial") |
-| !["Radar"](src/faces/radar/watchface.png?raw=true "radar") | !["Outline"](src/faces/116_2_dial/watchface.png?raw=true "116_2_dial") | !["Red"](src/faces/756_2_dial/watchface.png?raw=true "756_2_dial") |
-| !["Tix"](src/faces/tix_resized/watchface.png?raw=true "tix_resized") | !["Pixel"](src/faces/pixel_resized/watchface.png?raw=true "pixel_resized") | !["Smart"](src/faces/smart_resized/watchface.png?raw=true "smart_resized") |
-| !["Kenya"](src/faces/kenya/watchface.png?raw=true "kenya") | !["B & W"](src/faces/b_w_resized/watchface.png?raw=true "b_w_resized") | !["WFB"](src/faces/wfb_resized/watchface.png?raw=true "wfb_resized") |
+This project supports two types of watchfaces in addition to the default one:
 
-Check out [`esp32-lvgl-watchface`](https://github.com/fbiego/esp32-lvgl-watchface) project to see how watchfaces are converted from binary to LVGL code. You can add more watchfaces but you will be limited by the ESP32 flash size. 
-In that case you can only compile your favorite watchfaces. Links to the pre-built binary watchfaces are included.
-Enable them in `app_hal.h` according to your build platform.
+#### 1. External Precompiled Binary Watchfaces
+
+These watchfaces are binary files converted into LVGL code and compiled along with the main code. To add or remove these watchfaces, you need to recompile and flash the firmware.
+
+- Check out the [`esp32-lvgl-watchface`](https://github.com/fbiego/esp32-lvgl-watchface) project for details on converting watchfaces from binary to LVGL code.
+- You can add more watchfaces, but be mindful of the ESP32's flash size limitations. Prioritize compiling only your favorite watchfaces.
+- Links to pre-built binary watchfaces are included. Enable them in `app_hal.h` according to your build platform.
+
+#### 2. External Installable Binary Watchfaces
+
+This project now supports the installation of binary watchfaces after the initial code compilation and flashing. You can add or remove watchfaces via the Chronos app using BLE. Once transferred to the ESP32, the watchface will be parsed and executed.
+
+- Ensure there is sufficient storage space on the ESP32 flash. Using the FFAT partition is recommended.
+
+> [!IMPORTANT]
+> This feature is experimental and may not work 100% reliably.
+> Ensure your partition is mounted successfully for proper functionality.
+
+> [!WARNING]  
+> This has issues running on ESP32 C3 Mini due to smaller SRAM size
+
 
 ## Chronos App
 This is needed for additional functions on esp32 hardware as listed below.
 
-Click to download
-[<img src="chronos.png?raw=true" width=100 align=left>](https://fbiego.com/chronos/app?id=c3-mini)
+[<img src="chronos.png?raw=true" width=100 align=left>](https://chronos.ke/app?id=c3-mini)
 <br><br><br><br>
 
+[ChronosESP32 Website](https://chronos.ke/esp32)
+
+
 ### App functions (ESP32)
+[ChronosESP32](https://github.com/fbiego/chronos-esp32) library handles communication with the Chronos app over BLE
 - Sync time
+- Install additional watchfaces
 - Send notifications and call alerts
 - Sync weather info
 - Sync QR Links (Incomplete)

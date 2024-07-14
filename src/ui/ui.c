@@ -93,6 +93,11 @@ void ui_event_timeoutSelect(lv_event_t *e);
 lv_obj_t *ui_timeoutSelect;
 lv_obj_t *ui_timeoutIcon;
 lv_obj_t *ui_timeoutLabel;
+lv_obj_t *ui_languagePanel;
+void ui_event_languageSelect(lv_event_t *e);
+lv_obj_t *ui_languageSelect;
+lv_obj_t *ui_languageIcon;
+lv_obj_t *ui_languageLabel;
 lv_obj_t *ui_batteryPanel;
 void ui_event_batterySlider(lv_event_t *e);
 lv_obj_t *ui_batterySlider;
@@ -175,6 +180,24 @@ lv_obj_t *ui_qrIcon;
 lv_obj_t *ui_qrImage;
 lv_obj_t *ui_qrLabel;
 
+void ui_filesScreen_screen_init(void);
+lv_obj_t *ui_filesScreen;
+lv_obj_t *ui_fileManagerPanel;
+lv_obj_t *ui_driveInfoPanel;
+lv_obj_t *ui_driveInfoIcon;
+lv_obj_t *ui_driveInfoLabel;
+lv_obj_t *ui_driveInfoBar;
+lv_obj_t *ui_fileInfoPanel;
+lv_obj_t *ui_fileInfoIcon;
+lv_obj_t *ui_fileInfoName;
+lv_obj_t *ui_fileInfoSize;
+lv_obj_t *ui_folderInfoPanel;
+lv_obj_t *ui_folderInfoIcon;
+lv_obj_t *ui_folderInfoName;
+lv_obj_t *ui_driveBackPanel;
+lv_obj_t *ui_driveBackIcon;
+lv_obj_t *ui_driveBackLabel;
+
 lv_obj_t *ui_errorWindow;
 lv_obj_t *ui_errorPanel;
 lv_obj_t *ui_errorTitle;
@@ -187,10 +210,13 @@ lv_obj_t *ui_home;
 lv_obj_t *ui_game;
 lv_obj_t *ui_faceSelect;
 
+lv_obj_t *face_custom_root;
+
 bool toAppList;
 bool circular;
 int numFaces;
 int numGames;
+int currentIndex;
 
 void ui_event____initial_actions0(lv_event_t *e);
 lv_obj_t *ui____initial_actions0;
@@ -208,6 +234,10 @@ void setWeatherIcon(lv_obj_t *obj, int id, bool day);
 void setNotificationIcon(lv_obj_t *obj, int appId);
 void ui_update_watchfaces(int second, int minute, int hour, bool mode, bool am, int day, int month, int year, int weekday,
                           int temp, int icon, int battery, bool connection, int steps, int distance, int kcal, int bpm, int oxygen);
+void addListDrive(const char *name, int total, int used, lv_event_cb_t event_cb);
+void addListDir(const char *name);
+void addListFile(const char *name, int size);
+void addListBack(lv_event_cb_t event_cb);
 
 const lv_img_dsc_t *notificationIcons[] = {
     &ui_img_sms_png,       // SMS
@@ -612,13 +642,15 @@ void ui_event_scrollMode(lv_event_t *e)
       lv_obj_t *target = lv_event_get_target(e);
       if (event_code == LV_EVENT_VALUE_CHANGED)
       {
-            // onScrollMode(e);
+            
             circular = lv_obj_has_state(target, LV_STATE_CHECKED);
             lv_obj_scroll_by(ui_settingsList, 0, circular ? 1 : -1, LV_ANIM_ON);
             lv_obj_scroll_by(ui_appList, 0, circular ? 1 : -1, LV_ANIM_OFF);
             lv_obj_scroll_by(ui_messageList, 0, circular ? 1 : -1, LV_ANIM_OFF);
             lv_obj_scroll_by(ui_appInfoPanel, 0, circular ? 1 : -1, LV_ANIM_OFF);
             lv_obj_scroll_by(ui_gameList, 0, circular ? 1 : -1, LV_ANIM_OFF);
+            lv_obj_scroll_by(ui_fileManagerPanel, 0, circular ? 1 : -1, LV_ANIM_OFF);
+            onScrollMode(e);
       }
 }
 
@@ -651,6 +683,22 @@ void ui_event_timeoutSelect(lv_event_t *e)
       if (event_code == LV_EVENT_VALUE_CHANGED)
       {
             onTimeoutChange(e);
+      }
+}
+
+void ui_event_languageSelect(lv_event_t *e)
+{
+      lv_disp_t *display = lv_disp_get_default();
+      lv_obj_t *actScr = lv_disp_get_scr_act(display);
+      if (actScr != ui_settingsScreen)
+      {
+            return;
+      }
+      lv_event_code_t event_code = lv_event_get_code(e);
+      lv_obj_t *target = lv_event_get_target(e);
+      if (event_code == LV_EVENT_VALUE_CHANGED)
+      {
+            onLanguageChange(e);
       }
 }
 
@@ -877,7 +925,23 @@ void ui_event_faceSelected(lv_event_t *e)
                   showError("Watchface Error", "Watchface out of bounds");
                   return;
             }
-            ui_home = *faces[index].watchface;
+            if (currentIndex != index)
+            {
+                  currentIndex = index;
+                  if (faces[index].custom)
+                  {
+                        onCustomFaceSelected(faces[index].customIndex);
+                        onFaceSelected(e);
+
+                        return;
+                  }
+                  else
+                  {
+                        ui_home = *faces[index].watchface;
+                        onCustomFaceSelected(-1);
+                  }
+            }
+            
             lv_scr_load_anim(ui_home, LV_SCR_LOAD_ANIM_FADE_ON, 500, 0, false);
 
             onFaceSelected(e);
@@ -941,13 +1005,24 @@ void onAppListClicked(lv_event_t *e)
             _ui_screen_change(ui_qrScreen, LV_SCR_LOAD_ANIM_MOVE_BOTTOM, 500, 0);
             break;
       case 5:
-            _ui_screen_change(ui_faceSelect, LV_SCR_LOAD_ANIM_FADE_ON, 500, 0);
+            // _ui_screen_change(ui_faceSelect, LV_SCR_LOAD_ANIM_FADE_ON, 500, 0);
+
+            lv_obj_clean(ui_fileManagerPanel);
+
+            for (int i = 0; i < numFaces; i++){
+                  addFaceList(ui_fileManagerPanel, faces[i]);
+            }
+            _ui_screen_change(ui_filesScreen, LV_SCR_LOAD_ANIM_MOVE_LEFT, 500, 0);
+
             break;
       case 6:
             _ui_screen_change(ui_findPhoneScreen, LV_SCR_LOAD_ANIM_MOVE_LEFT, 500, 0);
             break;
       case 7:
             _ui_screen_change(ui_gameListScreen, LV_SCR_LOAD_ANIM_MOVE_LEFT, 500, 0);
+            break;
+      case 8:
+            _ui_screen_change(ui_filesScreen, LV_SCR_LOAD_ANIM_MOVE_LEFT, 500, 0);
             break;
       }
 }
@@ -1106,14 +1181,16 @@ void ui_gameExit()
       lv_scr_load_anim(ui_gameListScreen, LV_SCR_LOAD_ANIM_MOVE_RIGHT, 500, 0, false);
 }
 
-void ui_event_errorClose( lv_event_t * e)
+void ui_event_errorClose(lv_event_t *e)
 {
       lv_event_code_t event_code = lv_event_get_code(e);
-      lv_obj_t * target = lv_event_get_target(e);
-      if ( event_code == LV_EVENT_CLICKED) {
-            _ui_flag_modify( ui_errorWindow, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
+      lv_obj_t *target = lv_event_get_target(e);
+      if (event_code == LV_EVENT_CLICKED)
+      {
+            _ui_flag_modify(ui_errorWindow, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
       }
 }
+
 
 ///////////////////// HELPERS ////////////////////
 
@@ -1485,6 +1562,216 @@ void addAppInfo(const void *src, const char *txt)
       lv_obj_set_style_text_font(ui_appDetailsText, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
 }
 
+void addListDrive(const char *name, int total, int used, lv_event_cb_t event_cb)
+{
+      ui_driveInfoPanel = lv_obj_create(ui_fileManagerPanel);
+      lv_obj_set_width(ui_driveInfoPanel, 240);
+      lv_obj_set_height(ui_driveInfoPanel, 60);
+      lv_obj_set_align(ui_driveInfoPanel, LV_ALIGN_CENTER);
+      lv_obj_clear_flag(ui_driveInfoPanel, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+      lv_obj_set_style_radius(ui_driveInfoPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_bg_color(ui_driveInfoPanel, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_bg_opa(ui_driveInfoPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_border_color(ui_driveInfoPanel, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_border_opa(ui_driveInfoPanel, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_border_width(ui_driveInfoPanel, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_border_side(ui_driveInfoPanel, LV_BORDER_SIDE_BOTTOM, LV_PART_MAIN | LV_STATE_DEFAULT);
+      // lv_obj_set_style_bg_color(ui_driveInfoPanel, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_PRESSED);
+      // lv_obj_set_style_bg_opa(ui_driveInfoPanel, 100, LV_PART_MAIN | LV_STATE_PRESSED);
+
+      ui_driveInfoIcon = lv_img_create(ui_driveInfoPanel);
+      lv_img_set_src(ui_driveInfoIcon, &ui_img_drive_png);
+      lv_obj_set_width(ui_driveInfoIcon, LV_SIZE_CONTENT);  /// 1
+      lv_obj_set_height(ui_driveInfoIcon, LV_SIZE_CONTENT); /// 1
+      lv_obj_set_x(ui_driveInfoIcon, 10);
+      lv_obj_set_y(ui_driveInfoIcon, 0);
+      lv_obj_set_align(ui_driveInfoIcon, LV_ALIGN_LEFT_MID);
+      lv_obj_add_flag(ui_driveInfoIcon, LV_OBJ_FLAG_ADV_HITTEST);  /// Flags
+      lv_obj_clear_flag(ui_driveInfoIcon, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+
+      ui_driveInfoLabel = lv_label_create(ui_driveInfoPanel);
+      lv_obj_set_width(ui_driveInfoLabel, 150);
+      lv_obj_set_height(ui_driveInfoLabel, LV_SIZE_CONTENT); /// 1
+      lv_obj_set_x(ui_driveInfoLabel, 50);
+      lv_obj_set_y(ui_driveInfoLabel, -7);
+      lv_obj_set_align(ui_driveInfoLabel, LV_ALIGN_LEFT_MID);
+
+      if (total >= 1048576)
+      {
+            lv_label_set_text_fmt(ui_driveInfoLabel, "%s - %dMB", name, (total / 1048576));
+      }
+      else if (total >= 1024)
+      {
+            lv_label_set_text_fmt(ui_driveInfoLabel, "%s - %dkB", name, (total / 1024));
+      }
+      else if (total == 0)
+      {
+            lv_label_set_text_fmt(ui_driveInfoLabel, "%s - (n/a)", name);
+      }
+      else
+      {
+            lv_label_set_text_fmt(ui_driveInfoLabel, "%s - %dB", name, total);
+      }
+      lv_obj_set_style_text_font(ui_driveInfoLabel, &lv_font_montserrat_16, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+      ui_driveInfoBar = lv_bar_create(ui_driveInfoPanel);
+      if (total == 0)
+      {
+            lv_bar_set_value(ui_driveInfoBar, 0, LV_ANIM_OFF);
+      }
+      else
+      {
+            lv_bar_set_value(ui_driveInfoBar, ((used * 100) / total), LV_ANIM_OFF);
+      }
+
+      lv_bar_set_start_value(ui_driveInfoBar, 0, LV_ANIM_OFF);
+      lv_obj_set_width(ui_driveInfoBar, 150);
+      lv_obj_set_height(ui_driveInfoBar, 10);
+      lv_obj_set_x(ui_driveInfoBar, 50);
+      lv_obj_set_y(ui_driveInfoBar, 11);
+      lv_obj_set_align(ui_driveInfoBar, LV_ALIGN_LEFT_MID);
+
+      lv_obj_add_event_cb(ui_driveInfoPanel, event_cb, LV_EVENT_CLICKED, NULL);
+}
+
+void addListDir(const char *name)
+{
+
+      ui_folderInfoPanel = lv_obj_create(ui_fileManagerPanel);
+      lv_obj_set_width(ui_folderInfoPanel, 240);
+      lv_obj_set_height(ui_folderInfoPanel, 50);
+      lv_obj_set_align(ui_folderInfoPanel, LV_ALIGN_CENTER);
+      lv_obj_clear_flag(ui_folderInfoPanel, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+      lv_obj_set_style_radius(ui_folderInfoPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_bg_color(ui_folderInfoPanel, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_bg_opa(ui_folderInfoPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_border_color(ui_folderInfoPanel, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_border_opa(ui_folderInfoPanel, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_border_width(ui_folderInfoPanel, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_border_side(ui_folderInfoPanel, LV_BORDER_SIDE_BOTTOM, LV_PART_MAIN | LV_STATE_DEFAULT);
+      // lv_obj_set_style_bg_color(ui_folderInfoPanel, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_PRESSED);
+      // lv_obj_set_style_bg_opa(ui_folderInfoPanel, 100, LV_PART_MAIN | LV_STATE_PRESSED);
+
+      ui_folderInfoIcon = lv_img_create(ui_folderInfoPanel);
+      lv_img_set_src(ui_folderInfoIcon, &ui_img_directory_png);
+      lv_obj_set_width(ui_folderInfoIcon, LV_SIZE_CONTENT);  /// 1
+      lv_obj_set_height(ui_folderInfoIcon, LV_SIZE_CONTENT); /// 1
+      lv_obj_set_x(ui_folderInfoIcon, 10);
+      lv_obj_set_y(ui_folderInfoIcon, 0);
+      lv_obj_set_align(ui_folderInfoIcon, LV_ALIGN_LEFT_MID);
+      lv_obj_add_flag(ui_folderInfoIcon, LV_OBJ_FLAG_ADV_HITTEST);  /// Flags
+      lv_obj_clear_flag(ui_folderInfoIcon, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+
+      ui_folderInfoName = lv_label_create(ui_folderInfoPanel);
+      lv_obj_set_width(ui_folderInfoName, 150);
+      lv_obj_set_height(ui_folderInfoName, LV_SIZE_CONTENT); /// 1
+      lv_obj_set_x(ui_folderInfoName, 50);
+      lv_obj_set_y(ui_folderInfoName, 0);
+      lv_obj_set_align(ui_folderInfoName, LV_ALIGN_LEFT_MID);
+      lv_label_set_text(ui_folderInfoName, name);
+      lv_obj_set_style_text_font(ui_folderInfoName, &lv_font_montserrat_16, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+      // click to open
+}
+
+void addListFile(const char *name, int size)
+{
+      ui_fileInfoPanel = lv_obj_create(ui_fileManagerPanel);
+      lv_obj_set_width(ui_fileInfoPanel, 240);
+      lv_obj_set_height(ui_fileInfoPanel, 50);
+      lv_obj_set_align(ui_fileInfoPanel, LV_ALIGN_CENTER);
+      lv_obj_clear_flag(ui_fileInfoPanel, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+      lv_obj_set_style_radius(ui_fileInfoPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_bg_color(ui_fileInfoPanel, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_bg_opa(ui_fileInfoPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_border_color(ui_fileInfoPanel, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_border_opa(ui_fileInfoPanel, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_border_width(ui_fileInfoPanel, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_border_side(ui_fileInfoPanel, LV_BORDER_SIDE_BOTTOM, LV_PART_MAIN | LV_STATE_DEFAULT);
+      // lv_obj_set_style_bg_color(ui_fileInfoPanel, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_PRESSED);
+      // lv_obj_set_style_bg_opa(ui_fileInfoPanel, 100, LV_PART_MAIN | LV_STATE_PRESSED);
+
+      ui_fileInfoIcon = lv_img_create(ui_fileInfoPanel);
+      lv_img_set_src(ui_fileInfoIcon, &ui_img_file_png);
+      lv_obj_set_width(ui_fileInfoIcon, LV_SIZE_CONTENT);  /// 1
+      lv_obj_set_height(ui_fileInfoIcon, LV_SIZE_CONTENT); /// 1
+      lv_obj_set_x(ui_fileInfoIcon, 10);
+      lv_obj_set_y(ui_fileInfoIcon, 0);
+      lv_obj_set_align(ui_fileInfoIcon, LV_ALIGN_LEFT_MID);
+      lv_obj_add_flag(ui_fileInfoIcon, LV_OBJ_FLAG_ADV_HITTEST);  /// Flags
+      lv_obj_clear_flag(ui_fileInfoIcon, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+
+      ui_fileInfoName = lv_label_create(ui_fileInfoPanel);
+      lv_obj_set_width(ui_fileInfoName, 150);
+      lv_obj_set_height(ui_fileInfoName, LV_SIZE_CONTENT); /// 1
+      lv_obj_set_x(ui_fileInfoName, 50);
+      lv_obj_set_y(ui_fileInfoName, -7);
+      lv_obj_set_align(ui_fileInfoName, LV_ALIGN_LEFT_MID);
+      lv_label_set_text(ui_fileInfoName, name);
+      lv_obj_set_style_text_font(ui_fileInfoName, &lv_font_montserrat_16, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+      ui_fileInfoSize = lv_label_create(ui_fileInfoPanel);
+      lv_obj_set_width(ui_fileInfoSize, 150);
+      lv_obj_set_height(ui_fileInfoSize, LV_SIZE_CONTENT); /// 1
+      lv_obj_set_x(ui_fileInfoSize, 50);
+      lv_obj_set_y(ui_fileInfoSize, 11);
+      lv_obj_set_align(ui_fileInfoSize, LV_ALIGN_LEFT_MID);
+      if (size >= 1048576)
+      {
+            lv_label_set_text_fmt(ui_fileInfoSize, "%dmb", (size / 1048576));
+      }
+      else if (size >= 1024)
+      {
+            lv_label_set_text_fmt(ui_fileInfoSize, "%dkb", (size / 1024));
+      }
+      else
+      {
+            lv_label_set_text_fmt(ui_fileInfoSize, "%db", size);
+      }
+      lv_obj_set_style_text_align(ui_fileInfoSize, LV_TEXT_ALIGN_RIGHT, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_text_font(ui_fileInfoSize, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
+}
+
+void addListBack(lv_event_cb_t event_cb)
+{
+
+      ui_driveBackPanel = lv_obj_create(ui_fileManagerPanel);
+      lv_obj_set_width(ui_driveBackPanel, 240);
+      lv_obj_set_height(ui_driveBackPanel, 50);
+      lv_obj_set_align(ui_driveBackPanel, LV_ALIGN_CENTER);
+      lv_obj_clear_flag(ui_driveBackPanel, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+      lv_obj_set_style_radius(ui_driveBackPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_bg_color(ui_driveBackPanel, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_bg_opa(ui_driveBackPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_border_color(ui_driveBackPanel, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_border_opa(ui_driveBackPanel, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_border_width(ui_driveBackPanel, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_border_side(ui_driveBackPanel, LV_BORDER_SIDE_BOTTOM, LV_PART_MAIN | LV_STATE_DEFAULT);
+      // lv_obj_set_style_bg_color(ui_driveBackPanel, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_PRESSED);
+      // lv_obj_set_style_bg_opa(ui_driveBackPanel, 100, LV_PART_MAIN | LV_STATE_PRESSED);
+
+      ui_driveBackIcon = lv_img_create(ui_driveBackPanel);
+      lv_img_set_src(ui_driveBackIcon, &ui_img_back_file_png);
+      lv_obj_set_width(ui_driveBackIcon, LV_SIZE_CONTENT);  /// 1
+      lv_obj_set_height(ui_driveBackIcon, LV_SIZE_CONTENT); /// 1
+      lv_obj_set_x(ui_driveBackIcon, 10);
+      lv_obj_set_y(ui_driveBackIcon, 0);
+      lv_obj_set_align(ui_driveBackIcon, LV_ALIGN_LEFT_MID);
+      lv_obj_add_flag(ui_driveBackIcon, LV_OBJ_FLAG_ADV_HITTEST);  /// Flags
+      lv_obj_clear_flag(ui_driveBackIcon, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+
+      ui_driveBackLabel = lv_label_create(ui_driveBackPanel);
+      lv_obj_set_width(ui_driveBackLabel, 150);
+      lv_obj_set_height(ui_driveBackLabel, LV_SIZE_CONTENT); /// 1
+      lv_obj_set_x(ui_driveBackLabel, 50);
+      lv_obj_set_y(ui_driveBackLabel, 0);
+      lv_obj_set_align(ui_driveBackLabel, LV_ALIGN_LEFT_MID);
+      lv_label_set_text(ui_driveBackLabel, "Back");
+      lv_obj_set_style_text_font(ui_driveBackLabel, &lv_font_montserrat_16, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+      lv_obj_add_event_cb(ui_driveBackPanel, event_cb, LV_EVENT_CLICKED, NULL);
+}
+
 void registerWatchface_cb(const char *name, const lv_img_dsc_t *preview, lv_obj_t **watchface)
 {
       if (numFaces >= MAX_FACES)
@@ -1535,7 +1822,7 @@ void init_face_select()
       lv_obj_set_style_pad_column(ui_faceSelect, 15, LV_PART_MAIN | LV_STATE_DEFAULT);
 }
 
-void showError(const char* title, const char *message)
+void showError(const char *title, const char *message)
 {
       lv_disp_t *display = lv_disp_get_default();
       lv_obj_t *actScr = lv_disp_get_scr_act(display);
@@ -1545,9 +1832,8 @@ void showError(const char* title, const char *message)
 
       lv_label_set_text(ui_errorTitle, title);
       lv_label_set_text(ui_errorMessage, message);
-      lv_obj_clear_flag(ui_errorWindow, LV_OBJ_FLAG_HIDDEN );   // show the error
+      lv_obj_clear_flag(ui_errorWindow, LV_OBJ_FLAG_HIDDEN); // show the error
       lv_obj_scroll_to_y(ui_errorWindow, 0, LV_ANIM_ON);
-
 }
 
 ///////////////////// SCREENS ////////////////////
@@ -1777,6 +2063,12 @@ void ui_weatherScreen_screen_init(void)
       lv_obj_set_style_pad_top(ui_forecastList, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
       lv_obj_set_style_pad_bottom(ui_forecastList, 50, LV_PART_MAIN | LV_STATE_DEFAULT);
 
+      lv_obj_t *info = lv_label_create(ui_forecastList);
+      lv_obj_set_width(info, 180);
+      lv_obj_set_height(info, LV_SIZE_CONTENT); /// 1
+      lv_obj_set_align(info, LV_ALIGN_CENTER);
+      lv_label_set_text(info, "Weather information has not yet been synced. Connect the device to Chronos app to get weather info. Make sure to enable it in the app settings.");
+
       lv_obj_add_event_cb(ui_weatherScreen, ui_event_weatherScreen, LV_EVENT_ALL, NULL);
 }
 
@@ -1807,6 +2099,7 @@ void ui_appListScreen_screen_init(void)
       add_appList("Notifications", 0, &ui_img_notifications_app_png);
       add_appList("Weather", 1, &ui_img_weather_app_png);
       add_appList("App info", 3, &ui_img_app_info_png);
+      // add_appList("Files", 8, &ui_img_file_manager_png);
       add_appList("Games", 7, &ui_img_game_icon_png);
       add_appList("Watchfaces", 5, &ui_img_smartwatch_png);
       add_appList("QR Codes", 4, &ui_img_qr_icon_png);
@@ -2095,6 +2388,60 @@ void ui_settingsScreen_screen_init(void)
       lv_obj_set_y(ui_timeoutLabel, 0);
       lv_label_set_text(ui_timeoutLabel, "Screen Timeout");
 
+      // ui_languagePanel = lv_obj_create(ui_settingsList);
+      // lv_obj_set_width(ui_languagePanel, 200);
+      // lv_obj_set_height(ui_languagePanel, 64);
+      // lv_obj_set_x(ui_languagePanel, 37);
+      // lv_obj_set_y(ui_languagePanel, 7);
+      // lv_obj_set_align(ui_languagePanel, LV_ALIGN_CENTER);
+      // lv_obj_clear_flag(ui_languagePanel, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+      // lv_obj_set_style_radius(ui_languagePanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      // lv_obj_set_style_bg_color(ui_languagePanel, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+      // lv_obj_set_style_bg_opa(ui_languagePanel, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+      // lv_obj_set_style_border_color(ui_languagePanel, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+      // lv_obj_set_style_border_opa(ui_languagePanel, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+      // lv_obj_set_style_border_width(ui_languagePanel, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+      // lv_obj_set_style_border_side(ui_languagePanel, LV_BORDER_SIDE_BOTTOM, LV_PART_MAIN | LV_STATE_DEFAULT);
+      // lv_obj_set_style_pad_left(ui_languagePanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      // lv_obj_set_style_pad_right(ui_languagePanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      // lv_obj_set_style_pad_top(ui_languagePanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      // lv_obj_set_style_pad_bottom(ui_languagePanel, 5, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+      // ui_languageSelect = lv_dropdown_create(ui_languagePanel);
+      // lv_dropdown_set_options(ui_languageSelect, "中文\nEnglish\nItaliano\nEspañol\nPortuguês\nрусский\n日本人\n中文\nDeutsche\nไทย");
+      // lv_obj_set_width(ui_languageSelect, 120);
+      // lv_obj_set_height(ui_languageSelect, LV_SIZE_CONTENT); /// 1
+      // lv_obj_set_x(ui_languageSelect, 20);
+      // lv_obj_set_y(ui_languageSelect, 10);
+      // lv_obj_set_align(ui_languageSelect, LV_ALIGN_CENTER);
+      // lv_obj_add_flag(ui_languageSelect, LV_OBJ_FLAG_SCROLL_ON_FOCUS); /// Flags
+      // lv_obj_set_style_bg_color(ui_languageSelect, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+      // lv_obj_set_style_bg_opa(ui_languageSelect, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+      // lv_obj_set_style_border_color(ui_languageSelect, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+      // lv_obj_set_style_border_opa(ui_languageSelect, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+      // lv_obj_set_style_border_width(ui_languageSelect, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+      // lv_obj_set_style_bg_color(lv_dropdown_get_list(ui_languageSelect), lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+      // lv_obj_set_style_bg_opa(lv_dropdown_get_list(ui_languageSelect), 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+      // ui_languageIcon = lv_img_create(ui_languagePanel);
+      // lv_img_set_src(ui_languageIcon, &ui_img_language_png);
+      // lv_obj_set_width(ui_languageIcon, LV_SIZE_CONTENT);  /// 1
+      // lv_obj_set_height(ui_languageIcon, LV_SIZE_CONTENT); /// 1
+      // lv_obj_set_x(ui_languageIcon, -74);
+      // lv_obj_set_y(ui_languageIcon, 2);
+      // lv_obj_set_align(ui_languageIcon, LV_ALIGN_CENTER);
+      // lv_obj_add_flag(ui_languageIcon, LV_OBJ_FLAG_ADV_HITTEST);  /// Flags
+      // lv_obj_clear_flag(ui_languageIcon, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+      // lv_img_set_zoom(ui_languageIcon, 150);
+
+      // ui_languageLabel = lv_label_create(ui_languagePanel);
+      // lv_obj_set_width(ui_languageLabel, LV_SIZE_CONTENT);  /// 1
+      // lv_obj_set_height(ui_languageLabel, LV_SIZE_CONTENT); /// 1
+      // lv_obj_set_x(ui_languageLabel, 61);
+      // lv_obj_set_y(ui_languageLabel, 0);
+      // lv_label_set_text(ui_languageLabel, "Language");
+
       ui_alertStatePanel = lv_obj_create(ui_settingsList);
       lv_obj_set_width(ui_alertStatePanel, 200);
       lv_obj_set_height(ui_alertStatePanel, 64);
@@ -2217,7 +2564,7 @@ void ui_settingsScreen_screen_init(void)
       lv_obj_set_height(ui_aboutText, LV_SIZE_CONTENT); /// 1
       lv_obj_set_x(ui_aboutText, 60);
       lv_obj_set_y(ui_aboutText, 7);
-      lv_label_set_text(ui_aboutText, "v1.0 (fbiego)\nESP32 C3 Mini\n11:22:33:44:55:66");
+      lv_label_set_text(ui_aboutText, "v4.0 (fbiego)\nESP32 C3 Mini\n11:22:33:44:55:66");
 
       ui_kenyaPanel = lv_obj_create(ui_settingsList);
       lv_obj_set_width(ui_kenyaPanel, 200);
@@ -2261,6 +2608,7 @@ void ui_settingsScreen_screen_init(void)
       lv_obj_add_event_cb(ui_Switch2, ui_event_scrollMode, LV_EVENT_ALL, NULL);
       lv_obj_add_event_cb(ui_alertStateSwitch, ui_event_alertStateSwitch, LV_EVENT_ALL, NULL);
       lv_obj_add_event_cb(ui_timeoutSelect, ui_event_timeoutSelect, LV_EVENT_ALL, NULL);
+      // lv_obj_add_event_cb(ui_languageSelect, ui_event_languageSelect, LV_EVENT_ALL, NULL);
       lv_obj_add_event_cb(ui_batterySlider, ui_event_batterySlider, LV_EVENT_ALL, NULL);
       lv_obj_add_event_cb(ui_settingsScreen, ui_event_settingsScreen, LV_EVENT_ALL, NULL);
 }
@@ -2803,6 +3151,34 @@ void ui_logoScreen_screen_init(void)
       lv_obj_add_event_cb(ui_logoScreen, ui_event_logoScreen, LV_EVENT_ALL, NULL);
 }
 
+void ui_filesScreen_screen_init(void)
+{
+      ui_filesScreen = lv_obj_create(NULL);
+      lv_obj_clear_flag(ui_filesScreen, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+
+      ui_fileManagerPanel = lv_obj_create(ui_filesScreen);
+      lv_obj_set_width(ui_fileManagerPanel, lv_pct(100));
+      lv_obj_set_height(ui_fileManagerPanel, lv_pct(100));
+      lv_obj_set_align(ui_fileManagerPanel, LV_ALIGN_CENTER);
+      lv_obj_set_flex_flow(ui_fileManagerPanel, LV_FLEX_FLOW_COLUMN);
+      lv_obj_set_flex_align(ui_fileManagerPanel, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
+      lv_obj_set_scrollbar_mode(ui_fileManagerPanel, LV_SCROLLBAR_MODE_OFF);
+      lv_obj_set_scroll_dir(ui_fileManagerPanel, LV_DIR_VER);
+      lv_obj_set_style_radius(ui_fileManagerPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_bg_color(ui_fileManagerPanel, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_bg_opa(ui_fileManagerPanel, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_border_width(ui_fileManagerPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_pad_left(ui_fileManagerPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_pad_right(ui_fileManagerPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_pad_top(ui_fileManagerPanel, 40, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_pad_bottom(ui_fileManagerPanel, 40, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_pad_row(ui_fileManagerPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_pad_column(ui_fileManagerPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+      lv_obj_add_event_cb(ui_fileManagerPanel, onScroll, LV_EVENT_SCROLL, NULL);
+      lv_obj_add_event_cb(ui_filesScreen, ui_event_appInfoScreen, LV_EVENT_ALL, NULL);
+}
+
 void ui_watchfaces_init(void)
 {
       numFaces = 0;
@@ -2830,7 +3206,6 @@ void ui_watchfaces_init(void)
       init_face_2051(registerWatchface_cb);
       init_face_2151(registerWatchface_cb);
       init_face_3589(registerWatchface_cb);
-
 }
 
 void ui_update_watchfaces(int second, int minute, int hour, bool mode, bool am, int day, int month, int year, int weekday,
@@ -2864,6 +3239,15 @@ void ui_games_init(void)
 {
       numGames = 0;
       ui_raceScreen_screen_init(registerGame_cb);
+
+      if (numGames == 0)
+      {
+            lv_obj_t *info = lv_label_create(ui_gameList);
+            lv_obj_set_width(info, 180);
+            lv_obj_set_height(info, LV_SIZE_CONTENT); /// 1
+            lv_obj_set_align(info, LV_ALIGN_CENTER);
+            lv_label_set_text(info, "No games available currently. Check whether it was enabled in the code");
+      }
 }
 
 void ui_games_update(void)
@@ -2878,8 +3262,8 @@ void ui_errorWindow_init(void)
       lv_obj_set_height(ui_errorWindow, lv_pct(100));
       lv_obj_set_align(ui_errorWindow, LV_ALIGN_CENTER);
       lv_obj_set_scrollbar_mode(ui_errorWindow, LV_SCROLLBAR_MODE_OFF);
-      lv_obj_add_flag(ui_errorWindow, LV_OBJ_FLAG_HIDDEN );   /// Flags
-      lv_obj_clear_flag(ui_errorWindow, LV_OBJ_FLAG_GESTURE_BUBBLE );    /// block gesture events when active
+      lv_obj_add_flag(ui_errorWindow, LV_OBJ_FLAG_HIDDEN);           /// Flags
+      lv_obj_clear_flag(ui_errorWindow, LV_OBJ_FLAG_GESTURE_BUBBLE); /// block gesture events when active
       lv_obj_set_scroll_dir(ui_errorWindow, LV_DIR_VER);
       lv_obj_set_style_radius(ui_errorWindow, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
       lv_obj_set_style_bg_color(ui_errorWindow, lv_color_hex(0xB10000), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -2951,6 +3335,20 @@ void ui_errorWindow_init(void)
       lv_obj_add_event_cb(ui_errorClose, ui_event_errorClose, LV_EVENT_ALL, NULL);
 }
 
+void init_custom_face()
+{
+      face_custom_root = lv_obj_create(NULL);
+      lv_obj_clear_flag(face_custom_root, LV_OBJ_FLAG_SCROLLABLE);
+      lv_obj_set_style_bg_color(face_custom_root, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_bg_opa(face_custom_root, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_border_width(face_custom_root, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_pad_left(face_custom_root, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_pad_right(face_custom_root, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_pad_top(face_custom_root, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_pad_bottom(face_custom_root, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_add_event_cb(face_custom_root, onFaceEvent, LV_EVENT_ALL, NULL);
+}
+
 void ui_init(void)
 {
       lv_disp_t *dispp = lv_disp_get_default();
@@ -2974,9 +3372,11 @@ void ui_init(void)
       ui_cameraScreen_screen_init();
 
       ui_errorWindow_init();
+      ui_filesScreen_screen_init();
 
       init_face_select();
       ui_watchfaces_init();
+      init_custom_face();
 
       ui_games_init();
 

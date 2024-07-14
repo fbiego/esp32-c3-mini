@@ -31,6 +31,8 @@
 
 #endif
 
+#define ENABLE_GAME_RACING
+
 #ifdef __cplusplus
 extern "C" {
 #endif

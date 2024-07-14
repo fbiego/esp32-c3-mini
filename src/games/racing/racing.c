@@ -2,7 +2,7 @@
 
 #include "racing.h"
 
-
+#ifdef ENABLE_GAME_RACING
 
 #define ROAD_HEIGHT 270
 #define NPC_CAR_HEIGHT 400
@@ -14,7 +14,6 @@
 #define INITIAL_SPEED 3.5
 #define SPEED_LIMIT_FACTOR 3.5
 
-
 void ui_event_raceScreen(lv_event_t *e);
 lv_obj_t *ui_raceScreen;
 void ui_event_roadPanel(lv_event_t *e);
@@ -23,10 +22,10 @@ lv_obj_t *ui_roadImage;
 lv_obj_t *ui_distanceLabel;
 lv_obj_t *ui_speedLabel;
 lv_obj_t *ui_carPlayer;
-void ui_event_leftButton( lv_event_t * e);
+void ui_event_leftButton(lv_event_t *e);
 lv_obj_t *ui_leftButton;
 lv_obj_t *ui_leftButtonText;
-void ui_event_rightButton( lv_event_t * e);
+void ui_event_rightButton(lv_event_t *e);
 lv_obj_t *ui_rightButton;
 lv_obj_t *ui_rightButtonText;
 lv_obj_t *ui_carNPC1;
@@ -107,8 +106,6 @@ void ui_event_raceScreen(lv_event_t *e)
         onGameOpened();
         active = true;
         isRacing = false;
-        
-        
 
         lv_label_set_text(ui_distanceLabel, "0");
         lv_label_set_text(ui_speedLabel, "0");
@@ -232,18 +229,23 @@ void ui_event_raceStart(lv_event_t *e)
     }
 }
 
+#endif
+
 void ui_event_exitRace(lv_event_t *e)
 {
+#ifdef ENABLE_GAME_RACING
     lv_event_code_t event_code = lv_event_get_code(e);
     lv_obj_t *target = lv_event_get_target(e);
     if (event_code == LV_EVENT_CLICKED)
     {
         ui_gameExit();
     }
+#endif
 }
 
 void ui_raceScreen_screen_init(void (*callback)(const char *, const lv_img_dsc_t *, lv_obj_t **))
 {
+#ifdef ENABLE_GAME_RACING
     ui_raceScreen = lv_obj_create(NULL);
     lv_obj_clear_flag(ui_raceScreen, LV_OBJ_FLAG_SCROLLABLE); /// Flags
     lv_obj_set_style_bg_color(ui_raceScreen, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -325,12 +327,11 @@ void ui_raceScreen_screen_init(void (*callback)(const char *, const lv_img_dsc_t
     lv_obj_set_style_bg_opa(ui_leftButton, 150, LV_PART_MAIN | LV_STATE_PRESSED);
 
     ui_leftButtonText = lv_label_create(ui_leftButton);
-    lv_obj_set_width( ui_leftButtonText, LV_SIZE_CONTENT);  /// 1
-    lv_obj_set_height( ui_leftButtonText, LV_SIZE_CONTENT);   /// 1
-    lv_obj_set_align( ui_leftButtonText, LV_ALIGN_CENTER );
-    lv_label_set_text(ui_leftButtonText,"<");
-    lv_obj_set_style_text_font(ui_leftButtonText, &lv_font_montserrat_30, LV_PART_MAIN| LV_STATE_DEFAULT);
-
+    lv_obj_set_width(ui_leftButtonText, LV_SIZE_CONTENT);  /// 1
+    lv_obj_set_height(ui_leftButtonText, LV_SIZE_CONTENT); /// 1
+    lv_obj_set_align(ui_leftButtonText, LV_ALIGN_CENTER);
+    lv_label_set_text(ui_leftButtonText, "<");
+    lv_obj_set_style_text_font(ui_leftButtonText, &lv_font_montserrat_30, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_rightButton = lv_btn_create(ui_raceScreen);
     lv_obj_set_width(ui_rightButton, 50);
@@ -347,12 +348,11 @@ void ui_raceScreen_screen_init(void (*callback)(const char *, const lv_img_dsc_t
     lv_obj_set_style_bg_opa(ui_rightButton, 150, LV_PART_MAIN | LV_STATE_PRESSED);
 
     ui_rightButtonText = lv_label_create(ui_rightButton);
-    lv_obj_set_width( ui_rightButtonText, LV_SIZE_CONTENT);  /// 1
-    lv_obj_set_height( ui_rightButtonText, LV_SIZE_CONTENT);   /// 1
-    lv_obj_set_align( ui_rightButtonText, LV_ALIGN_CENTER );
-    lv_label_set_text(ui_rightButtonText,">");
-    lv_obj_set_style_text_font(ui_rightButtonText, &lv_font_montserrat_30, LV_PART_MAIN| LV_STATE_DEFAULT);
-
+    lv_obj_set_width(ui_rightButtonText, LV_SIZE_CONTENT);  /// 1
+    lv_obj_set_height(ui_rightButtonText, LV_SIZE_CONTENT); /// 1
+    lv_obj_set_align(ui_rightButtonText, LV_ALIGN_CENTER);
+    lv_label_set_text(ui_rightButtonText, ">");
+    lv_obj_set_style_text_font(ui_rightButtonText, &lv_font_montserrat_30, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_carNPC1 = lv_img_create(ui_raceScreen);
     lv_img_set_src(ui_carNPC1, &ui_img_car_green_png);
@@ -480,10 +480,13 @@ void ui_raceScreen_screen_init(void (*callback)(const char *, const lv_img_dsc_t
 
     callback("Racing", &ui_img_car_png, &ui_raceScreen);
     active = false;
+
+#endif
 }
 
 void ui_raceScreen_screen_loop()
 {
+#ifdef ENABLE_GAME_RACING
     if (!active)
     {
         return;
@@ -587,4 +590,6 @@ void ui_raceScreen_screen_loop()
 
         counter++;
     }
+
+#endif
 }

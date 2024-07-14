@@ -83,6 +83,11 @@ extern "C"
     extern lv_obj_t *ui_timeoutSelect;
     extern lv_obj_t *ui_timeoutIcon;
     extern lv_obj_t *ui_timeoutLabel;
+    extern lv_obj_t *ui_languagePanel;
+    void ui_event_languageSelect(lv_event_t *e);
+    extern lv_obj_t *ui_languageSelect;
+    extern lv_obj_t *ui_languageIcon;
+    extern lv_obj_t *ui_languageLabel;
     extern lv_obj_t *ui_batteryPanel;
     void ui_event_batterySlider(lv_event_t *e);
     extern lv_obj_t *ui_batterySlider;
@@ -164,6 +169,24 @@ extern "C"
     extern lv_obj_t *ui_qrImage;
     extern lv_obj_t *ui_qrLabel;
 
+    void ui_filesScreen_screen_init(void);
+    extern lv_obj_t *ui_filesScreen;
+    extern lv_obj_t *ui_fileManagerPanel;
+    extern lv_obj_t *ui_driveInfoPanel;
+    extern lv_obj_t *ui_driveInfoIcon;
+    extern lv_obj_t *ui_driveInfoLabel;
+    extern lv_obj_t *ui_driveInfoBar;
+    extern lv_obj_t *ui_fileInfoPanel;
+    extern lv_obj_t *ui_fileInfoIcon;
+    extern lv_obj_t *ui_fileInfoName;
+    extern lv_obj_t *ui_fileInfoSize;
+    extern lv_obj_t *ui_folderInfoPanel;
+    extern lv_obj_t *ui_folderInfoIcon;
+    extern lv_obj_t *ui_folderInfoName;
+    extern lv_obj_t *ui_driveBackPanel;
+    extern lv_obj_t *ui_driveBackIcon;
+    extern lv_obj_t *ui_driveBackLabel;
+
     extern lv_obj_t *ui_errorWindow;
     extern lv_obj_t *ui_errorPanel;
     extern lv_obj_t *ui_errorTitle;
@@ -175,10 +198,13 @@ extern "C"
     extern lv_obj_t *ui_home;
     extern lv_obj_t *ui_faceSelect;
 
+    extern lv_obj_t *face_custom_root;
+
     extern bool toAppList;
     extern bool circular;
     extern int numFaces;
     extern int numGames;
+    extern int currentIndex;
 
     void ui_event____initial_actions0(lv_event_t *e);
     extern lv_obj_t *ui____initial_actions0;
@@ -188,6 +214,8 @@ extern "C"
         const char *name;
         const lv_img_dsc_t *preview;
         lv_obj_t **watchface;
+        bool custom;
+        int customIndex;
     } Face;
 
     typedef struct DragEvent
@@ -212,10 +240,18 @@ extern "C"
     void setNotificationIcon(lv_obj_t *obj, int appId);
     void ui_games_update(void);
     void showError(const char *title, const char *message);
+    void addWatchface(const char *name, const lv_img_dsc_t *src, int index);
+
+    void addListDrive(const char* name, int total, int used, lv_event_cb_t event_cb);
+    void addListDir(const char* name);
+    void addListFile(const char* name, int size);
+    void addListBack(lv_event_cb_t event_cb);
+
+    void addFaceList(lv_obj_t *parent, Face face);
 
     // LV_IMG_DECLARE(ui_img_753022056);      // assets\night-sky.png
-    LV_IMG_DECLARE(ui_img_602195540);      // assets\dy-6.png
-    LV_IMG_DECLARE(ui_img_wechat_png);     // assets\wechat.png
+    LV_IMG_DECLARE(ui_img_602195540);  // assets\dy-6.png
+    LV_IMG_DECLARE(ui_img_wechat_png); // assets\wechat.png
     // LV_IMG_DECLARE(ui_img_857483832);      // assets\day-sky.png
     LV_IMG_DECLARE(ui_img_602206286);      // assets\dy-0.png
     LV_IMG_DECLARE(ui_img_chrns_png);      // assets\chrns.png
@@ -289,6 +325,14 @@ extern "C"
     LV_IMG_DECLARE(ui_img_kenya_png);           // assets\kenya.png
     LV_IMG_DECLARE(ui_img_lvgl_logo_png);       // assets\lvgl_logo.png
     LV_IMG_DECLARE(ui_img_game_icon_png);       // assets\game_icon.png
+    LV_IMG_DECLARE(ui_img_language_png);        // assets\language.png
+    LV_IMG_DECLARE(ui_img_file_manager_png);
+    LV_IMG_DECLARE(ui_img_drive_png);     // assets/drive.png
+    LV_IMG_DECLARE(ui_img_file_png);      // assets/file.png
+    LV_IMG_DECLARE(ui_img_directory_png); // assets/directory.png
+    LV_IMG_DECLARE(ui_img_back_file_png); // assets/back_file.png
+    LV_IMG_DECLARE(ui_img_clock_png);    // assets/clock.png
+    LV_IMG_DECLARE(ui_img_bin_png);    // assets/bin.png
 
     LV_IMG_DECLARE(ui_img_wechat_pay_png);
     LV_IMG_DECLARE(ui_img_alipay_png);
