@@ -6,6 +6,7 @@ A demo LVGL Watch project for ESP32 C3 mini 240*240 touch display development bo
 - [`ESP32 C3 mini LVGL`](https://youtu.be/u96OkjxC0Ro)
 - [`ESP32  Watchfaces LVGL`](https://youtu.be/lvRsTp9v6_k)
 - [`Waveshare ESP32 S3 (240x240 1.28” Round & 240x280 1.69” Rectangular)`](https://youtu.be/WXER_NX7LWI)
+- [`Installing custom watchfaces`](https://youtu.be/qXx6tj7s6pQ)
 
 
 ## Screens Preview
