@@ -642,7 +642,7 @@ void ui_event_scrollMode(lv_event_t *e)
       lv_obj_t *target = lv_event_get_target(e);
       if (event_code == LV_EVENT_VALUE_CHANGED)
       {
-            
+
             circular = lv_obj_has_state(target, LV_STATE_CHECKED);
             lv_obj_scroll_by(ui_settingsList, 0, circular ? 1 : -1, LV_ANIM_ON);
             lv_obj_scroll_by(ui_appList, 0, circular ? 1 : -1, LV_ANIM_OFF);
@@ -941,7 +941,7 @@ void ui_event_faceSelected(lv_event_t *e)
                         onCustomFaceSelected(-1);
                   }
             }
-            
+
             lv_scr_load_anim(ui_home, LV_SCR_LOAD_ANIM_FADE_ON, 500, 0, false);
 
             onFaceSelected(e);
@@ -1005,15 +1005,17 @@ void onAppListClicked(lv_event_t *e)
             _ui_screen_change(ui_qrScreen, LV_SCR_LOAD_ANIM_MOVE_BOTTOM, 500, 0);
             break;
       case 5:
-            // _ui_screen_change(ui_faceSelect, LV_SCR_LOAD_ANIM_FADE_ON, 500, 0);
-
+#ifdef USE_SDL
+            _ui_screen_change(ui_faceSelect, LV_SCR_LOAD_ANIM_FADE_ON, 500, 0);
+#else
             lv_obj_clean(ui_fileManagerPanel);
 
-            for (int i = 0; i < numFaces; i++){
+            for (int i = 0; i < numFaces; i++)
+            {
                   addFaceList(ui_fileManagerPanel, faces[i]);
             }
             _ui_screen_change(ui_filesScreen, LV_SCR_LOAD_ANIM_MOVE_LEFT, 500, 0);
-
+#endif
             break;
       case 6:
             _ui_screen_change(ui_findPhoneScreen, LV_SCR_LOAD_ANIM_MOVE_LEFT, 500, 0);
@@ -1190,7 +1192,6 @@ void ui_event_errorClose(lv_event_t *e)
             _ui_flag_modify(ui_errorWindow, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
       }
 }
-
 
 ///////////////////// HELPERS ////////////////////
 
@@ -2099,7 +2100,9 @@ void ui_appListScreen_screen_init(void)
       add_appList("Notifications", 0, &ui_img_notifications_app_png);
       add_appList("Weather", 1, &ui_img_weather_app_png);
       add_appList("App info", 3, &ui_img_app_info_png);
-      // add_appList("Files", 8, &ui_img_file_manager_png);
+#ifdef USE_SDL
+      add_appList("Files", 8, &ui_img_file_manager_png);
+#endif
       add_appList("Games", 7, &ui_img_game_icon_png);
       add_appList("Watchfaces", 5, &ui_img_smartwatch_png);
       add_appList("QR Codes", 4, &ui_img_qr_icon_png);

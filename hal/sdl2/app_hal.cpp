@@ -144,7 +144,10 @@ void onGameOpened(){}
 
 void onGameClosed(){}
 
-bool loadCustomFace(const char *file) {}
+bool loadCustomFace(const char *file) 
+{
+    return true;
+}
 
 void onMessageClick(lv_event_t *e)
 {
@@ -167,6 +170,8 @@ void onCaptureClick(lv_event_t *e)
 {
     lv_scr_load_anim(ui_home, LV_SCR_LOAD_ANIM_FADE_IN, 500, 0, false);
 }
+
+void addFaceList(lv_obj_t *parent, Face face){}
 
 void setupWeather()
 {
