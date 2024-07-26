@@ -47,6 +47,7 @@
 #include "ui/custom_face.h"
 
 #include "main.h"
+#include "splash.h"
 
 #include "FS.h"
 #include "FFat.h"
@@ -154,7 +155,12 @@ public:
 
 LGFX tft;
 
+#ifdef CS_CONFIG
+ChronosESP32 watch("Chronos C3", CS_CONFIG);
+#else
 ChronosESP32 watch("Chronos C3");
+#endif
+
 Preferences prefs;
 
 static const uint32_t screenWidth = WIDTH;
@@ -1374,7 +1380,8 @@ void hal_setup()
 
   Serial.println(heapUsage());
 
-  if (setupFS())
+  bool fsState = setupFS();
+  if (fsState)
   {
     // driveList_cb(NULL);
     Serial.println("Setup FS success");
@@ -1481,6 +1488,10 @@ void hal_setup()
   else
   {
     Serial.println("Drive S is not ready");
+  }
+
+  if (!fsState){
+    showError(F_NAME, "Failed to mount the partition, installing custom watchfaces will not work");
   }
 
   Timber.i("Setup done");
