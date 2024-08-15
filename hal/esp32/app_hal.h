@@ -34,6 +34,11 @@
 
 #endif
 
+#if defined(ESPS3_1_69) || defined(ESPS3_1_28)
+#define ENABLE_APP_QMI8658C
+#endif
+
+
 // #define ENABLE_GAME_RACING
 
 #ifdef __cplusplus

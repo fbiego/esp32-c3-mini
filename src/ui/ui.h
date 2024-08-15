@@ -19,6 +19,7 @@ extern "C"
 #include "ui_events.h"
 
 #include "games/racing/racing.h"
+#include "apps/qmi8658c/qmi8658c.h"
 
     void pulseCall_Animation(lv_obj_t *TargetObject, int delay);
     void ui_event_clockScreen(lv_event_t *e);

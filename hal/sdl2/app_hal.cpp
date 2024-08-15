@@ -139,6 +139,10 @@ void onWatchfaceChange(lv_event_t *e) {}
 void onFaceSelected(lv_event_t *e) {}
 
 void onCustomFaceSelected(int pathIndex) {}
+void onRTWState(bool state)
+{
+  
+}
 
 void onGameOpened(){}
 

@@ -39,6 +39,7 @@
 #include <Timber.h>
 #include <Preferences.h>
 #include <ArduinoJson.h>
+#include <Wire.h>
 #include "app_hal.h"
 
 #include <lvgl.h>
@@ -51,6 +52,12 @@
 
 #include "FS.h"
 #include "FFat.h"
+
+#ifdef ENABLE_APP_QMI8658C
+#include "Qmi8658c.h"                // Include the library for QMI8658C sensor
+#define QMI_ADDRESS 0x6B             // Define QMI8658C I2C address
+#define QMI8658C_I2C_FREQUENCY 40000 // Define I2C frequency as 80kHz (in Hz)
+#endif
 
 #define FLASH FFat
 #define F_NAME "FATFS"
@@ -137,7 +144,7 @@ public:
       cfg.y_max = HEIGHT;   // タッチスクリーンから得られる最大のY値(生の値)
       cfg.pin_int = TP_INT; // INTが接続されているピン番号
       // cfg.pin_rst = TP_RST;
-      cfg.bus_shared = false;  // 画面と共通のバスを使用している場合 trueを設定
+      cfg.bus_shared = false;   // 画面と共通のバスを使用している場合 trueを設定
       cfg.offset_rotation = 0; // 表示とタッチの向きのが一致しない場合の調整 0~7の値で設定
       cfg.i2c_port = 0;        // 使用するI2Cを選択 (0 or 1)
       cfg.i2c_addr = 0x15;     // I2Cデバイスアドレス番号
@@ -160,8 +167,24 @@ ChronosESP32 watch("Chronos C3", CS_CONFIG);
 #else
 ChronosESP32 watch("Chronos C3");
 #endif
-
 Preferences prefs;
+
+#ifdef ENABLE_APP_QMI8658C
+// Declare an instance of Qmi8658c
+Qmi8658c qmi8658c(QMI_ADDRESS, QMI8658C_I2C_FREQUENCY);
+
+/* QMI8658C configuration */
+qmi8658_cfg_t qmi8658_cfg = {
+    .qmi8658_mode = qmi8658_mode_dual, // Set the QMI8658C mode to dual mode
+    .acc_scale = acc_scale_2g,         // Set the accelerometer scale to ±2g
+    .acc_odr = acc_odr_8000,           // Set the accelerometer output data rate (ODR) to 8000Hz
+    .gyro_scale = gyro_scale_16dps,    // Set the gyroscope scale to ±16 dps
+    .gyro_odr = gyro_odr_8000,         // Set the gyroscope output data rate (ODR) to 8000Hz
+};
+
+qmi8658_result_t qmi8658_result;
+qmi_data_t data; // Declare a variable to store sensor data
+#endif
 
 static const uint32_t screenWidth = WIDTH;
 static const uint32_t screenHeight = HEIGHT;
@@ -180,10 +203,12 @@ lv_obj_t *lastActScr;
 bool circular = false;
 bool alertSwitch = false;
 bool gameActive = false;
+bool readIMU = false;
 
 String customFacePaths[15];
 int customFaceIndex;
-
+static bool transfer = false;
+#ifdef ENABLE_CUSTOM_FACE
 // watchface transfer
 int cSize, pos, recv;
 uint32_t total, currentRecv;
@@ -191,10 +216,11 @@ bool last;
 String fName;
 uint8_t buf1[1024];
 uint8_t buf2[1024];
-static bool writeFile = false, transfer = false, wSwitch = true;
+static bool writeFile = false, wSwitch = true;
 static int wLen1 = 0, wLen2 = 0;
 bool start = false;
 int lastCustom;
+#endif
 
 TaskHandle_t gameHandle = NULL;
 
@@ -239,22 +265,23 @@ void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color
 /*Read the touchpad*/
 void my_touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
 {
-
   bool touched;
   uint8_t gesture;
   uint16_t touchX, touchY;
-  RemoteTouch rt = watch.getTouch(); // remote touch
-  if (rt.state)
-  {
-    // use remote touch when active
-    touched = rt.state;
-    touchX = rt.x;
-    touchY = rt.y;
-  }
-  else
-  {
-    touched = tft.getTouch(&touchX, &touchY);
-  }
+  // RemoteTouch rt = watch.getTouch(); // remote touch
+  // if (rt.state)
+  // {
+  //   // use remote touch when active
+  //   touched = rt.state;
+  //   touchX = rt.x;
+  //   touchY = rt.y;
+  // }
+  // else
+  // {
+  //   touched = tft.getTouch(&touchX, &touchY);
+  // }
+
+  touched = tft.getTouch(&touchX, &touchY);
 
   if (!touched)
   {
@@ -274,15 +301,14 @@ void my_touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
 
 String heapUsage()
 {
-	String usage;
-	uint32_t total = ESP.getHeapSize();
-	uint32_t free = ESP.getFreeHeap();
-	usage += "Total: " + String(total);
-	usage += "\tFree: " + String(free);
-	usage += "\t" + String(((total - free) * 1.0) / total * 100, 2) + "%";
-	return usage;
+  String usage;
+  uint32_t total = ESP.getHeapSize();
+  uint32_t free = ESP.getFreeHeap();
+  usage += "Total: " + String(total);
+  usage += "\tFree: " + String(free);
+  usage += "\t" + String(((total - free) * 1.0) / total * 100, 2) + "%";
+  return usage;
 }
-
 
 void *sd_open_cb(struct _lv_fs_drv_t *drv, const char *path, lv_fs_mode_t mode)
 {
@@ -374,15 +400,15 @@ lv_fs_res_t sd_tell_cb(struct _lv_fs_drv_t *drv, void *file_p, uint32_t *pos_p)
   return res;
 }
 
-lv_fs_res_t sd_close_cb(struct _lv_fs_drv_t *drv, void *file_p) {
-    File *fp = (File *)file_p;
+lv_fs_res_t sd_close_cb(struct _lv_fs_drv_t *drv, void *file_p)
+{
+  File *fp = (File *)file_p;
 
-    fp->close();
-    // delete fp;  // Free the allocated memory
+  fp->close();
+  // delete fp;  // Free the allocated memory
 
-    return LV_FS_RES_OK;
+  return LV_FS_RES_OK;
 }
-
 
 void checkLocal()
 {
@@ -407,6 +433,7 @@ void checkLocal()
     }
     else
     {
+#ifdef ENABLE_CUSTOM_FACE
       // addListFile(file.name(), file.size());
       String nm = String(file.name());
       if (nm.endsWith(".jsn"))
@@ -415,6 +442,7 @@ void checkLocal()
         nm = "/" + nm;
         registerCustomFace(nm.c_str(), &ui_img_custom_preview_png, &face_custom_root, nm);
       }
+#endif
     }
     file = root.openNextFile();
   }
@@ -454,6 +482,10 @@ void deleteFile(const char *path)
 
 bool setupFS()
 {
+
+#ifndef ENABLE_CUSTOM_FACE
+  return false;
+#endif
 
   if (!FLASH.begin(true, "/ffat", MAX_FILE_OPEN))
   {
@@ -622,13 +654,13 @@ bool deleteCustomFace(String file)
     {
       return false;
     }
-    
+
     JsonArray assets = face["assets"].as<JsonArray>();
     int sz = assets.size();
 
     for (int j = 0; j < sz; j++)
     {
-      deleteFile(assets[j].as<const char*>());
+      deleteFile(assets[j].as<const char *>());
     }
 
     deleteFile(path.c_str());
@@ -672,13 +704,15 @@ void onCustomDelete(lv_event_t *e)
   Serial.println("Delete custom watchface");
   Serial.println(customFacePaths[index]);
   showError("Delete", "The watchface will be deleted from storage, ESP32 will restart after deletion");
-  if (deleteCustomFace(customFacePaths[index])){
+  if (deleteCustomFace(customFacePaths[index]))
+  {
     lv_scr_load_anim(ui_appListScreen, LV_SCR_LOAD_ANIM_MOVE_RIGHT, 500, 0, false);
     ESP.restart();
-  } else {
+  }
+  else
+  {
     showError("Error", "Failed to delete watchface");
   }
-
 }
 
 void addFaceList(lv_obj_t *parent, Face face)
@@ -746,8 +780,9 @@ void addFaceList(lv_obj_t *parent, Face face)
   if (!face.custom)
   {
     lv_obj_add_flag(ui_faceItemDelete, LV_OBJ_FLAG_HIDDEN);
-
-  } else {
+  }
+  else
+  {
     lv_obj_add_event_cb(ui_faceItemDelete, onCustomDelete, LV_EVENT_CLICKED, (void *)face.customIndex);
   }
 }
@@ -1026,24 +1061,27 @@ void onFaceSelected(lv_event_t *e)
 
 void onCustomFaceSelected(int pathIndex)
 {
+#ifdef ENABLE_CUSTOM_FACE
 
   if (pathIndex < 0)
   {
     prefs.putString("custom", "");
     return;
   }
-  if (lv_obj_get_child_cnt(face_custom_root) > 0 && lastCustom == pathIndex){
+  if (lv_obj_get_child_cnt(face_custom_root) > 0 && lastCustom == pathIndex)
+  {
     ui_home = face_custom_root;
-  } else if (loadCustomFace(customFacePaths[pathIndex]))
+  }
+  else if (loadCustomFace(customFacePaths[pathIndex]))
   {
     lastCustom = pathIndex;
     ui_home = face_custom_root;
-    
   }
 
   lv_scr_load_anim(ui_home, LV_SCR_LOAD_ANIM_FADE_ON, 500, 0, false);
 
   prefs.putString("custom", customFacePaths[pathIndex]);
+#endif
 }
 
 void onBatteryChange(lv_event_t *e)
@@ -1143,11 +1181,17 @@ void onVolumeDown(lv_event_t *e)
 
 void updateQrLinks()
 {
+#if LV_USE_QRCODE == 1
   lv_obj_clean(ui_qrPanel);
   for (int i = 0; i < 9; i++)
   {
     addQrList(i, watch.getQrAt(i).c_str());
   }
+#endif
+}
+
+void onRTWState(bool state)
+{
 }
 
 void gameLoop(void *pvParameters)
@@ -1228,6 +1272,8 @@ void showAlert()
 
 void rawDataCallback(uint8_t *data, int len)
 {
+
+#ifdef ENABLE_CUSTOM_FACE
   if (data[0] == 0xB0)
   {
     // this is a chunk header data command
@@ -1288,9 +1334,9 @@ void rawDataCallback(uint8_t *data, int len)
 
     if (last)
     {
-
     }
   }
+#endif
 }
 
 void dataCallback(uint8_t *data, int length)
@@ -1400,7 +1446,7 @@ void hal_setup()
     wf = 0; // default
   }
   currentIndex = wf;
-  if (custom != "" && loadCustomFace(custom))
+  if (custom != "" && fsState && loadCustomFace(custom))
   {
     ui_home = face_custom_root;
   }
@@ -1481,6 +1527,10 @@ void hal_setup()
 
   setTimeout(tm);
 
+  // if (!fsState){
+  //   showError(F_NAME, "Failed to mount the partition");
+  // }
+
   if (lv_fs_is_ready('S'))
   {
     Serial.println("Drive S is ready");
@@ -1490,9 +1540,15 @@ void hal_setup()
     Serial.println("Drive S is not ready");
   }
 
-  if (!fsState){
-    showError(F_NAME, "Failed to mount the partition, installing custom watchfaces will not work");
-  }
+#ifdef ENABLE_APP_QMI8658C
+
+  qmi8658_result = qmi8658c.open(&qmi8658_cfg);
+  delay(100); // Delay for sensor initialization
+  ui_imu_set_info(qmi8658_result == qmi8658_result_open_success, qmi8658c.deviceID, qmi8658c.deviceRevisionID);
+
+  // showError("IMU State", qmi8658c.resultToString(qmi8658_result));
+
+#endif
 
   Timber.i("Setup done");
   Timber.i(about);
@@ -1503,6 +1559,18 @@ void hal_loop()
 
   if (!transfer)
   {
+
+#ifdef ENABLE_APP_QMI8658C
+    if (qmi8658c_active)
+    {
+      delay(10);
+      qmi8658c.read(&data); // Read sensor data from QMI8658C sensor
+      ui_imu_update_acc(data.acc_xyz.x, data.acc_xyz.y, data.acc_xyz.z);
+      ui_imu_update_gyro(data.gyro_xyz.x, data.gyro_xyz.y, data.gyro_xyz.z);
+      ui_imu_update_temp(data.temperature);
+    }
+#endif
+
     lv_timer_handler(); /* let the GUI do its work */
     delay(5);
     watch.loop();
@@ -1574,6 +1642,7 @@ void hal_loop()
     }
   }
 
+#ifdef ENABLE_CUSTOM_FACE
   if (writeFile && transfer)
   {
     if (start)
@@ -1645,6 +1714,8 @@ void hal_loop()
       ESP.restart();
     }
   }
+
+#endif
 }
 
 bool isDay()
@@ -1759,6 +1830,7 @@ String longHexString(unsigned long l)
 void parseDial(const char *path)
 {
 
+#ifdef ENABLE_CUSTOM_FACE
   String name = longHexString(watch.getEpoch());
 
   Serial.print("Parsing dial:");
@@ -2148,11 +2220,11 @@ void parseDial(const char *path)
     Serial.println("Watchface parsed successfully");
 
     prefs.putString("custom", jsnFile);
-
-    
   }
   delay(500);
   ESP.restart();
+
+#endif
 }
 
 bool lvImgHeader(uint8_t *byteArray, uint8_t cf, uint16_t w, uint16_t h)

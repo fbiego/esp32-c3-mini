@@ -45,6 +45,8 @@ typedef struct {
     lvs_elem obj4;
 } lvs_obj5;
 
+#ifdef ENABLE_CUSTOM_FACE
+
 // Global instances
 extern lvs_obj2 c_hour;    // 2 [10] // digital
 extern lvs_obj2 c_minute;  // 2 [10]
@@ -76,6 +78,8 @@ extern lvs_obj3 c_sp02;    // 3 [10]
 
 
 LV_IMG_DECLARE(ui_img_custom_preview_png);    // assets/custom_preview.png
+
+#endif
 
 // Function declarations
 void delete_lvc(lv_obj_t **obj_ptr);

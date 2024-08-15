@@ -1,5 +1,6 @@
 #include "custom_face.h"
 
+#ifdef ENABLE_CUSTOM_FACE
 // Global instances
 lvs_obj2 c_hour;   // 2 [10] // digital
 lvs_obj2 c_minute; // 2 [10]
@@ -39,6 +40,8 @@ int b_month;
 int b_year;
 int b_weekday;
 
+#endif
+
 // Function to delete an object and set its pointer to NULL
 void delete_lvc(lv_obj_t **obj_ptr)
 {
@@ -52,6 +55,7 @@ void delete_lvc(lv_obj_t **obj_ptr)
 // Function to invalidate and delete all objects
 void invalidate_all(void)
 {
+#ifdef ENABLE_CUSTOM_FACE
     // Digital
     delete_lvc(&c_hour.obj0.element);
     delete_lvc(&c_hour.obj1.element);
@@ -129,6 +133,7 @@ void invalidate_all(void)
     b_month = -1;
     b_year = -1;
     b_weekday = -1;
+#endif
 }
 
 bool is_obj_valid(lv_obj_t *obj)
@@ -138,215 +143,257 @@ bool is_obj_valid(lv_obj_t *obj)
 
 void add_item(lv_obj_t *root, int id, int x, int y, int pvX, int pvY, const char *image, const char *group[], int group_size)
 {
-    if (id == 0){
-        if (!is_obj_valid(c_hour.obj0.element)){
+#ifdef ENABLE_CUSTOM_FACE
+    if (id == 0)
+    {
+        if (!is_obj_valid(c_hour.obj0.element))
+        {
             c_hour.obj0.element = lv_img_create(root);
             lv_img_set_src(c_hour.obj0.element, image);
             lv_obj_set_width(c_hour.obj0.element, LV_SIZE_CONTENT);
             lv_obj_set_height(c_hour.obj0.element, LV_SIZE_CONTENT);
             lv_obj_set_x(c_hour.obj0.element, x);
             lv_obj_set_y(c_hour.obj0.element, y);
-            lv_obj_add_flag(c_hour.obj0.element, LV_OBJ_FLAG_ADV_HITTEST );
-            lv_obj_clear_flag(c_hour.obj0.element, LV_OBJ_FLAG_SCROLLABLE );
+            lv_obj_add_flag(c_hour.obj0.element, LV_OBJ_FLAG_ADV_HITTEST);
+            lv_obj_clear_flag(c_hour.obj0.element, LV_OBJ_FLAG_SCROLLABLE);
 
-            for (int i = 0; i < group_size && i < 20; i++) {
+            for (int i = 0; i < group_size && i < 20; i++)
+            {
                 c_hour.obj0.path[i] = strdup(group[i]);
             }
-
-        } else if (!is_obj_valid(c_hour.obj1.element)){
+        }
+        else if (!is_obj_valid(c_hour.obj1.element))
+        {
             c_hour.obj1.element = lv_img_create(root);
             lv_img_set_src(c_hour.obj1.element, image);
             lv_obj_set_width(c_hour.obj1.element, LV_SIZE_CONTENT);
             lv_obj_set_height(c_hour.obj1.element, LV_SIZE_CONTENT);
             lv_obj_set_x(c_hour.obj1.element, x);
             lv_obj_set_y(c_hour.obj1.element, y);
-            lv_obj_add_flag(c_hour.obj1.element, LV_OBJ_FLAG_ADV_HITTEST );
-            lv_obj_clear_flag(c_hour.obj1.element, LV_OBJ_FLAG_SCROLLABLE );
+            lv_obj_add_flag(c_hour.obj1.element, LV_OBJ_FLAG_ADV_HITTEST);
+            lv_obj_clear_flag(c_hour.obj1.element, LV_OBJ_FLAG_SCROLLABLE);
 
-            for (int i = 0; i < group_size && i < 20; i++) {
+            for (int i = 0; i < group_size && i < 20; i++)
+            {
                 c_hour.obj1.path[i] = strdup(group[i]);
             }
         }
-    } else if (id == 1){
-        if (!is_obj_valid(c_minute.obj0.element)){
+    }
+    else if (id == 1)
+    {
+        if (!is_obj_valid(c_minute.obj0.element))
+        {
             c_minute.obj0.element = lv_img_create(root);
             lv_img_set_src(c_minute.obj0.element, image);
             lv_obj_set_width(c_minute.obj0.element, LV_SIZE_CONTENT);
             lv_obj_set_height(c_minute.obj0.element, LV_SIZE_CONTENT);
             lv_obj_set_x(c_minute.obj0.element, x);
             lv_obj_set_y(c_minute.obj0.element, y);
-            lv_obj_add_flag(c_minute.obj0.element, LV_OBJ_FLAG_ADV_HITTEST );
-            lv_obj_clear_flag(c_minute.obj0.element, LV_OBJ_FLAG_SCROLLABLE );
+            lv_obj_add_flag(c_minute.obj0.element, LV_OBJ_FLAG_ADV_HITTEST);
+            lv_obj_clear_flag(c_minute.obj0.element, LV_OBJ_FLAG_SCROLLABLE);
 
-            for (int i = 0; i < group_size && i < 20; i++) {
+            for (int i = 0; i < group_size && i < 20; i++)
+            {
                 c_minute.obj0.path[i] = strdup(group[i]);
             }
-
-        } else if (!is_obj_valid(c_minute.obj1.element)){
+        }
+        else if (!is_obj_valid(c_minute.obj1.element))
+        {
             c_minute.obj1.element = lv_img_create(root);
             lv_img_set_src(c_minute.obj1.element, image);
             lv_obj_set_width(c_minute.obj1.element, LV_SIZE_CONTENT);
             lv_obj_set_height(c_minute.obj1.element, LV_SIZE_CONTENT);
             lv_obj_set_x(c_minute.obj1.element, x);
             lv_obj_set_y(c_minute.obj1.element, y);
-            lv_obj_add_flag(c_minute.obj1.element, LV_OBJ_FLAG_ADV_HITTEST );
-            lv_obj_clear_flag(c_minute.obj1.element, LV_OBJ_FLAG_SCROLLABLE );
+            lv_obj_add_flag(c_minute.obj1.element, LV_OBJ_FLAG_ADV_HITTEST);
+            lv_obj_clear_flag(c_minute.obj1.element, LV_OBJ_FLAG_SCROLLABLE);
 
-            for (int i = 0; i < group_size && i < 20; i++) {
+            for (int i = 0; i < group_size && i < 20; i++)
+            {
                 c_minute.obj1.path[i] = strdup(group[i]);
             }
         }
-    } else if (id == 2){
-        if (!is_obj_valid(c_date.obj0.element)){
+    }
+    else if (id == 2)
+    {
+        if (!is_obj_valid(c_date.obj0.element))
+        {
             c_date.obj0.element = lv_img_create(root);
             lv_img_set_src(c_date.obj0.element, image);
             lv_obj_set_width(c_date.obj0.element, LV_SIZE_CONTENT);
             lv_obj_set_height(c_date.obj0.element, LV_SIZE_CONTENT);
             lv_obj_set_x(c_date.obj0.element, x);
             lv_obj_set_y(c_date.obj0.element, y);
-            lv_obj_add_flag(c_date.obj0.element, LV_OBJ_FLAG_ADV_HITTEST );
-            lv_obj_clear_flag(c_date.obj0.element, LV_OBJ_FLAG_SCROLLABLE );
+            lv_obj_add_flag(c_date.obj0.element, LV_OBJ_FLAG_ADV_HITTEST);
+            lv_obj_clear_flag(c_date.obj0.element, LV_OBJ_FLAG_SCROLLABLE);
 
-            for (int i = 0; i < group_size && i < 20; i++) {
+            for (int i = 0; i < group_size && i < 20; i++)
+            {
                 c_date.obj0.path[i] = strdup(group[i]);
             }
-
-        } else if (!is_obj_valid(c_date.obj1.element)){
+        }
+        else if (!is_obj_valid(c_date.obj1.element))
+        {
             c_date.obj1.element = lv_img_create(root);
             lv_img_set_src(c_date.obj1.element, image);
             lv_obj_set_width(c_date.obj1.element, LV_SIZE_CONTENT);
             lv_obj_set_height(c_date.obj1.element, LV_SIZE_CONTENT);
             lv_obj_set_x(c_date.obj1.element, x);
             lv_obj_set_y(c_date.obj1.element, y);
-            lv_obj_add_flag(c_date.obj1.element, LV_OBJ_FLAG_ADV_HITTEST );
-            lv_obj_clear_flag(c_date.obj1.element, LV_OBJ_FLAG_SCROLLABLE );
+            lv_obj_add_flag(c_date.obj1.element, LV_OBJ_FLAG_ADV_HITTEST);
+            lv_obj_clear_flag(c_date.obj1.element, LV_OBJ_FLAG_SCROLLABLE);
 
-            for (int i = 0; i < group_size && i < 20; i++) {
+            for (int i = 0; i < group_size && i < 20; i++)
+            {
                 c_date.obj1.path[i] = strdup(group[i]);
             }
         }
-    } else if (id == 3){
-        if (group_size == 12){
-            if (!is_obj_valid(c_month.obj0.element)){
+    }
+    else if (id == 3)
+    {
+        if (group_size == 12)
+        {
+            if (!is_obj_valid(c_month.obj0.element))
+            {
                 c_month.obj0.element = lv_img_create(root);
                 lv_img_set_src(c_month.obj0.element, image);
                 lv_obj_set_width(c_month.obj0.element, LV_SIZE_CONTENT);
                 lv_obj_set_height(c_month.obj0.element, LV_SIZE_CONTENT);
                 lv_obj_set_x(c_month.obj0.element, x);
                 lv_obj_set_y(c_month.obj0.element, y);
-                lv_obj_add_flag(c_month.obj0.element, LV_OBJ_FLAG_ADV_HITTEST );
-                lv_obj_clear_flag(c_month.obj0.element, LV_OBJ_FLAG_SCROLLABLE );
+                lv_obj_add_flag(c_month.obj0.element, LV_OBJ_FLAG_ADV_HITTEST);
+                lv_obj_clear_flag(c_month.obj0.element, LV_OBJ_FLAG_SCROLLABLE);
 
-                for (int i = 0; i < group_size && i < 20; i++) {
+                for (int i = 0; i < group_size && i < 20; i++)
+                {
                     c_month.obj0.path[i] = strdup(group[i]);
                 }
-
-            } 
-        } else {
-            if (!is_obj_valid(c_month_digit.obj0.element)){
+            }
+        }
+        else
+        {
+            if (!is_obj_valid(c_month_digit.obj0.element))
+            {
                 c_month_digit.obj0.element = lv_img_create(root);
                 lv_img_set_src(c_month_digit.obj0.element, image);
                 lv_obj_set_width(c_month_digit.obj0.element, LV_SIZE_CONTENT);
                 lv_obj_set_height(c_month_digit.obj0.element, LV_SIZE_CONTENT);
                 lv_obj_set_x(c_month_digit.obj0.element, x);
                 lv_obj_set_y(c_month_digit.obj0.element, y);
-                lv_obj_add_flag(c_month_digit.obj0.element, LV_OBJ_FLAG_ADV_HITTEST );
-                lv_obj_clear_flag(c_month_digit.obj0.element, LV_OBJ_FLAG_SCROLLABLE );
+                lv_obj_add_flag(c_month_digit.obj0.element, LV_OBJ_FLAG_ADV_HITTEST);
+                lv_obj_clear_flag(c_month_digit.obj0.element, LV_OBJ_FLAG_SCROLLABLE);
 
-                for (int i = 0; i < group_size && i < 20; i++) {
+                for (int i = 0; i < group_size && i < 20; i++)
+                {
                     c_month_digit.obj0.path[i] = strdup(group[i]);
                 }
-
-            } else if (!is_obj_valid(c_month_digit.obj1.element)){
+            }
+            else if (!is_obj_valid(c_month_digit.obj1.element))
+            {
                 c_month_digit.obj1.element = lv_img_create(root);
                 lv_img_set_src(c_month_digit.obj1.element, image);
                 lv_obj_set_width(c_month_digit.obj1.element, LV_SIZE_CONTENT);
                 lv_obj_set_height(c_month_digit.obj1.element, LV_SIZE_CONTENT);
                 lv_obj_set_x(c_month_digit.obj1.element, x);
                 lv_obj_set_y(c_month_digit.obj1.element, y);
-                lv_obj_add_flag(c_month_digit.obj1.element, LV_OBJ_FLAG_ADV_HITTEST );
-                lv_obj_clear_flag(c_month_digit.obj1.element, LV_OBJ_FLAG_SCROLLABLE );
+                lv_obj_add_flag(c_month_digit.obj1.element, LV_OBJ_FLAG_ADV_HITTEST);
+                lv_obj_clear_flag(c_month_digit.obj1.element, LV_OBJ_FLAG_SCROLLABLE);
 
-                for (int i = 0; i < group_size && i < 20; i++) {
+                for (int i = 0; i < group_size && i < 20; i++)
+                {
                     c_month_digit.obj1.path[i] = strdup(group[i]);
                 }
             }
         }
-    } else if (id == 6){
-        if (!is_obj_valid(c_weekday.obj0.element)){
+    }
+    else if (id == 6)
+    {
+        if (!is_obj_valid(c_weekday.obj0.element))
+        {
             c_weekday.obj0.element = lv_img_create(root);
             lv_img_set_src(c_weekday.obj0.element, image);
             lv_obj_set_width(c_weekday.obj0.element, LV_SIZE_CONTENT);
             lv_obj_set_height(c_weekday.obj0.element, LV_SIZE_CONTENT);
             lv_obj_set_x(c_weekday.obj0.element, x);
             lv_obj_set_y(c_weekday.obj0.element, y);
-            lv_obj_add_flag(c_weekday.obj0.element, LV_OBJ_FLAG_ADV_HITTEST );
-            lv_obj_clear_flag(c_weekday.obj0.element, LV_OBJ_FLAG_SCROLLABLE );
+            lv_obj_add_flag(c_weekday.obj0.element, LV_OBJ_FLAG_ADV_HITTEST);
+            lv_obj_clear_flag(c_weekday.obj0.element, LV_OBJ_FLAG_SCROLLABLE);
 
-            for (int i = 0; i < group_size && i < 20; i++) {
+            for (int i = 0; i < group_size && i < 20; i++)
+            {
                 c_weekday.obj0.path[i] = strdup(group[i]);
             }
-
         }
-    } else if (id == 7){
-        if (!is_obj_valid(c_year.obj0.element)){
+    }
+    else if (id == 7)
+    {
+        if (!is_obj_valid(c_year.obj0.element))
+        {
             c_year.obj0.element = lv_img_create(root);
             lv_img_set_src(c_year.obj0.element, image);
             lv_obj_set_width(c_year.obj0.element, LV_SIZE_CONTENT);
             lv_obj_set_height(c_year.obj0.element, LV_SIZE_CONTENT);
             lv_obj_set_x(c_year.obj0.element, x);
             lv_obj_set_y(c_year.obj0.element, y);
-            lv_obj_add_flag(c_year.obj0.element, LV_OBJ_FLAG_ADV_HITTEST );
-            lv_obj_clear_flag(c_year.obj0.element, LV_OBJ_FLAG_SCROLLABLE );
+            lv_obj_add_flag(c_year.obj0.element, LV_OBJ_FLAG_ADV_HITTEST);
+            lv_obj_clear_flag(c_year.obj0.element, LV_OBJ_FLAG_SCROLLABLE);
 
-            for (int i = 0; i < group_size && i < 20; i++) {
+            for (int i = 0; i < group_size && i < 20; i++)
+            {
                 c_year.obj0.path[i] = strdup(group[i]);
             }
-
-        } else if (!is_obj_valid(c_year.obj1.element)){
+        }
+        else if (!is_obj_valid(c_year.obj1.element))
+        {
             c_year.obj1.element = lv_img_create(root);
             lv_img_set_src(c_year.obj1.element, image);
             lv_obj_set_width(c_year.obj1.element, LV_SIZE_CONTENT);
             lv_obj_set_height(c_year.obj1.element, LV_SIZE_CONTENT);
             lv_obj_set_x(c_year.obj1.element, x);
             lv_obj_set_y(c_year.obj1.element, y);
-            lv_obj_add_flag(c_year.obj1.element, LV_OBJ_FLAG_ADV_HITTEST );
-            lv_obj_clear_flag(c_year.obj1.element, LV_OBJ_FLAG_SCROLLABLE );
+            lv_obj_add_flag(c_year.obj1.element, LV_OBJ_FLAG_ADV_HITTEST);
+            lv_obj_clear_flag(c_year.obj1.element, LV_OBJ_FLAG_SCROLLABLE);
 
-            for (int i = 0; i < group_size && i < 20; i++) {
+            for (int i = 0; i < group_size && i < 20; i++)
+            {
                 c_year.obj1.path[i] = strdup(group[i]);
             }
-
-        } else if (!is_obj_valid(c_year.obj2.element)){
+        }
+        else if (!is_obj_valid(c_year.obj2.element))
+        {
             c_year.obj2.element = lv_img_create(root);
             lv_img_set_src(c_year.obj2.element, image);
             lv_obj_set_width(c_year.obj2.element, LV_SIZE_CONTENT);
             lv_obj_set_height(c_year.obj2.element, LV_SIZE_CONTENT);
             lv_obj_set_x(c_year.obj2.element, x);
             lv_obj_set_y(c_year.obj2.element, y);
-            lv_obj_add_flag(c_year.obj2.element, LV_OBJ_FLAG_ADV_HITTEST );
-            lv_obj_clear_flag(c_year.obj2.element, LV_OBJ_FLAG_SCROLLABLE );
+            lv_obj_add_flag(c_year.obj2.element, LV_OBJ_FLAG_ADV_HITTEST);
+            lv_obj_clear_flag(c_year.obj2.element, LV_OBJ_FLAG_SCROLLABLE);
 
-            for (int i = 0; i < group_size && i < 20; i++) {
+            for (int i = 0; i < group_size && i < 20; i++)
+            {
                 c_year.obj2.path[i] = strdup(group[i]);
             }
-
-        } else if (!is_obj_valid(c_year.obj3.element)){
+        }
+        else if (!is_obj_valid(c_year.obj3.element))
+        {
             c_year.obj3.element = lv_img_create(root);
             lv_img_set_src(c_year.obj3.element, image);
             lv_obj_set_width(c_year.obj3.element, LV_SIZE_CONTENT);
             lv_obj_set_height(c_year.obj3.element, LV_SIZE_CONTENT);
             lv_obj_set_x(c_year.obj3.element, x);
             lv_obj_set_y(c_year.obj3.element, y);
-            lv_obj_add_flag(c_year.obj3.element, LV_OBJ_FLAG_ADV_HITTEST );
-            lv_obj_clear_flag(c_year.obj3.element, LV_OBJ_FLAG_SCROLLABLE );
+            lv_obj_add_flag(c_year.obj3.element, LV_OBJ_FLAG_ADV_HITTEST);
+            lv_obj_clear_flag(c_year.obj3.element, LV_OBJ_FLAG_SCROLLABLE);
 
-            for (int i = 0; i < group_size && i < 20; i++) {
+            for (int i = 0; i < group_size && i < 20; i++)
+            {
                 c_year.obj3.path[i] = strdup(group[i]);
             }
-
         }
-    } else if (id == 13){
+    }
+    else if (id == 13)
+    {
         // analog hands
         // if (!is_obj_valid(c_hourA.obj0.element)){
         //     c_hourA.obj0.element = lv_img_create(root);
@@ -392,16 +439,19 @@ void add_item(lv_obj_t *root, int id, int x, int y, int pvX, int pvY, const char
         //         c_secondA.obj0.path[i] = strdup(group[i]);
         //     }
         // }
-    } else {
+    }
+    else
+    {
         lv_obj_t *elem = lv_img_create(root);
         lv_img_set_src(elem, image);
         lv_obj_set_width(elem, LV_SIZE_CONTENT);
         lv_obj_set_height(elem, LV_SIZE_CONTENT);
         lv_obj_set_x(elem, x);
         lv_obj_set_y(elem, y);
-        lv_obj_add_flag(elem, LV_OBJ_FLAG_ADV_HITTEST );
-        lv_obj_clear_flag(elem, LV_OBJ_FLAG_SCROLLABLE );
+        lv_obj_add_flag(elem, LV_OBJ_FLAG_ADV_HITTEST);
+        lv_obj_clear_flag(elem, LV_OBJ_FLAG_SCROLLABLE);
     }
+#endif
 }
 
 void set_obj_src(lv_obj_t *obj, const char *path)
@@ -440,6 +490,7 @@ void init_face_custom(void (*callback)(const char *, const lv_img_dsc_t *, lv_ob
 }
 void update_time_custom(int second, int minute, int hour, bool mode, bool am, int day, int month, int year, int weekday)
 {
+#ifdef ENABLE_CUSTOM_FACE
     if (b_second != second)
     {
         set_obj_src(c_second.obj0.element, c_second.obj0.path[(second / 1) % 10]);
@@ -492,6 +543,8 @@ void update_time_custom(int second, int minute, int hour, bool mode, bool am, in
         set_obj_src(c_weekday.obj0.element, c_weekday.obj0.path[((weekday + 6) / 1) % 7]);
         b_weekday = weekday;
     }
+
+#endif
 }
 void update_weather_custom(int temp, int icon)
 {

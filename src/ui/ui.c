@@ -1487,6 +1487,7 @@ void addNotificationList(int appId, const char *message, int index)
 
 void addQrList(uint8_t id, const char *link)
 {
+#if LV_USE_QRCODE == 1
       ui_qrItem = lv_obj_create(ui_qrPanel);
       lv_obj_set_width(ui_qrItem, 200);
       lv_obj_set_height(ui_qrItem, 240);
@@ -1524,6 +1525,7 @@ void addQrList(uint8_t id, const char *link)
       lv_obj_set_align(ui_qrLabel, LV_ALIGN_CENTER);
       lv_label_set_text(ui_qrLabel, qrNames[getQRIndex(id)]);
       lv_obj_set_style_text_font(ui_qrLabel, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
+#endif
 }
 
 void addAppInfo(const void *src, const char *txt)
@@ -2103,7 +2105,7 @@ void ui_appListScreen_screen_init(void)
 #ifdef USE_SDL
       add_appList("Files", 8, &ui_img_file_manager_png);
 #endif
-      add_appList("Games", 7, &ui_img_game_icon_png);
+      add_appList("Apps", 7, &ui_img_game_icon_png);
       add_appList("Watchfaces", 5, &ui_img_smartwatch_png);
       add_appList("QR Codes", 4, &ui_img_qr_icon_png);
       add_appList("Find Phone", 6, &ui_img_search_png);
@@ -3057,6 +3059,8 @@ void ui_qrScreen_screen_init(void)
       lv_obj_set_style_pad_top(ui_qrPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
       lv_obj_set_style_pad_bottom(ui_qrPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
 
+#ifdef LV_USE_QRCODE
+
       addQrList(0, "https://chronos.ke/");
       addQrList(1, "https://www.youtube.com/c/fbiego");
       addQrList(2, "https://play.google.com/store/apps/details?id=com.fbiego.chronos");
@@ -3066,6 +3070,15 @@ void ui_qrScreen_screen_init(void)
       addQrList(6, "https://www.linkedin.com/in/fbiego/");
       addQrList(7, "https://ko-fi.com/fbiego");
       addQrList(8, "https://www.paypal.com/paypalme/biego");
+
+#else
+      lv_obj_t *info = lv_label_create(ui_qrPanel);
+      lv_obj_set_width(info, 180);
+      lv_obj_set_height(info, LV_SIZE_CONTENT); /// 1
+      lv_obj_set_align(info, LV_ALIGN_CENTER);
+      lv_label_set_text(info, "QR feature has been disabled. (LV_USE_QRCODE) definition not found");
+
+#endif
 
       lv_obj_add_event_cb(ui_qrScreen, ui_event_qrScreen, LV_EVENT_ALL, NULL);
 }
@@ -3242,6 +3255,7 @@ void ui_games_init(void)
 {
       numGames = 0;
       ui_raceScreen_screen_init(registerGame_cb);
+      ui_imuScreen_screen_init(registerGame_cb);
 
       if (numGames == 0)
       {
@@ -3249,9 +3263,10 @@ void ui_games_init(void)
             lv_obj_set_width(info, 180);
             lv_obj_set_height(info, LV_SIZE_CONTENT); /// 1
             lv_obj_set_align(info, LV_ALIGN_CENTER);
-            lv_label_set_text(info, "No games available currently. Check whether it was enabled in the code");
+            lv_label_set_text(info, "No apps or games available currently. Check whether it was enabled in the code");
       }
 }
+
 
 void ui_games_update(void)
 {

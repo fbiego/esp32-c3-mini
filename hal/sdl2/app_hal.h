@@ -32,6 +32,7 @@
 #endif
 
 #define ENABLE_GAME_RACING
+#define ENABLE_APP_QMI8658C
 
 #ifdef __cplusplus
 extern "C" {

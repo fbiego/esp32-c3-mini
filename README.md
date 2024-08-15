@@ -93,6 +93,6 @@ This is needed for additional functions on esp32 hardware as listed below.
 - Install additional watchfaces
 - Send notifications and call alerts
 - Sync weather info
-- Sync QR Links (Incomplete)
+- Sync QR Links
 - Music control, find phone & Camera
 
