@@ -144,7 +144,7 @@ public:
       cfg.y_max = HEIGHT;   // タッチスクリーンから得られる最大のY値(生の値)
       cfg.pin_int = TP_INT; // INTが接続されているピン番号
       // cfg.pin_rst = TP_RST;
-      cfg.bus_shared = false;   // 画面と共通のバスを使用している場合 trueを設定
+      cfg.bus_shared = false;  // 画面と共通のバスを使用している場合 trueを設定
       cfg.offset_rotation = 0; // 表示とタッチの向きのが一致しない場合の調整 0~7の値で設定
       cfg.i2c_port = 0;        // 使用するI2Cを選択 (0 or 1)
       cfg.i2c_addr = 0x15;     // I2Cデバイスアドレス番号
@@ -298,6 +298,62 @@ void my_touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
     screenTimer.active = true;
   }
 }
+
+#ifdef ELECROW_C3
+// ELECROW C3 I2C IO extender
+#define PI4IO_I2C_ADDR 0x43
+
+// Extended IO function
+void init_IO_extender()
+{
+  Wire.beginTransmission(PI4IO_I2C_ADDR);
+  Wire.write(0x01); // test register
+  Wire.endTransmission();
+  Wire.requestFrom(PI4IO_I2C_ADDR, 1);
+  uint8_t rxdata = Wire.read();
+  Serial.print("Device ID: ");
+  Serial.println(rxdata, HEX);
+
+  Wire.beginTransmission(PI4IO_I2C_ADDR);
+  Wire.write(0x03);                                                 // IO direction register
+  Wire.write((1 << 0) | (1 << 1) | (1 << 2) | (1 << 3) | (1 << 4)); // set pins 0, 1, 2 as outputs
+  Wire.endTransmission();
+
+  Wire.beginTransmission(PI4IO_I2C_ADDR);
+  Wire.write(0x07);                                                    // Output Hi-Z register
+  Wire.write(~((1 << 0) | (1 << 1) | (1 << 2) | (1 << 3) | (1 << 4))); // set pins 0, 1, 2 low
+  Wire.endTransmission();
+}
+
+void set_pin_io(uint8_t pin_number, bool value)
+{
+
+  Wire.beginTransmission(PI4IO_I2C_ADDR);
+  Wire.write(0x05); // test register
+  Wire.endTransmission();
+  Wire.requestFrom(PI4IO_I2C_ADDR, 1);
+  uint8_t rxdata = Wire.read();
+  Serial.print("Before the change: ");
+  Serial.println(rxdata, HEX);
+
+  Wire.beginTransmission(PI4IO_I2C_ADDR);
+  Wire.write(0x05); // Output register
+
+  if (!value)
+    Wire.write((~(1 << pin_number)) & rxdata); // set pin low
+  else
+    Wire.write((1 << pin_number) | rxdata); // set pin high
+  Wire.endTransmission();
+
+  Wire.beginTransmission(PI4IO_I2C_ADDR);
+  Wire.write(0x05); // test register
+  Wire.endTransmission();
+  Wire.requestFrom(PI4IO_I2C_ADDR, 1);
+  rxdata = Wire.read();
+  Serial.print("after the change: ");
+  Serial.println(rxdata, HEX);
+}
+#endif
 
 String heapUsage()
 {
@@ -1388,6 +1444,15 @@ void hal_setup()
   Timber.i("Starting up device");
 
   prefs.begin("my-app");
+
+#ifdef ELECROW_C3
+  Wire.begin(4, 5);
+  init_IO_extender();
+  delay(100);
+  set_pin_io(2, true);
+  set_pin_io(3, true);
+  set_pin_io(4, true);
+#endif
 
   tft.init();
   tft.initDMA();
