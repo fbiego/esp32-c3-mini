@@ -30,6 +30,8 @@
 
 ///////////////////// VARIABLES ////////////////////
 void pulseCall_Animation(lv_obj_t *TargetObject, int delay);
+void analogSecond_Animation(lv_obj_t * TargetObject, int delay);
+lv_anim_t secondsAnimation_0;
 void ui_event_clockScreen(lv_event_t *e);
 lv_obj_t *ui_clockScreen;
 lv_obj_t *ui_hourLabel;
@@ -238,6 +240,7 @@ void addListDrive(const char *name, int total, int used, lv_event_cb_t event_cb)
 void addListDir(const char *name);
 void addListFile(const char *name, int size);
 void addListBack(lv_event_cb_t event_cb);
+void addSelectItem(lv_obj_t *parent);
 
 const lv_img_dsc_t *notificationIcons[] = {
     &ui_img_sms_png,       // SMS
@@ -385,6 +388,30 @@ void findPhone_Animation(lv_obj_t *TargetObject, int delay)
       lv_anim_set_repeat_delay(&PropertyAnimation_1, 0);
       lv_anim_set_early_apply(&PropertyAnimation_1, false);
       lv_anim_start(&PropertyAnimation_1);
+}
+
+void analogSecond_Animation(lv_obj_t * TargetObject, int delay)
+{
+    ui_anim_user_data_t * secondsAnimation_0_user_data = lv_mem_alloc(sizeof(ui_anim_user_data_t));
+    secondsAnimation_0_user_data->target = TargetObject;
+    secondsAnimation_0_user_data->val = -1;
+    lv_anim_init(&secondsAnimation_0);
+    lv_anim_set_time(&secondsAnimation_0, 60000);
+    lv_anim_set_user_data(&secondsAnimation_0, secondsAnimation_0_user_data);
+    lv_anim_set_custom_exec_cb(&secondsAnimation_0, _ui_anim_callback_set_image_angle);
+    lv_anim_set_values(&secondsAnimation_0, 0, 3600);
+    lv_anim_set_path_cb(&secondsAnimation_0, lv_anim_path_linear);
+    lv_anim_set_delay(&secondsAnimation_0, delay + 0);
+    lv_anim_set_deleted_cb(&secondsAnimation_0, _ui_anim_callback_free_user_data);
+    lv_anim_set_playback_time(&secondsAnimation_0, 0);
+    lv_anim_set_playback_delay(&secondsAnimation_0, 0);
+    lv_anim_set_repeat_count(&secondsAnimation_0, LV_ANIM_REPEAT_INFINITE);
+    lv_anim_set_repeat_delay(&secondsAnimation_0, 0);
+    lv_anim_set_early_apply(&secondsAnimation_0, false);
+    lv_anim_set_get_value_cb(&secondsAnimation_0, &_ui_anim_callback_get_image_angle);
+    lv_anim_start(&secondsAnimation_0);
+
+
 }
 
 ///////////////////// FUNCTIONS ////////////////////
@@ -1010,10 +1037,13 @@ void onAppListClicked(lv_event_t *e)
 #else
             lv_obj_clean(ui_fileManagerPanel);
 
+            addSelectItem(ui_fileManagerPanel);
+
             for (int i = 0; i < numFaces; i++)
             {
                   addFaceList(ui_fileManagerPanel, faces[i]);
             }
+
             _ui_screen_change(ui_filesScreen, LV_SCR_LOAD_ANIM_MOVE_LEFT, 500, 0);
 #endif
             break;
@@ -1191,6 +1221,17 @@ void ui_event_errorClose(lv_event_t *e)
       {
             _ui_flag_modify(ui_errorWindow, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
       }
+}
+
+void ui_event_face_select(lv_event_t *e)
+{
+      lv_disp_t *display = lv_disp_get_default();
+      lv_obj_t *actScr = lv_disp_get_scr_act(display);
+      if (actScr != ui_filesScreen)
+      {
+            return;
+      }
+      lv_scr_load_anim(ui_faceSelect, LV_SCR_LOAD_ANIM_FADE_ON, 500, 0, false);
 }
 
 ///////////////////// HELPERS ////////////////////
@@ -1396,6 +1437,46 @@ void addWatchface(const char *name, const lv_img_dsc_t *src, int index)
       lv_obj_add_event_cb(ui_faceItem, ui_event_faceSelected, LV_EVENT_ALL, (void *)index);
 }
 
+void addSelectItem(lv_obj_t *parent)
+{
+      lv_obj_t *ui_faceSelectItem = lv_obj_create(parent);
+      lv_obj_set_width(ui_faceSelectItem, 240);
+      lv_obj_set_height(ui_faceSelectItem, 50);
+      lv_obj_set_align(ui_faceSelectItem, LV_ALIGN_CENTER);
+      lv_obj_clear_flag(ui_faceSelectItem, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+      lv_obj_set_style_radius(ui_faceSelectItem, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_bg_color(ui_faceSelectItem, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_bg_opa(ui_faceSelectItem, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_border_color(ui_faceSelectItem, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_border_opa(ui_faceSelectItem, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_border_width(ui_faceSelectItem, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_border_side(ui_faceSelectItem, LV_BORDER_SIDE_BOTTOM, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+      lv_obj_t *ui_faceItemIcon = lv_img_create(ui_faceSelectItem);
+      lv_img_set_src(ui_faceItemIcon, &ui_img_clock_png);
+      lv_obj_set_width(ui_faceItemIcon, LV_SIZE_CONTENT);  /// 1
+      lv_obj_set_height(ui_faceItemIcon, LV_SIZE_CONTENT); /// 1
+      lv_obj_set_x(ui_faceItemIcon, 10);
+      lv_obj_set_y(ui_faceItemIcon, 0);
+      lv_obj_set_align(ui_faceItemIcon, LV_ALIGN_LEFT_MID);
+      lv_obj_add_flag(ui_faceItemIcon, LV_OBJ_FLAG_ADV_HITTEST);  /// Flags
+      lv_obj_clear_flag(ui_faceItemIcon, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+      lv_obj_set_style_img_recolor(ui_faceItemIcon, lv_color_hex(0x2062E3), LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_img_recolor_opa(ui_faceItemIcon, 200, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+      lv_obj_t *ui_faceItemName = lv_label_create(ui_faceSelectItem);
+      lv_obj_set_width(ui_faceItemName, 117);
+      lv_obj_set_height(ui_faceItemName, LV_SIZE_CONTENT); /// 1
+      lv_obj_set_x(ui_faceItemName, 50);
+      lv_obj_set_y(ui_faceItemName, 0);
+      lv_obj_set_align(ui_faceItemName, LV_ALIGN_LEFT_MID);
+      lv_label_set_long_mode(ui_faceItemName, LV_LABEL_LONG_CLIP);
+      lv_label_set_text(ui_faceItemName, "Change Current");
+
+      lv_obj_set_style_text_font(ui_faceItemName, &lv_font_montserrat_16, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+      lv_obj_add_event_cb(ui_faceSelectItem, ui_event_face_select, LV_EVENT_CLICKED, NULL);
+}
 void addForecast(int day, int temp, int icon)
 {
       lv_obj_t *forecastItem = lv_obj_create(ui_forecastList);
@@ -3191,6 +3272,7 @@ void ui_filesScreen_screen_init(void)
       lv_obj_set_style_pad_row(ui_fileManagerPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
       lv_obj_set_style_pad_column(ui_fileManagerPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
 
+      
       lv_obj_add_event_cb(ui_fileManagerPanel, onScroll, LV_EVENT_SCROLL, NULL);
       lv_obj_add_event_cb(ui_filesScreen, ui_event_appInfoScreen, LV_EVENT_ALL, NULL);
 }

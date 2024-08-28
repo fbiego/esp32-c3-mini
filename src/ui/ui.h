@@ -22,6 +22,8 @@ extern "C"
 #include "apps/qmi8658c/qmi8658c.h"
 
     void pulseCall_Animation(lv_obj_t *TargetObject, int delay);
+    void analogSecond_Animation(lv_obj_t * TargetObject, int delay);
+    extern lv_anim_t secondsAnimation_0;
     void ui_event_clockScreen(lv_event_t *e);
     extern lv_obj_t *ui_clockScreen;
     extern lv_obj_t *ui_hourLabel;

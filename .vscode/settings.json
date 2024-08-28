@@ -4,6 +4,7 @@
         "75_2_dial.h": "c",
         "radar.h": "c",
         "79_2_dial.h": "c",
-        "racing.h": "c"
+        "racing.h": "c",
+        "chrono": "cpp"
     }
 }

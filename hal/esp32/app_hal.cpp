@@ -42,6 +42,8 @@
 #include <Wire.h>
 #include "app_hal.h"
 
+#include "tone.h"
+
 #include <lvgl.h>
 #include "ui/ui.h"
 
@@ -57,6 +59,11 @@
 #include "Qmi8658c.h"                // Include the library for QMI8658C sensor
 #define QMI_ADDRESS 0x6B             // Define QMI8658C I2C address
 #define QMI8658C_I2C_FREQUENCY 40000 // Define I2C frequency as 80kHz (in Hz)
+#endif
+
+#ifdef ENABLE_RTC
+#include <RtcPCF8563.h>
+RtcPCF8563<TwoWire> Rtc(Wire);
 #endif
 
 #define FLASH FFat
@@ -355,6 +362,71 @@ void set_pin_io(uint8_t pin_number, bool value)
 }
 #endif
 
+#ifdef ENABLE_RTC
+bool wasError(const char *errorTopic = "")
+{
+  uint8_t error = Rtc.LastError();
+  if (error != 0)
+  {
+    // we have a communications error
+    // see https://www.arduino.cc/reference/en/language/functions/communication/wire/endtransmission/
+    // for what the number means
+    Serial.print("[");
+    Serial.print(errorTopic);
+    Serial.print("] WIRE communications error (");
+    Serial.print(error);
+    Serial.print(") : ");
+
+    switch (error)
+    {
+    case Rtc_Wire_Error_None:
+      Serial.println("(none?!)");
+      break;
+    case Rtc_Wire_Error_TxBufferOverflow:
+      Serial.println("transmit buffer overflow");
+      break;
+    case Rtc_Wire_Error_NoAddressableDevice:
+      Serial.println("no device responded");
+      break;
+    case Rtc_Wire_Error_UnsupportedRequest:
+      Serial.println("device doesn't support request");
+      break;
+    case Rtc_Wire_Error_Unspecific:
+      Serial.println("unspecified error");
+      break;
+    case Rtc_Wire_Error_CommunicationTimeout:
+      Serial.println("communications timed out");
+      break;
+    }
+    return true;
+  }
+  return false;
+}
+#endif
+
+
+void toneOut(int pitch, int duration)
+{ // pitch in Hz, duration in ms
+#if defined(BUZZER) && (BUZZER != -1)
+    int delayPeriod;
+    long cycles, i;
+
+    pinMode(BUZZER, OUTPUT);                     // turn on output pin
+    delayPeriod = (500000 / pitch) - 7;             // calc 1/2 period in us -7 for overhead
+    cycles = ((long)pitch * (long)duration) / 1000; // calc. number of cycles for loop
+
+    for (i = 0; i <= cycles; i++)
+    { // play note for duration ms
+        digitalWrite(BUZZER, HIGH);
+        delayMicroseconds(delayPeriod);
+        digitalWrite(BUZZER, LOW);
+        delayMicroseconds(delayPeriod - 1); // - 1 to make up for digitaWrite overhead
+    }
+    pinMode(BUZZER, INPUT); // shut off pin to avoid noise from other operations
+#endif
+}
+
+
 String heapUsage()
 {
   String usage;
@@ -502,6 +574,14 @@ void checkLocal()
     }
     file = root.openNextFile();
   }
+}
+
+void screenBrightness(uint8_t value)
+{
+  tft.setBrightness(value);
+#ifdef ELECROW_C3
+  set_pin_io(2, value > 0); // ELECROW C3, no brightness control
+#endif
 }
 
 String readFile(const char *path)
@@ -897,6 +977,14 @@ void configCallback(Config config, uint32_t a, uint32_t b)
 {
   switch (config)
   {
+  case CF_TIME:
+    // time has been synced from BLE
+#ifdef ENABLE_RTC
+    // set the RTC time
+    Rtc.SetDateTime(RtcDateTime(watch.getYear(), watch.getMonth() + 1, watch.getDay(), watch.getHour(true), watch.getMinute(), watch.getSecond()));
+
+#endif
+    break;
   case CF_RST:
 
     Serial.println("Reset request, formating storage");
@@ -1104,7 +1192,7 @@ void onBrightnessChange(lv_event_t *e)
   // Your code here
   lv_obj_t *slider = lv_event_get_target(e);
   int v = lv_slider_get_value(slider);
-  tft.setBrightness(v);
+  screenBrightness(v);
 
   prefs.putInt("brightness", v);
 }
@@ -1422,7 +1510,7 @@ void loadSplash()
   int xOffset = 63;
   int yOffset = 55;
   tft.fillScreen(TFT_BLACK);
-  tft.setBrightness(200);
+  screenBrightness(200);
   for (int y = 0; y < h; y++)
   {
     for (int x = 0; x < w; x++)
@@ -1459,6 +1547,10 @@ void hal_setup()
   tft.startWrite();
   tft.fillScreen(TFT_BLACK);
   loadSplash();
+
+  toneOut(TONE_EN * 2, 170);
+  toneOut(TONE_FS * 2, 170);
+  toneOut(TONE_GN * 2, 170);
 
   Serial.println(heapUsage());
 
@@ -1566,7 +1658,7 @@ void hal_setup()
     tm = 0;
   }
 
-  tft.setBrightness(br);
+  screenBrightness(br);
 
   lv_dropdown_set_selected(ui_timeoutSelect, tm);
   lv_slider_set_value(ui_brightnessSlider, br, LV_ANIM_OFF);
@@ -1613,6 +1705,28 @@ void hal_setup()
 
   // showError("IMU State", qmi8658c.resultToString(qmi8658_result));
 
+#endif
+
+#ifdef ENABLE_RTC
+  Rtc.Begin();
+
+  if (!Rtc.GetIsRunning())
+  {
+    uint8_t error = Rtc.LastError();
+    if (error != 0)
+    {
+      showError("RTC", "Error on RTC");
+    }
+    Rtc.SetIsRunning(true);
+  }
+
+  RtcDateTime now = Rtc.GetDateTime();
+
+  watch.setTime(now.Second(), now.Minute(), now.Hour(), now.Day(), now.Month(), now.Year());
+
+  Rtc.StopAlarm();
+  Rtc.StopTimer();
+  Rtc.SetSquareWavePin(PCF8563SquareWavePinMode_None);
 #endif
 
   Timber.i("Setup done");
@@ -1685,7 +1799,7 @@ void hal_loop()
     if (screenTimer.active)
     {
       uint8_t lvl = lv_slider_get_value(ui_brightnessSlider);
-      tft.setBrightness(lvl);
+      screenBrightness(lvl);
 
       if (screenTimer.duration < 0)
       {
@@ -1701,7 +1815,7 @@ void hal_loop()
         Timber.w("Screen timeout");
         screenTimer.active = false;
 
-        tft.setBrightness(0);
+        screenBrightness(0);
         lv_disp_load_scr(ui_home);
       }
     }
@@ -1712,7 +1826,7 @@ void hal_loop()
   {
     if (start)
     {
-      tft.setBrightness(200);
+      screenBrightness(200);
       tft.fillScreen(TFT_BLUE);
 
       tft.drawRoundRect(70, 120, 100, 20, 5, TFT_WHITE);

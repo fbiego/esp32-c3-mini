@@ -20,7 +20,7 @@
 // 240x240 watchfaces
 
 #define ENABLE_FACE_34_2_DIAL // (Shadow) 
-// #define ENABLE_FACE_75_2_DIAL // (Analog)
+#define ENABLE_FACE_75_2_DIAL // (Analog)
 // #define ENABLE_FACE_79_2_DIAL // (Blue)
 // #define ENABLE_FACE_116_2_DIAL // (Outline)
 #define ENABLE_FACE_756_2_DIAL // (Red)
@@ -38,6 +38,9 @@
 #define ENABLE_APP_QMI8658C
 #endif
 
+#if defined(ELECROW_C3)
+#define ENABLE_RTC
+#endif
 
 // #define ENABLE_GAME_RACING
 

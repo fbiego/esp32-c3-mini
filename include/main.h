@@ -59,6 +59,8 @@
 
 #define BL -1 // unused (connected on IO extender)
 
+#define BUZZER 3
+
 #define MAX_FILE_OPEN 10
 
 #elif ESPC3
@@ -87,6 +89,8 @@
 #define RST -1
 
 #define BL 3
+
+#define BUZZER -1
 
 #define MAX_FILE_OPEN 10
 
@@ -117,6 +121,8 @@
 
 #define BL 2
 
+#define BUZZER -1
+
 #define MAX_FILE_OPEN 50
 
 #elif ESPS3_1_69
@@ -145,6 +151,8 @@
 #define RST 8
 
 #define BL 15
+
+#define BUZZER 33
 
 #define MAX_FILE_OPEN 20
 
@@ -176,6 +184,8 @@
 #define RST 13
 
 #define BL 2
+
+#define BUZZER -1
 
 #define MAX_FILE_OPEN 10
 
