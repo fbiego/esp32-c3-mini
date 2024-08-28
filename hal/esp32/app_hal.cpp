@@ -1623,7 +1623,7 @@ void hal_setup()
   watch.set24Hour(true);
   watch.setBattery(85);
 
-  String about = "v4.0 [fbiego]\nESP32 C3 Mini\n" + watch.getAddress();
+  String about = String(ui_info_text) + "\nESP32 C3 Mini\n" + watch.getAddress();
   lv_label_set_text(ui_aboutText, about.c_str());
 
   // bool intro = prefs.getBool("intro", true);
@@ -1759,7 +1759,7 @@ void hal_loop()
       lv_label_set_text(ui_hourLabel, watch.getHourZ().c_str());
       lv_label_set_text(ui_dayLabel, watch.getTime("%A").c_str());
       lv_label_set_text(ui_minuteLabel, watch.getTime("%M").c_str());
-      lv_label_set_text(ui_dateLabel, watch.getTime("%d\n%B").c_str());
+      lv_label_set_text(ui_dateLabel, watch.getTime("%d\n%b").c_str());
       lv_label_set_text(ui_amPmLabel, watch.getAmPmC(false).c_str());
     }
     else

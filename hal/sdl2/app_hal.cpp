@@ -40,7 +40,7 @@ void update_faces();
 
 // some pre-generated data just for preview
 Notification notifications[10] = {
-    {.icon = 0xC0, .app = "Chronos", .time = "10:27", .message = "Chronos v3.6.0 is live! Enjoy enhanced notifications for finding your watch and viewing activity status, plus more. Upgrade now for an improved experience"},
+    {.icon = 0xC0, .app = "Chronos", .time = "10:27", .message = "Chronos v3.7.0 is live! Enjoy enhanced notifications for finding your watch and viewing activity status, plus more. Upgrade now for an improved experience"},
     {.icon = 0x08, .app = "Skype", .time = "09:30", .message = "Hey there! Just reminding you about our meeting at 10:00 AM. Please make sure to prepare the presentation slides and gather all necessary documents beforehand. Looking forward to a productive discussion!"},
     {.icon = 0x10, .app = "Facebook", .time = "14:20", .message = "You've got 3 new friend requests. Check them out now! Don't forget to catch up with your old friends and see what they've been up to lately. It's always nice to reconnect and expand your social circle."},
     {.icon = 0x18, .app = "Telegram", .time = "16:45", .message = "New message from John: 'Hey, have you seen the latest news?' Let's catch up later today and discuss the latest updates together. It's always interesting to exchange ideas and opinions on current events."},
@@ -62,7 +62,7 @@ Weather weather[7] = {
 };
 
 const char *daysWk[7] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
-const char *months[12] = {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"};
+const char *months[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 /**
  * A task to measure the elapsed time for LittlevGL
  * @param data unused
@@ -229,6 +229,8 @@ void setupFiles()
     addListFile("kenya.bin", 152453);
     addListFile("kenya.wf", 453);
     addListFile("list.txt", 2453);
+
+    lv_obj_scroll_to_y(ui_fileManagerPanel, 1, LV_ANIM_ON);
 }
 
 
@@ -290,6 +292,8 @@ void hal_setup(void)
     lv_obj_scroll_to_y(ui_appInfoPanel, 1, LV_ANIM_ON);
     lv_obj_scroll_to_y(ui_gameList, 1, LV_ANIM_ON);
     lv_obj_add_state(ui_Switch2, LV_STATE_CHECKED);
+
+    lv_label_set_text_fmt(ui_aboutText, "%s\nLVGL Simulator\nA1:B2:C3:D4:E5:F6", ui_info_text);
 
     
     /* Tick init.

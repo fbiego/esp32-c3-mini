@@ -32,6 +32,8 @@
 
 #include <ChronosESP32.h>
 
+#define UI_VERSION "4.1.0"
+
 #ifdef ELECROW_C3
 
 // screen configs

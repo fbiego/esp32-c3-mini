@@ -21,6 +21,7 @@ extern "C"
 #include "games/racing/racing.h"
 #include "apps/qmi8658c/qmi8658c.h"
 
+    extern const char* ui_info_text;
     void pulseCall_Animation(lv_obj_t *TargetObject, int delay);
     void analogSecond_Animation(lv_obj_t * TargetObject, int delay);
     extern lv_anim_t secondsAnimation_0;

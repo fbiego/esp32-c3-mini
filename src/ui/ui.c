@@ -28,6 +28,10 @@
 #include "./faces/2151/2151.h"
 #include "./faces/3589/3589.h"
 
+#define UI_VERSION "4.1.0"
+
+const char* ui_info_text = "v" UI_VERSION " [fbiego]";
+
 ///////////////////// VARIABLES ////////////////////
 void pulseCall_Animation(lv_obj_t *TargetObject, int delay);
 void analogSecond_Animation(lv_obj_t * TargetObject, int delay);
