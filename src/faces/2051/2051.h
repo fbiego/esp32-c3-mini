@@ -17,7 +17,6 @@ extern "C"
 
 //#define ENABLE_FACE_2051 // (2051) uncomment to enable or define it elsewhere
 
-
 #ifdef ENABLE_FACE_2051
     extern lv_obj_t *face_2051;
 	extern lv_obj_t *face_2051_0_184;
@@ -66,12 +65,13 @@ extern "C"
 	LV_IMG_DECLARE(face_2051_dial_img_8_102190_5);
 	LV_IMG_DECLARE(face_2051_dial_img_8_102190_6);
 	LV_IMG_DECLARE(face_2051_dial_img_preview_0);
+	LV_IMG_DECLARE(face_2051_dial_img_preview_0);
 
 
 #endif
     void onFaceEvent(lv_event_t * e);
 
-    void init_face_2051(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_t **));
+    void init_face_2051(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_t **, lv_obj_t **));
     void update_time_2051(int second, int minute, int hour, bool mode, bool am, int day, int month, int year, int weekday);
     void update_weather_2051(int temp, int icon);
     void update_status_2051(int battery, bool connection);

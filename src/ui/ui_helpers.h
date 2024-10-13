@@ -65,7 +65,7 @@ void _ui_opacity_set( lv_obj_t *target, int val);
 /** Describes an animation*/
 typedef struct _ui_anim_user_data_t {
     lv_obj_t *target;
-    lv_img_dsc_t **imgset;
+    lv_image_dsc_t **imgset;
     int32_t imgset_size;
     int32_t val;
 } ui_anim_user_data_t;

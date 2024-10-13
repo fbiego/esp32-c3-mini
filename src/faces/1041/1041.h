@@ -17,7 +17,6 @@ extern "C"
 
 //#define ENABLE_FACE_1041 // (1041) uncomment to enable or define it elsewhere
 
-
 #ifdef ENABLE_FACE_1041
     extern lv_obj_t *face_1041;
 	extern lv_obj_t *face_1041_0_984;
@@ -31,12 +30,13 @@ extern "C"
 	LV_IMG_DECLARE(face_1041_dial_img_17_117033_0);
 	LV_IMG_DECLARE(face_1041_dial_img_33_205280_0);
 	LV_IMG_DECLARE(face_1041_dial_img_preview_0);
+	LV_IMG_DECLARE(face_1041_dial_img_preview_0);
 
 
 #endif
     void onFaceEvent(lv_event_t * e);
 
-    void init_face_1041(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_t **));
+    void init_face_1041(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_t **, lv_obj_t **));
     void update_time_1041(int second, int minute, int hour, bool mode, bool am, int day, int month, int year, int weekday);
     void update_weather_1041(int temp, int icon);
     void update_status_1041(int battery, bool connection);

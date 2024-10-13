@@ -39,10 +39,6 @@ lv_obj_t *face_smart_resized_38_93007;
 #if LV_COLOR_DEPTH != 16
 #error "LV_COLOR_DEPTH should be 16bit for watchfaces"
 #endif
-#if LV_COLOR_16_SWAP != 1
-#error "LV_COLOR_16_SWAP should be 1 for watchfaces"
-#endif
-
 
 const lv_img_dsc_t *face_smart_resized_dial_img_weather[] = {
 	&face_smart_resized_dial_img_2_58894_0,
@@ -124,9 +120,11 @@ const lv_img_dsc_t *face_smart_resized_dial_img_38_93007_group[] = {
 };
 
 
+
+
 #endif
 
-void init_face_smart_resized(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_t **)){
+void init_face_smart_resized(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_t **, lv_obj_t **)){
 #ifdef ENABLE_FACE_SMART_RESIZED
     face_smart_resized = lv_obj_create(NULL);
     lv_obj_clear_flag(face_smart_resized, LV_OBJ_FLAG_SCROLLABLE);
@@ -367,7 +365,7 @@ void init_face_smart_resized(void (*callback)(const char*, const lv_img_dsc_t *,
     lv_obj_clear_flag(face_smart_resized_38_93007, LV_OBJ_FLAG_SCROLLABLE );
 
 
-    callback("Smart", &face_smart_resized_dial_img_preview_0, &face_smart_resized);
+    callback("Smart", &face_smart_resized_dial_img_preview_0, &face_smart_resized, NULL);
 
 #endif
 }

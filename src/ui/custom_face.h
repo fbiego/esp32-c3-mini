@@ -1,3 +1,10 @@
+
+/*
+    Copyright (c) 2024 Felix Biego. All rights reserved.
+    This work is licensed under the terms of the MIT license.  
+    For a copy, see <https://opensource.org/licenses/MIT>.
+*/
+
 #ifndef CUSTOM_FACE_H
 #define CUSTOM_FACE_H
 
@@ -89,7 +96,7 @@ void add_item(lv_obj_t *root, int id, int x, int y, int pvX, int pvY, const char
 
 
 
-void init_face_custom(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_t **));
+void init_face_custom(void (*callback)(const char*, const lv_image_dsc_t *, lv_obj_t **));
 void update_time_custom(int second, int minute, int hour, bool mode, bool am, int day, int month, int year, int weekday);
 void update_weather_custom(int temp, int icon);
 void update_status_custom(int battery, bool connection);

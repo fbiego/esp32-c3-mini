@@ -18,16 +18,14 @@ lv_obj_t *face_1041_33_205280;
 #if LV_COLOR_DEPTH != 16
 #error "LV_COLOR_DEPTH should be 16bit for watchfaces"
 #endif
-#if LV_COLOR_16_SWAP != 1
-#error "LV_COLOR_16_SWAP should be 1 for watchfaces"
-#endif
+
 
 
 
 
 #endif
 
-void init_face_1041(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_t **)){
+void init_face_1041(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_t **, lv_obj_t **)){
 #ifdef ENABLE_FACE_1041
     face_1041 = lv_obj_create(NULL);
     lv_obj_clear_flag(face_1041, LV_OBJ_FLAG_SCROLLABLE);
@@ -94,8 +92,8 @@ void update_time_1041(int second, int minute, int hour, bool mode, bool am, int 
     {
         return;
     }
-	lv_img_set_angle(face_1041_1_70612, hour * 300 + (minute * 5));
-	lv_img_set_angle(face_1041_17_117033, minute * 60);
+	lv_img_set_angle(face_1041_1_70612, hour * 300 + (minute * 5) + (second * (5 / 60)));
+	lv_img_set_angle(face_1041_17_117033, (minute * 60) + second);
 	lv_img_set_angle(face_1041_33_205280, second * 60);
 
 #endif

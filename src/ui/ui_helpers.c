@@ -58,7 +58,7 @@ void _ui_arc_increment( lv_obj_t *target, int val)
 {
    int old = lv_arc_get_value(target);
    lv_arc_set_value(target, old+val);
-   lv_event_send(target,LV_EVENT_VALUE_CHANGED, 0);
+   lv_obj_send_event(target,LV_EVENT_VALUE_CHANGED, 0);
 }
 
 void _ui_bar_increment( lv_obj_t *target, int val, int anm) 
@@ -71,7 +71,7 @@ void _ui_slider_increment( lv_obj_t *target, int val, int anm)
 {
    int old = lv_slider_get_value(target);
    lv_slider_set_value(target, old+val, anm);
-   lv_event_send(target,LV_EVENT_VALUE_CHANGED, 0);
+   lv_obj_send_event(target,LV_EVENT_VALUE_CHANGED, 0);
 }
 
 void _ui_keyboard_set_target( lv_obj_t *keyboard, lv_obj_t *textarea) 
@@ -107,7 +107,7 @@ void _ui_opacity_set( lv_obj_t *target, int val)
 
 void _ui_anim_callback_free_user_data(lv_anim_t *a)
 {
-	lv_mem_free(a->user_data);
+	lv_free(a->user_data);
 	a->user_data=NULL;
 }
 

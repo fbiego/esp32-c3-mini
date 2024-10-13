@@ -1,4 +1,9 @@
 
+/*
+    Copyright (c) 2024 Felix Biego. All rights reserved.
+    This work is licensed under the terms of the MIT license.  
+    For a copy, see <https://opensource.org/licenses/MIT>.
+*/
 
 #include "qmi8658c.h"
 
@@ -28,7 +33,7 @@ lv_obj_t *ui_rtwSwitch;
 
 bool qmi8658c_active;
 
-void ui_event_appScreen(lv_event_t *e)
+void ui_event_imuScreen(lv_event_t *e)
 {
     lv_event_code_t event_code = lv_event_get_code(e);
     lv_obj_t *target = lv_event_get_target(e);
@@ -64,7 +69,7 @@ void ui_event_appScreen(lv_event_t *e)
 
 #endif
 
-void ui_imuScreen_screen_init(void (*callback)(const char *, const lv_img_dsc_t *, lv_obj_t **))
+void ui_imuScreen_screen_init(void (*callback)(const char *, const lv_image_dsc_t *, lv_obj_t **))
 {
 #ifdef ENABLE_APP_QMI8658C
     ui_imuScreen = lv_obj_create(NULL);
@@ -223,7 +228,7 @@ void ui_imuScreen_screen_init(void (*callback)(const char *, const lv_img_dsc_t 
     // lv_obj_set_height(ui_rtwSwitch, 25);
     // lv_obj_set_align(ui_rtwSwitch, LV_ALIGN_CENTER);
 
-    lv_obj_add_event_cb(ui_imuScreen, ui_event_appScreen, LV_EVENT_ALL, NULL);
+    lv_obj_add_event_cb(ui_imuScreen, ui_event_imuScreen, LV_EVENT_ALL, NULL);
     // lv_obj_add_event_cb(ui_rtwSwitch, ui_event_rtwSwitch, LV_EVENT_ALL, NULL);
 
     callback("QMI8658C", &ui_img_gyro_l_png, &ui_imuScreen);

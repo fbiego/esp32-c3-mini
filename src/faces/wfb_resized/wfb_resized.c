@@ -54,10 +54,6 @@ lv_obj_t *face_wfb_resized_48_67215;
 #if LV_COLOR_DEPTH != 16
 #error "LV_COLOR_DEPTH should be 16bit for watchfaces"
 #endif
-#if LV_COLOR_16_SWAP != 1
-#error "LV_COLOR_16_SWAP should be 1 for watchfaces"
-#endif
-
 
 const lv_img_dsc_t *face_wfb_resized_dial_img_2_59434_group[] = {
 	&face_wfb_resized_dial_img_2_59434_0,
@@ -126,9 +122,11 @@ const lv_img_dsc_t *face_wfb_resized_dial_img_weather[] = {
 };
 
 
+
+
 #endif
 
-void init_face_wfb_resized(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_t **)){
+void init_face_wfb_resized(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_t **, lv_obj_t **)){
 #ifdef ENABLE_FACE_WFB_RESIZED
     face_wfb_resized = lv_obj_create(NULL);
     lv_obj_clear_flag(face_wfb_resized, LV_OBJ_FLAG_SCROLLABLE);
@@ -504,7 +502,7 @@ void init_face_wfb_resized(void (*callback)(const char*, const lv_img_dsc_t *, l
     lv_obj_clear_flag(face_wfb_resized_48_67215, LV_OBJ_FLAG_SCROLLABLE );
 
 
-    callback("WFB", &face_wfb_resized_dial_img_preview_0, &face_wfb_resized);
+    callback("WFB", &face_wfb_resized_dial_img_preview_0, &face_wfb_resized, NULL);
 
 #endif
 }
@@ -525,6 +523,8 @@ void update_time_wfb_resized(int second, int minute, int hour, bool mode, bool a
 	lv_img_set_src(face_wfb_resized_9_63485, face_wfb_resized_dial_img_8_63485_group[(hour / 10) % 10]);
 	lv_img_set_src(face_wfb_resized_10_63485, face_wfb_resized_dial_img_8_63485_group[(minute / 1) % 10]);
 	lv_img_set_src(face_wfb_resized_11_63485, face_wfb_resized_dial_img_8_63485_group[(minute / 10) % 10]);
+    lv_img_set_src(face_wfb_resized_12_63485, face_wfb_resized_dial_img_8_63485_group[(second / 1) % 10]);
+	lv_img_set_src(face_wfb_resized_13_63485, face_wfb_resized_dial_img_8_63485_group[(second / 10) % 10]);
 
 #endif
 }

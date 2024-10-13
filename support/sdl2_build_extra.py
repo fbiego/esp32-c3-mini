@@ -5,7 +5,7 @@ for e in [ env, projenv ]:
     # Add via script, because `-Wl,-m32` does not work.
     if "-m32" in e['CCFLAGS']:
         e.Append(LINKFLAGS = ["-m32"])
-    e.Append(LINKFLAGS = ["-mwindows"])
+    # e.Append(LINKFLAGS = ["-mwindows"])
 
 exec_name = "${BUILD_DIR}/${PROGNAME}${PROGSUFFIX}"
 

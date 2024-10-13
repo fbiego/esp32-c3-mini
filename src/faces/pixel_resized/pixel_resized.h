@@ -134,12 +134,13 @@ extern "C"
 	LV_IMG_DECLARE(face_pixel_resized_dial_img_48_136588_0);
 	LV_IMG_DECLARE(face_pixel_resized_dial_img_49_137284_0);
 	LV_IMG_DECLARE(face_pixel_resized_dial_img_preview_0);
+	LV_IMG_DECLARE(face_pixel_resized_dial_img_preview_0);
 
 
 #endif
     void onFaceEvent(lv_event_t * e);
 
-    void init_face_pixel_resized(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_t **));
+    void init_face_pixel_resized(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_t **, lv_obj_t **));
     void update_time_pixel_resized(int second, int minute, int hour, bool mode, bool am, int day, int month, int year, int weekday);
     void update_weather_pixel_resized(int temp, int icon);
     void update_status_pixel_resized(int battery, bool connection);

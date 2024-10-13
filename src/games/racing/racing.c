@@ -1,4 +1,10 @@
 
+/*
+    Copyright (c) 2024 Felix Biego. All rights reserved.
+    This work is licensed under the terms of the MIT license.  
+    For a copy, see <https://opensource.org/licenses/MIT>.
+*/
+
 
 #include "racing.h"
 
@@ -66,7 +72,7 @@ typedef struct CarPosition
     int y;
 } CarP;
 
-const lv_img_dsc_t *carIcons[] = {
+const lv_image_dsc_t *carIcons[] = {
     &ui_img_car_green_png,
     &ui_img_car_red_png,
     &ui_img_car_yellow_png,
@@ -106,6 +112,9 @@ void ui_event_raceScreen(lv_event_t *e)
         onGameOpened();
         active = true;
         isRacing = false;
+
+
+        highScore = getPrefInt("racing_high", 0);
 
         lv_label_set_text(ui_distanceLabel, "0");
         lv_label_set_text(ui_speedLabel, "0");
@@ -243,7 +252,7 @@ void ui_event_exitRace(lv_event_t *e)
 #endif
 }
 
-void ui_raceScreen_screen_init(void (*callback)(const char *, const lv_img_dsc_t *, lv_obj_t **))
+void ui_raceScreen_screen_init(void (*callback)(const char *, const lv_image_dsc_t *, lv_obj_t **))
 {
 #ifdef ENABLE_GAME_RACING
     ui_raceScreen = lv_obj_create(NULL);
@@ -269,6 +278,7 @@ void ui_raceScreen_screen_init(void (*callback)(const char *, const lv_img_dsc_t
     lv_obj_set_align(ui_roadImage, LV_ALIGN_BOTTOM_MID);
     lv_obj_add_flag(ui_roadImage, LV_OBJ_FLAG_ADV_HITTEST);  /// Flags
     lv_obj_clear_flag(ui_roadImage, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+    lv_image_set_inner_align(ui_roadImage, LV_IMAGE_ALIGN_TILE );
 
     ui_distanceLabel = lv_label_create(ui_raceScreen);
     lv_obj_set_width(ui_distanceLabel, LV_SIZE_CONTENT);  /// 1
@@ -584,6 +594,7 @@ void ui_raceScreen_screen_loop()
             {
                 highScore = currentScore;
                 lv_label_set_text(ui_raceLabel, "New High Score");
+                savePrefInt("racing_high", highScore);
             }
             currentScore = 0;
         }

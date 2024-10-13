@@ -11,18 +11,23 @@
 #endif
 
 
+// LVGL 9 format (RGB565) // LVGL_9 compatible 
 const LV_ATTRIBUTE_MEM_ALIGN uint8_t face_pixel_resized_dial_img_37_65535_data_0[] = {
-	0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+	//RGB565 data 
+	0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+
+	// Alpha Channel 
+	0xFF,0xFF,0xFF,0xFF,
     };
         
 
 
 const lv_img_dsc_t face_pixel_resized_dial_img_37_65535_0 = {
-    .header.always_zero = 0,
+    .header.magic = LV_IMAGE_HEADER_MAGIC,
     .header.w = 4,
     .header.h = 1,
     .data_size = sizeof(face_pixel_resized_dial_img_37_65535_data_0),
-    .header.cf = LV_IMG_CF_TRUE_COLOR_ALPHA,
+    .header.cf = LV_COLOR_FORMAT_NATIVE_WITH_ALPHA,
     .data = face_pixel_resized_dial_img_37_65535_data_0};
 
     

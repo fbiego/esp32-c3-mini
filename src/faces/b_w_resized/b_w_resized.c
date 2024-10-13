@@ -44,10 +44,6 @@ lv_obj_t *face_b_w_resized_39_138154;
 #if LV_COLOR_DEPTH != 16
 #error "LV_COLOR_DEPTH should be 16bit for watchfaces"
 #endif
-#if LV_COLOR_16_SWAP != 1
-#error "LV_COLOR_16_SWAP should be 1 for watchfaces"
-#endif
-
 
 const lv_img_dsc_t *face_b_w_resized_dial_img_1_59020_group[] = {
 	&face_b_w_resized_dial_img_1_59020_0,
@@ -261,9 +257,11 @@ const lv_img_dsc_t *face_b_w_resized_dial_img_weather[] = {
 };
 
 
+
+
 #endif
 
-void init_face_b_w_resized(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_t **)){
+void init_face_b_w_resized(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_t **, lv_obj_t **)){
 #ifdef ENABLE_FACE_B_W_RESIZED
     face_b_w_resized = lv_obj_create(NULL);
     lv_obj_clear_flag(face_b_w_resized, LV_OBJ_FLAG_SCROLLABLE);
@@ -549,7 +547,7 @@ void init_face_b_w_resized(void (*callback)(const char*, const lv_img_dsc_t *, l
     lv_obj_clear_flag(face_b_w_resized_39_138154, LV_OBJ_FLAG_SCROLLABLE );
 
 
-    callback("B & W", &face_b_w_resized_dial_img_preview_0, &face_b_w_resized);
+    callback("B & W", &face_b_w_resized_dial_img_preview_0, &face_b_w_resized, NULL);
 
 #endif
 }

@@ -114,12 +114,13 @@ extern "C"
 	LV_IMG_DECLARE(face_smart_resized_dial_img_38_93007_5);
 	LV_IMG_DECLARE(face_smart_resized_dial_img_38_93007_6);
 	LV_IMG_DECLARE(face_smart_resized_dial_img_preview_0);
+	LV_IMG_DECLARE(face_smart_resized_dial_img_preview_0);
 
 
 #endif
     void onFaceEvent(lv_event_t * e);
 
-    void init_face_smart_resized(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_t **));
+    void init_face_smart_resized(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_t **, lv_obj_t **));
     void update_time_smart_resized(int second, int minute, int hour, bool mode, bool am, int day, int month, int year, int weekday);
     void update_weather_smart_resized(int temp, int icon);
     void update_status_smart_resized(int battery, bool connection);
