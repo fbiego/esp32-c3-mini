@@ -143,7 +143,7 @@ void init_face_1169(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_t
     lv_obj_clear_flag(face_1169_6_129032, LV_OBJ_FLAG_SCROLLABLE );
 
 
-    callback("1169", &face_1169_dial_img_preview_0, &face_1169);
+    callback("1169", &face_1169_dial_img_preview_0, &face_1169, NULL);
 
 #endif
 }

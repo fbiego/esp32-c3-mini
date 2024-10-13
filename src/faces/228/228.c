@@ -159,7 +159,7 @@ void init_face_228(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_t 
     lv_obj_clear_flag(face_228_8_89898, LV_OBJ_FLAG_SCROLLABLE );
 
 
-    callback("228", &face_228_dial_img_preview_0, &face_228);
+    callback("228", &face_228_dial_img_preview_0, &face_228, NULL);
 
 #endif
 }

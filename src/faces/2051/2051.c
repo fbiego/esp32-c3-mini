@@ -159,7 +159,7 @@ void init_face_2051(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_t
     lv_obj_clear_flag(face_2051_8_102190, LV_OBJ_FLAG_SCROLLABLE );
 
 
-    callback("2051", &face_2051_dial_img_preview_0, &face_2051);
+    callback("2051", &face_2051_dial_img_preview_0, &face_2051, NULL);
 
 #endif
 }

@@ -225,7 +225,7 @@ void init_face_3589(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_t
     lv_obj_clear_flag(face_3589_11_132664, LV_OBJ_FLAG_SCROLLABLE );
 
 
-    callback("3589", &face_3589_dial_img_preview_0, &face_3589);
+    callback("3589", &face_3589_dial_img_preview_0, &face_3589, NULL);
 
 #endif
 }

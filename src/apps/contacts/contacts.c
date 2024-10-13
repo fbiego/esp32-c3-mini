@@ -116,6 +116,8 @@ void ui_contactScreen_screen_init(void (*callback)(const char *, const lv_image_
 #ifdef ENABLE_APP_CONTACTS
     ui_contactScreen = lv_obj_create(NULL);
     lv_obj_clear_flag(ui_contactScreen, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+    lv_obj_set_style_bg_color(ui_contactScreen, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(ui_contactScreen, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_contactList = lv_obj_create(ui_contactScreen);
     lv_obj_set_width(ui_contactList, lv_pct(100));

@@ -429,7 +429,7 @@ void init_face_174(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_t 
     lv_obj_clear_flag(face_174_36_124040, LV_OBJ_FLAG_SCROLLABLE );
 
 
-    callback("174", &face_174_dial_img_preview_0, &face_174);
+    callback("174", &face_174_dial_img_preview_0, &face_174, NULL);
 
 #endif
 }

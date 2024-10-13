@@ -80,7 +80,7 @@ void init_face_1041(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_t
 	lv_img_set_pivot(face_1041_33_205280, 14, 115);
 
 
-    callback("1041", &face_1041_dial_img_preview_0, &face_1041);
+    callback("1041", &face_1041_dial_img_preview_0, &face_1041, &face_1041_33_205280);
 
 #endif
 }
@@ -94,7 +94,6 @@ void update_time_1041(int second, int minute, int hour, bool mode, bool am, int 
     }
 	lv_img_set_angle(face_1041_1_70612, hour * 300 + (minute * 5) + (second * (5 / 60)));
 	lv_img_set_angle(face_1041_17_117033, (minute * 60) + second);
-	lv_img_set_angle(face_1041_33_205280, second * 60);
 
 #endif
 }

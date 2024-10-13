@@ -291,6 +291,8 @@ void ui_simonScreen_screen_init(void (*callback)(const char *, const lv_image_ds
 #ifdef ENABLE_GAME_SIMON
     ui_simonScreen = lv_obj_create(NULL);
     lv_obj_clear_flag(ui_simonScreen, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+    lv_obj_set_style_bg_color(ui_simonScreen, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(ui_simonScreen, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_simonMainPanel = lv_obj_create(ui_simonScreen);
     lv_obj_set_width(ui_simonMainPanel, 240);
