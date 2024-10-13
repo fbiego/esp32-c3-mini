@@ -5,6 +5,10 @@
         "radar.h": "c",
         "79_2_dial.h": "c",
         "racing.h": "c",
-        "chrono": "cpp"
+        "chrono": "cpp",
+        "app_hal.h": "c",
+        "elecrow.h": "c",
+        "contacts.h": "c",
+        "variant": "c"
     }
 }

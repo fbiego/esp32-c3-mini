@@ -18,16 +18,14 @@ lv_obj_t *face_radar_33_212563;
 #if LV_COLOR_DEPTH != 16
 #error "LV_COLOR_DEPTH should be 16bit for watchfaces"
 #endif
-#if LV_COLOR_16_SWAP != 1
-#error "LV_COLOR_16_SWAP should be 1 for watchfaces"
-#endif
+
 
 
 
 
 #endif
 
-void init_face_radar(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_t **)){
+void init_face_radar(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_t **, lv_obj_t **)){
 #ifdef ENABLE_FACE_RADAR
     face_radar = lv_obj_create(NULL);
     lv_obj_clear_flag(face_radar, LV_OBJ_FLAG_SCROLLABLE);
@@ -82,7 +80,7 @@ void init_face_radar(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_
 	lv_img_set_pivot(face_radar_33_212563, 1, 121);
 
 
-    callback("Radar", &face_radar_dial_img_preview_0, &face_radar);
+    callback("Radar", &face_radar_dial_img_preview_0, &face_radar, &face_radar_33_212563);
 
 #endif
 }
@@ -94,9 +92,9 @@ void update_time_radar(int second, int minute, int hour, bool mode, bool am, int
     {
         return;
     }
-	lv_img_set_angle(face_radar_1_58768, hour * 300 + (minute * 5));
-	lv_img_set_angle(face_radar_17_119773, minute * 60);
-	lv_img_set_angle(face_radar_33_212563, second * 60);
+	lv_img_set_angle(face_radar_1_58768, hour * 300 + (minute * 5) + (second * (5 / 60)));
+	lv_img_set_angle(face_radar_17_119773, (minute * 60) + second);
+	// lv_img_set_angle(face_radar_33_212563, second * 60);
 
 #endif
 }

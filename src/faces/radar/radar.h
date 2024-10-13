@@ -30,12 +30,13 @@ extern "C"
 	LV_IMG_DECLARE(face_radar_dial_img_17_119773_0);
 	LV_IMG_DECLARE(face_radar_dial_img_33_212563_0);
 	LV_IMG_DECLARE(face_radar_dial_img_preview_0);
+	LV_IMG_DECLARE(face_radar_dial_img_preview_0);
 
 
 #endif
     void onFaceEvent(lv_event_t * e);
 
-    void init_face_radar(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_t **));
+    void init_face_radar(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_t **, lv_obj_t **));
     void update_time_radar(int second, int minute, int hour, bool mode, bool am, int day, int month, int year, int weekday);
     void update_weather_radar(int temp, int icon);
     void update_status_radar(int battery, bool connection);

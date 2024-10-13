@@ -3,11 +3,18 @@
 // LVGL version: 8.3.3
 // Project name: C3_Watch
 
+
+/*
+    Copyright (c) 2024 Felix Biego. All rights reserved.
+    This work is licensed under the terms of the MIT license.  
+    For a copy, see <https://opensource.org/licenses/MIT>.
+*/
+
 #ifndef _C3_WATCH_UI_H
 #define _C3_WATCH_UI_H
 
 #define MAX_FACES 15
-#define MAX_GAMES 5
+#define MAX_GAMES 10
 
 #ifdef __cplusplus
 extern "C"
@@ -19,11 +26,15 @@ extern "C"
 #include "ui_events.h"
 
 #include "games/racing/racing.h"
+#include "games/simon/simon.h"
 #include "apps/qmi8658c/qmi8658c.h"
+#include "apps/navigation/navigation.h"
+#include "apps/contacts/contacts.h"
+#include "apps/piobot/piobot.h"
 
-    extern const char* ui_info_text;
+    extern const char *ui_info_text;
     void pulseCall_Animation(lv_obj_t *TargetObject, int delay);
-    void analogSecond_Animation(lv_obj_t * TargetObject, int delay);
+    void analogSecond_Animation(lv_obj_t *TargetObject, int delay);
     extern lv_anim_t secondsAnimation_0;
     void ui_event_clockScreen(lv_event_t *e);
     extern lv_obj_t *ui_clockScreen;
@@ -45,9 +56,8 @@ extern "C"
     extern lv_obj_t *ui_weatherCurrentIcon;
     extern lv_obj_t *ui_weatherCurrentTemp;
     extern lv_obj_t *ui_weatherUpdateTime;
-    extern lv_obj_t *ui_forecastPanel;
-    extern lv_obj_t *ui_forecastTitle;
     extern lv_obj_t *ui_forecastList;
+    extern lv_obj_t *ui_hourlyList;
     void ui_event_notificationScreen(lv_event_t *e);
     extern lv_obj_t *ui_notificationScreen;
     extern lv_obj_t *ui_messagePanel;
@@ -68,6 +78,11 @@ extern "C"
     extern lv_obj_t *ui_alertStateSwitch;
     extern lv_obj_t *ui_alertStateIcon;
     extern lv_obj_t *ui_alertStatePanel;
+    void ui_event_navStateSwitch(lv_event_t *e);
+    extern lv_obj_t *ui_navStateLabel;
+    extern lv_obj_t *ui_navStateSwitch;
+    extern lv_obj_t *ui_navStateIcon;
+    extern lv_obj_t *ui_navStatePanel;
     void ui_event_settingsScreen(lv_event_t *e);
     extern lv_obj_t *ui_settingsScreen;
     extern lv_obj_t *ui_settingsList;
@@ -87,6 +102,11 @@ extern "C"
     extern lv_obj_t *ui_timeoutSelect;
     extern lv_obj_t *ui_timeoutIcon;
     extern lv_obj_t *ui_timeoutLabel;
+    extern lv_obj_t *ui_rotatePanel;
+    void ui_event_rotateSelect(lv_event_t *e);
+    extern lv_obj_t *ui_rotateSelect;
+    extern lv_obj_t *ui_rotateIcon;
+    extern lv_obj_t *ui_rotateLabel;
     extern lv_obj_t *ui_languagePanel;
     void ui_event_languageSelect(lv_event_t *e);
     extern lv_obj_t *ui_languageSelect;
@@ -122,6 +142,8 @@ extern "C"
     extern lv_obj_t *ui_volumeDownButton;
     void ui_event_qrCodeButton(lv_event_t *e);
     extern lv_obj_t *ui_qrCodeButton;
+    void ui_event_closeControlButton(lv_event_t *e);
+    extern lv_obj_t *ui_closeControlButton;
 
     void ui_event_appInfoScreen(lv_event_t *e);
     extern lv_obj_t *ui_appInfoScreen;
@@ -149,7 +171,11 @@ extern "C"
     void ui_event_logoScreen(lv_event_t *e);
     extern lv_obj_t *ui_logoScreen;
     void ui_event_lvglLogo(lv_event_t *e);
-    extern lv_obj_t *ui_lvglLogo;
+    // extern lv_obj_t *ui_lvglLogo;
+    extern lv_obj_t *ui_lvglLogoBlack;
+    extern lv_obj_t *ui_lvglLogoBlue;
+    extern lv_obj_t *ui_lvglLogoGreen;
+    extern lv_obj_t *ui_lvglLogoRed;
 
     void ui_event_callScreen(lv_event_t *e);
     extern lv_obj_t *ui_callScreen;
@@ -204,11 +230,14 @@ extern "C"
 
     extern lv_obj_t *face_custom_root;
 
+    void onScroll(lv_event_t *e);
+
     extern bool toAppList;
     extern bool circular;
     extern int numFaces;
     extern int numGames;
     extern int currentIndex;
+    extern bool screenOn;
 
     void ui_event____initial_actions0(lv_event_t *e);
     extern lv_obj_t *ui____initial_actions0;
@@ -216,8 +245,9 @@ extern "C"
     typedef struct WatchFace
     {
         const char *name;
-        const lv_img_dsc_t *preview;
+        const lv_image_dsc_t *preview;
         lv_obj_t **watchface;
+        lv_obj_t **seconds; // analog second hand
         bool custom;
         int customIndex;
     } Face;
@@ -233,22 +263,24 @@ extern "C"
     extern Face faces[MAX_FACES];
     extern Face games[MAX_GAMES];
 
-    void registerWatchface_cb(const char *name, const lv_img_dsc_t *preview, lv_obj_t **watchface);
+    void registerWatchface_cb(const char *name, const lv_image_dsc_t *preview, lv_obj_t **watchface, lv_obj_t **seconds);
     void ui_update_watchfaces(int second, int minute, int hour, bool mode, bool am, int day, int month, int year, int weekday,
                               int temp, int icon, int battery, bool connection, int steps, int distance, int kcal, int bpm, int oxygen);
+    void ui_update_seconds(int second);
 
     void addNotificationList(int appId, const char *message, int index);
     void addForecast(int day, int temp, int icon);
+    void addHourlyWeather(int hour, int icon, int temp, int humidity, int wind, int uv, bool info);
     void addQrList(uint8_t id, const char *link);
     void setWeatherIcon(lv_obj_t *obj, int id, bool day);
     void setNotificationIcon(lv_obj_t *obj, int appId);
     void ui_games_update(void);
     void showError(const char *title, const char *message);
-    void addWatchface(const char *name, const lv_img_dsc_t *src, int index);
+    void addWatchface(const char *name, const lv_image_dsc_t *src, int index);
 
-    void addListDrive(const char* name, int total, int used, lv_event_cb_t event_cb);
-    void addListDir(const char* name);
-    void addListFile(const char* name, int size);
+    void addListDrive(const char *name, int total, int used, lv_event_cb_t event_cb);
+    void addListDir(const char *name);
+    void addListFile(const char *name, int size);
     void addListBack(lv_event_cb_t event_cb);
 
     void addFaceList(lv_obj_t *parent, Face face);
@@ -328,6 +360,10 @@ extern "C"
     LV_IMG_DECLARE(ui_img_web_png);             // assets\web.png
     LV_IMG_DECLARE(ui_img_kenya_png);           // assets\kenya.png
     LV_IMG_DECLARE(ui_img_lvgl_logo_png);       // assets\lvgl_logo.png
+    LV_IMG_DECLARE(ui_img_lvgl_logo_black_png); // assets/lvgl_logo_black.png
+    LV_IMG_DECLARE(ui_img_lvgl_logo_red_png);   // assets/lvgl_logo_red.png
+    LV_IMG_DECLARE(ui_img_lvgl_logo_green_png); // assets/lvgl_logo_green.png
+    LV_IMG_DECLARE(ui_img_lvgl_logo_blue_png);  // assets/lvgl_logo_blue.png
     LV_IMG_DECLARE(ui_img_game_icon_png);       // assets\game_icon.png
     LV_IMG_DECLARE(ui_img_language_png);        // assets\language.png
     LV_IMG_DECLARE(ui_img_file_manager_png);
@@ -335,8 +371,10 @@ extern "C"
     LV_IMG_DECLARE(ui_img_file_png);      // assets/file.png
     LV_IMG_DECLARE(ui_img_directory_png); // assets/directory.png
     LV_IMG_DECLARE(ui_img_back_file_png); // assets/back_file.png
-    LV_IMG_DECLARE(ui_img_clock_png);    // assets/clock.png
-    LV_IMG_DECLARE(ui_img_bin_png);    // assets/bin.png
+    LV_IMG_DECLARE(ui_img_clock_png);     // assets/clock.png
+    LV_IMG_DECLARE(ui_img_bin_png);       // assets/bin.png
+    LV_IMG_DECLARE(ui_img_up_arrow_png);   // assets/up_arrow.png
+    LV_IMG_DECLARE(ui_img_screen_rotate_png);   // assets/screen_rotate.png
 
     LV_IMG_DECLARE(ui_img_wechat_pay_png);
     LV_IMG_DECLARE(ui_img_alipay_png);
@@ -348,13 +386,8 @@ extern "C"
     LV_IMG_DECLARE(ui_img_notifications_app_png);
     LV_IMG_DECLARE(ui_img_weather_app_png);
 
-    LV_FONT_DECLARE(ui_font_H1);
-    LV_FONT_DECLARE(ui_font_Number_big);
-    LV_FONT_DECLARE(ui_font_Number_extra);
-    LV_FONT_DECLARE(ui_font_Subtitle);
-    LV_FONT_DECLARE(ui_font_Title);
-
     void ui_init(void);
+    void ui_setup(void);
 
 #ifdef __cplusplus
 } /*extern "C"*/

@@ -1,4 +1,10 @@
 
+/*
+    Copyright (c) 2024 Felix Biego. All rights reserved.
+    This work is licensed under the terms of the MIT license.  
+    For a copy, see <https://opensource.org/licenses/MIT>.
+*/
+
 
 #ifndef _QMI8658C_APP_H
 #define _QMI8658C_APP_H
@@ -40,7 +46,7 @@ extern "C"
 
 #endif
 
-    void ui_imuScreen_screen_init(void (*callback)(const char *, const lv_img_dsc_t *, lv_obj_t **));
+    void ui_imuScreen_screen_init(void (*callback)(const char *, const lv_image_dsc_t *, lv_obj_t **));
     void ui_imu_set_info(bool status, uint8_t id, uint8_t rev);
     void ui_imu_update_acc(float x, float y, float z);
     void ui_imu_update_gyro(float x, float y, float z);

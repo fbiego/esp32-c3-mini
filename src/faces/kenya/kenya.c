@@ -25,10 +25,6 @@ lv_obj_t *face_kenya_12_85153;
 #if LV_COLOR_DEPTH != 16
 #error "LV_COLOR_DEPTH should be 16bit for watchfaces"
 #endif
-#if LV_COLOR_16_SWAP != 1
-#error "LV_COLOR_16_SWAP should be 1 for watchfaces"
-#endif
-
 
 const lv_img_dsc_t *face_kenya_dial_img_2_58391_group[] = {
 	&face_kenya_dial_img_2_58391_0,
@@ -74,9 +70,11 @@ const lv_img_dsc_t *face_kenya_dial_img_12_85153_group[] = {
 };
 
 
+
+
 #endif
 
-void init_face_kenya(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_t **)){
+void init_face_kenya(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_t **, lv_obj_t **)){
 #ifdef ENABLE_FACE_KENYA
     face_kenya = lv_obj_create(NULL);
     lv_obj_clear_flag(face_kenya, LV_OBJ_FLAG_SCROLLABLE);
@@ -191,7 +189,7 @@ void init_face_kenya(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_
     lv_obj_clear_flag(face_kenya_12_85153, LV_OBJ_FLAG_SCROLLABLE );
 
 
-    callback("Kenya", &face_kenya_dial_img_preview_0, &face_kenya);
+    callback("Kenya", &face_kenya_dial_img_preview_0, &face_kenya, NULL);
 
 #endif
 }

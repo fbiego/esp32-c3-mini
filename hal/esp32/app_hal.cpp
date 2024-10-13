@@ -196,8 +196,8 @@ qmi_data_t data; // Declare a variable to store sensor data
 static const uint32_t screenWidth = WIDTH;
 static const uint32_t screenHeight = HEIGHT;
 
-static lv_disp_draw_buf_t draw_buf;
-static lv_color_t buf[2][screenWidth * buf_size];
+const unsigned int lvBufferSize = screenWidth * buf_size;
+uint8_t lvBuffer[2][lvBufferSize];
 
 bool weatherUpdate = true, notificationsUpdate = true;
 
@@ -205,17 +205,27 @@ ChronosTimer screenTimer;
 ChronosTimer alertTimer;
 ChronosTimer searchTimer;
 
+Navigation nav;
+bool navChanged = false;
+bool navIcChanged = false;
+uint32_t navIcCRC = 0xFFFFFFFF;
+
 lv_obj_t *lastActScr;
 
 bool circular = false;
 bool alertSwitch = false;
 bool gameActive = false;
 bool readIMU = false;
+bool updateSeconds = false;
+bool hasUpdatedSec = false;
+bool navSwitch = false;
 
 String customFacePaths[15];
 int customFaceIndex;
 static bool transfer = false;
 #ifdef ENABLE_CUSTOM_FACE
+
+#error "Custom Watchface has not been migrated to LVGL 9 yet"
 // watchface transfer
 int cSize, pos, recv;
 uint32_t total, currentRecv;
@@ -245,8 +255,8 @@ void flashDrive_cb(lv_event_t *e);
 void driveList_cb(lv_event_t *e);
 
 void checkLocal();
-void registerWatchface_cb(const char *name, const lv_img_dsc_t *preview, lv_obj_t **watchface);
-void registerCustomFace(const char *name, const lv_img_dsc_t *preview, lv_obj_t **watchface, String path);
+void registerWatchface_cb(const char *name, const lv_image_dsc_t *preview, lv_obj_t **watchface, lv_obj_t **second);
+void registerCustomFace(const char *name, const lv_image_dsc_t *preview, lv_obj_t **watchface, String path);
 
 String hexString(uint8_t *arr, size_t len, bool caps = false, String separator = "");
 
@@ -258,19 +268,25 @@ void parseDial(const char *path);
 bool lvImgHeader(uint8_t *byteArray, uint8_t cf, uint16_t w, uint16_t h);
 
 /* Display flushing */
-void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
+void my_disp_flush(lv_display_t *display, const lv_area_t *area, unsigned char *data)
 {
+
+  uint32_t w = lv_area_get_width(area);
+  uint32_t h = lv_area_get_height(area);
+  lv_draw_sw_rgb565_swap(data, w * h);
+
   if (tft.getStartCount() == 0)
   {
     tft.endWrite();
   }
 
-  tft.pushImageDMA(area->x1, area->y1, area->x2 - area->x1 + 1, area->y2 - area->y1 + 1, (lgfx::swap565_t *)&color_p->full);
-  lv_disp_flush_ready(disp); /* tell lvgl that flushing is done */
+  // tft.pushImageDMA(area->x1, area->y1, area->x2 - area->x1 + 1, area->y2 - area->y1 + 1, (lgfx::swap565_t *)&color_p->full);
+  tft.pushImageDMA(area->x1, area->y1, area->x2 - area->x1 + 1, area->y2 - area->y1 + 1, (uint16_t *)data);
+  lv_disp_flush_ready(display); /* tell lvgl that flushing is done */
 }
 
 /*Read the touchpad*/
-void my_touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
+void my_touchpad_read(lv_indev_t *indev_driver, lv_indev_data_t *data)
 {
   bool touched;
   uint8_t gesture;
@@ -404,28 +420,26 @@ bool wasError(const char *errorTopic = "")
 }
 #endif
 
-
 void toneOut(int pitch, int duration)
 { // pitch in Hz, duration in ms
 #if defined(BUZZER) && (BUZZER != -1)
-    int delayPeriod;
-    long cycles, i;
+  int delayPeriod;
+  long cycles, i;
 
-    pinMode(BUZZER, OUTPUT);                     // turn on output pin
-    delayPeriod = (500000 / pitch) - 7;             // calc 1/2 period in us -7 for overhead
-    cycles = ((long)pitch * (long)duration) / 1000; // calc. number of cycles for loop
+  pinMode(BUZZER, OUTPUT);                        // turn on output pin
+  delayPeriod = (500000 / pitch) - 7;             // calc 1/2 period in us -7 for overhead
+  cycles = ((long)pitch * (long)duration) / 1000; // calc. number of cycles for loop
 
-    for (i = 0; i <= cycles; i++)
-    { // play note for duration ms
-        digitalWrite(BUZZER, HIGH);
-        delayMicroseconds(delayPeriod);
-        digitalWrite(BUZZER, LOW);
-        delayMicroseconds(delayPeriod - 1); // - 1 to make up for digitaWrite overhead
-    }
-    pinMode(BUZZER, INPUT); // shut off pin to avoid noise from other operations
+  for (i = 0; i <= cycles; i++)
+  { // play note for duration ms
+    digitalWrite(BUZZER, HIGH);
+    delayMicroseconds(delayPeriod);
+    digitalWrite(BUZZER, LOW);
+    delayMicroseconds(delayPeriod - 1); // - 1 to make up for digitaWrite overhead
+  }
+  pinMode(BUZZER, INPUT); // shut off pin to avoid noise from other operations
 #endif
 }
-
 
 String heapUsage()
 {
@@ -438,7 +452,7 @@ String heapUsage()
   return usage;
 }
 
-void *sd_open_cb(struct _lv_fs_drv_t *drv, const char *path, lv_fs_mode_t mode)
+void *sd_open_cb(lv_fs_drv_t *drv, const char *path, lv_fs_mode_t mode)
 {
   char buf[256];
   sprintf(buf, "/%s", path);
@@ -469,7 +483,7 @@ void *sd_open_cb(struct _lv_fs_drv_t *drv, const char *path, lv_fs_mode_t mode)
   return (void *)fp;      // Return the pointer to the allocated File object
 }
 
-lv_fs_res_t sd_read_cb(struct _lv_fs_drv_t *drv, void *file_p, void *buf, uint32_t btr, uint32_t *br)
+lv_fs_res_t sd_read_cb(lv_fs_drv_t *drv, void *file_p, void *buf, uint32_t btr, uint32_t *br)
 {
   lv_fs_res_t res = LV_FS_RES_NOT_IMP;
   File *fp = (File *)file_p;
@@ -483,7 +497,7 @@ lv_fs_res_t sd_read_cb(struct _lv_fs_drv_t *drv, void *file_p, void *buf, uint32
   return res;
 }
 
-lv_fs_res_t sd_seek_cb(struct _lv_fs_drv_t *drv, void *file_p, uint32_t pos, lv_fs_whence_t whence)
+lv_fs_res_t sd_seek_cb(lv_fs_drv_t *drv, void *file_p, uint32_t pos, lv_fs_whence_t whence)
 {
   lv_fs_res_t res = LV_FS_RES_OK;
   File *fp = (File *)file_p;
@@ -516,7 +530,7 @@ lv_fs_res_t sd_seek_cb(struct _lv_fs_drv_t *drv, void *file_p, uint32_t pos, lv_
   return res;
 }
 
-lv_fs_res_t sd_tell_cb(struct _lv_fs_drv_t *drv, void *file_p, uint32_t *pos_p)
+lv_fs_res_t sd_tell_cb(lv_fs_drv_t *drv, void *file_p, uint32_t *pos_p)
 {
   lv_fs_res_t res = LV_FS_RES_NOT_IMP;
   File *fp = (File *)file_p;
@@ -528,7 +542,7 @@ lv_fs_res_t sd_tell_cb(struct _lv_fs_drv_t *drv, void *file_p, uint32_t *pos_p)
   return res;
 }
 
-lv_fs_res_t sd_close_cb(struct _lv_fs_drv_t *drv, void *file_p)
+lv_fs_res_t sd_close_cb(lv_fs_drv_t *drv, void *file_p)
 {
   File *fp = (File *)file_p;
 
@@ -811,7 +825,7 @@ bool deleteCustomFace(String file)
   return false;
 }
 
-void registerCustomFace(const char *name, const lv_img_dsc_t *preview, lv_obj_t **watchface, String path)
+void registerCustomFace(const char *name, const lv_image_dsc_t *preview, lv_obj_t **watchface, String path)
 {
   if (numFaces >= MAX_FACES)
   {
@@ -904,8 +918,9 @@ void addFaceList(lv_obj_t *parent, Face face)
   lv_obj_set_x(ui_faceItemDelete, -10);
   lv_obj_set_y(ui_faceItemDelete, 0);
   lv_obj_set_align(ui_faceItemDelete, LV_ALIGN_RIGHT_MID);
-  lv_obj_add_flag(ui_faceItemDelete, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_ADV_HITTEST); /// Flags
-  lv_obj_clear_flag(ui_faceItemDelete, LV_OBJ_FLAG_SCROLLABLE);                        /// Flags
+  lv_obj_add_flag(ui_faceItemDelete, LV_OBJ_FLAG_CLICKABLE);    /// Flags
+  lv_obj_add_flag(ui_faceItemDelete, LV_OBJ_FLAG_ADV_HITTEST);  /// Flags
+  lv_obj_clear_flag(ui_faceItemDelete, LV_OBJ_FLAG_SCROLLABLE); /// Flags
   lv_obj_set_style_radius(ui_faceItemDelete, 20, LV_PART_MAIN | LV_STATE_PRESSED);
   lv_obj_set_style_bg_color(ui_faceItemDelete, lv_color_hex(0xF34235), LV_PART_MAIN | LV_STATE_PRESSED);
   lv_obj_set_style_bg_opa(ui_faceItemDelete, 255, LV_PART_MAIN | LV_STATE_PRESSED);
@@ -934,7 +949,7 @@ void connectionCallback(bool state)
   {
     lv_obj_add_state(ui_btStateButton, LV_STATE_CHECKED);
   }
-  lv_label_set_text_fmt(ui_appConnectionText, "Status\n%s", state ? "#19f736 Connected#" : "#f73619 Disconnected#");
+  lv_label_set_text_fmt(ui_appConnectionText, "Status\n%s", state ? "Connected" : "Disconnected");
 }
 
 void ringerCallback(String caller, bool state)
@@ -984,6 +999,13 @@ void configCallback(Config config, uint32_t a, uint32_t b)
     Rtc.SetDateTime(RtcDateTime(watch.getYear(), watch.getMonth() + 1, watch.getDay(), watch.getHour(true), watch.getMinute(), watch.getSecond()));
 
 #endif
+    // ui_update_seconds(watch.getSecond());
+    if (!hasUpdatedSec){
+      hasUpdatedSec = true;
+      updateSeconds = true;
+    }
+    
+
     break;
   case CF_RST:
 
@@ -1067,6 +1089,46 @@ void configCallback(Config config, uint32_t a, uint32_t b)
       updateQrLinks();
     }
     break;
+  case CF_NAV_DATA:
+    navChanged = true;
+    break;
+  case CF_NAV_ICON:
+    if (a == 2)
+    {
+      navIcChanged = true;
+      Timber.w("Navigation icon received. CRC 0x%04X", b);
+    }
+    break;
+  case CF_CONTACT:
+    if (a == 0)
+    {
+      Serial.println("Receiving contacts");
+      Serial.print("SOS index: ");
+      Serial.print(uint8_t(b >> 8));
+      Serial.print("\tSize: ");
+      Serial.println(uint8_t(b));
+      setNoContacts();
+    }
+    if (a == 1)
+    {
+      Serial.println("Received all contacts");
+      int n = uint8_t(b);      // contacts size -> watch.getContactCount();
+      int s = uint8_t(b >> 8); // sos contact index -> watch.getSOSContactIndex();
+
+      clearContactList();
+
+      for (int i = 0; i < n; i++)
+      {
+        Contact cn = watch.getContact(i);
+        Serial.print("Name: ");
+        Serial.print(cn.name);
+        Serial.print(s == i ? " [SOS]" : "");
+        Serial.print("\tNumber: ");
+        Serial.println(cn.number);
+        addContact(cn.name.c_str(), cn.number.c_str(), s == i);
+      }
+    }
+    break;
   }
 }
 
@@ -1102,7 +1164,7 @@ void onCaptureClick(lv_event_t *e)
 
 void onForecastOpen(lv_event_t *e)
 {
-  lv_obj_scroll_to_y(ui_forecastPanel, 0, LV_ANIM_ON);
+  // lv_obj_scroll_to_y(ui_forecastList, 0, LV_ANIM_ON);
 }
 
 void onScrollMode(lv_event_t *e)
@@ -1112,10 +1174,27 @@ void onScrollMode(lv_event_t *e)
 
 void onAlertState(lv_event_t *e)
 {
-  lv_obj_t *obj = lv_event_get_target(e);
+  lv_obj_t *obj = (lv_obj_t *)lv_event_get_target(e);
   alertSwitch = lv_obj_has_state(obj, LV_STATE_CHECKED);
 
   prefs.putBool("alerts", alertSwitch);
+}
+
+void onNavState(lv_event_t *e)
+{
+  lv_obj_t *obj = (lv_obj_t *)lv_event_get_target(e);
+  navSwitch = lv_obj_has_state(obj, LV_STATE_CHECKED);
+
+  prefs.putBool("autonav", navSwitch);
+}
+
+void savePrefInt(const char* key, int value)
+{
+  prefs.putInt(key, value);
+}
+
+int getPrefInt(const char* key, int def_value){
+    return prefs.getInt(key, def_value);
 }
 
 void onNotificationsOpen(lv_event_t *e)
@@ -1157,7 +1236,8 @@ void onWeatherLoad(lv_event_t *e)
   //   lv_obj_set_style_bg_img_src(ui_weatherScreen, &ui_img_753022056, LV_PART_MAIN | LV_STATE_DEFAULT);
   // }
   lv_obj_clear_flag(ui_weatherPanel, LV_OBJ_FLAG_HIDDEN);
-  lv_obj_add_flag(ui_forecastPanel, LV_OBJ_FLAG_HIDDEN);
+  lv_obj_add_flag(ui_forecastList, LV_OBJ_FLAG_HIDDEN);
+  lv_obj_add_flag(ui_hourlyList, LV_OBJ_FLAG_HIDDEN);
   if (watch.getWeatherCount() > 0)
   {
     String updateTime = "Updated at\n" + watch.getWeatherTime();
@@ -1165,12 +1245,22 @@ void onWeatherLoad(lv_event_t *e)
     lv_label_set_text(ui_weatherUpdateTime, updateTime.c_str());
     lv_label_set_text_fmt(ui_weatherCurrentTemp, "%d°C", watch.getWeatherAt(0).temp);
     setWeatherIcon(ui_weatherIcon, watch.getWeatherAt(0).icon, isDay());
+    setWeatherIcon(ui_weatherCurrentIcon, watch.getWeatherAt(0).icon, isDay());
 
     lv_obj_clean(ui_forecastList);
     int c = watch.getWeatherCount();
     for (int i = 0; i < c; i++)
     {
       addForecast(watch.getWeatherAt(i).day, watch.getWeatherAt(i).temp, watch.getWeatherAt(i).icon);
+    }
+
+    lv_obj_scroll_by(ui_forecastList, 0, -1, LV_ANIM_OFF);
+
+    lv_obj_clean(ui_hourlyList);
+    addHourlyWeather(0, watch.getWeatherAt(0).icon, 0, 0, 0, 0, true);
+    for (int h = watch.getHour(true); h < 24; h++){
+      HourlyForecast hf = watch.getForecastHour(h);
+      addHourlyWeather(hf.hour, hf.icon, hf.temp, hf.humidity, hf.wind, hf.uv, false);
     }
   }
 }
@@ -1190,7 +1280,7 @@ void onLoadHome(lv_event_t *e)
 void onBrightnessChange(lv_event_t *e)
 {
   // Your code here
-  lv_obj_t *slider = lv_event_get_target(e);
+  lv_obj_t *slider = (lv_obj_t *)lv_event_get_target(e);
   int v = lv_slider_get_value(slider);
   screenBrightness(v);
 
@@ -1268,12 +1358,26 @@ void onClickAlert(lv_event_t *e)
 
 void onTimeoutChange(lv_event_t *e)
 {
-  lv_obj_t *obj = lv_event_get_target(e);
+  lv_obj_t *obj = (lv_obj_t *)lv_event_get_target(e);
   uint16_t sel = lv_dropdown_get_selected(obj);
   Timber.i("Selected index: %d", sel);
 
   setTimeout(sel);
   prefs.putInt("timeout", sel);
+}
+
+void onRotateChange(lv_event_t * e)
+{
+  lv_obj_t *obj = (lv_obj_t *)lv_event_get_target(e);
+  uint16_t sel = lv_dropdown_get_selected(obj);
+  Timber.i("Selected index: %d", sel);
+
+  prefs.putInt("rotate", sel);
+
+  tft.setRotation(sel);
+  // screen rotation has changed, invalidate to redraw
+  lv_obj_invalidate(lv_scr_act());
+
 }
 
 void onLanguageChange(lv_event_t *e)
@@ -1367,6 +1471,7 @@ void onGameClosed()
     vTaskDelete(gameHandle);
     gameHandle = NULL;
   }
+  screenTimer.active = true;
 }
 
 void showAlert()
@@ -1533,6 +1638,8 @@ void hal_setup()
 
   prefs.begin("my-app");
 
+  int rt = prefs.getInt("rotate", 0);
+
 #ifdef ELECROW_C3
   Wire.begin(4, 5);
   init_IO_extender();
@@ -1546,6 +1653,7 @@ void hal_setup()
   tft.initDMA();
   tft.startWrite();
   tft.fillScreen(TFT_BLACK);
+  tft.setRotation(rt);
   loadSplash();
 
   toneOut(TONE_EN * 2, 170);
@@ -1556,28 +1664,19 @@ void hal_setup()
 
   lv_init();
 
-  lv_disp_draw_buf_init(&draw_buf, buf[0], buf[1], screenWidth * buf_size);
+  static auto *lvDisplay = lv_display_create(screenWidth, screenHeight);
+  lv_display_set_color_format(lvDisplay, LV_COLOR_FORMAT_RGB565);
+  lv_display_set_flush_cb(lvDisplay, my_disp_flush);
 
-  /*Initialize the display*/
-  static lv_disp_drv_t disp_drv;
-  lv_disp_drv_init(&disp_drv);
-  /*Change the following line to your display resolution*/
-  disp_drv.hor_res = screenWidth;
-  disp_drv.ver_res = screenHeight;
-  disp_drv.flush_cb = my_disp_flush;
-  disp_drv.draw_buf = &draw_buf;
-  lv_disp_drv_register(&disp_drv);
+  lv_display_set_buffers(lvDisplay, lvBuffer[0], lvBuffer[1], lvBufferSize, LV_DISPLAY_RENDER_MODE_PARTIAL);
 
-  /*Initialize the (dummy) input device driver*/
-  static lv_indev_drv_t indev_drv;
-  lv_indev_drv_init(&indev_drv);
-  indev_drv.type = LV_INDEV_TYPE_POINTER;
-  indev_drv.read_cb = my_touchpad_read;
-  lv_indev_drv_register(&indev_drv);
+  static auto *lvInput = lv_indev_create();
+  lv_indev_set_type(lvInput, LV_INDEV_TYPE_POINTER);
+  lv_indev_set_read_cb(lvInput, my_touchpad_read);
 
-  lv_log_register_print_cb(my_log_cb);
+  // lv_log_register_print_cb(my_log_cb);
 
-  _lv_fs_init();
+  // _lv_fs_init();
 
   ui_init();
 
@@ -1613,6 +1712,12 @@ void hal_setup()
   }
   lv_disp_load_scr(ui_home);
 
+  int ch = lv_obj_get_child_count(ui_faceSelect);
+  if (wf < ch)
+  {
+    lv_obj_scroll_to_view(lv_obj_get_child(ui_faceSelect, wf), LV_ANIM_OFF);
+  }
+
   watch.setConnectionCallback(connectionCallback);
   watch.setNotificationCallback(notificationCallback);
   watch.setConfigurationCallback(configCallback);
@@ -1640,9 +1745,11 @@ void hal_setup()
 
   // load saved preferences
   int tm = prefs.getInt("timeout", 0);
+  
   int br = prefs.getInt("brightness", 100);
   circular = prefs.getBool("circular", false);
   alertSwitch = prefs.getBool("alerts", false);
+  navSwitch = prefs.getBool("autonav", false);
 
   lv_obj_scroll_to_y(ui_settingsList, 1, LV_ANIM_ON);
   lv_obj_scroll_to_y(ui_appList, 1, LV_ANIM_ON);
@@ -1661,6 +1768,7 @@ void hal_setup()
   screenBrightness(br);
 
   lv_dropdown_set_selected(ui_timeoutSelect, tm);
+  lv_dropdown_set_selected(ui_rotateSelect, rt);
   lv_slider_set_value(ui_brightnessSlider, br, LV_ANIM_OFF);
   if (circular)
   {
@@ -1678,6 +1786,16 @@ void hal_setup()
   {
     lv_obj_clear_state(ui_alertStateSwitch, LV_STATE_CHECKED);
   }
+#ifdef ENABLE_APP_NAVIGATION
+  if (navSwitch)
+  {
+    lv_obj_add_state(ui_navStateSwitch, LV_STATE_CHECKED);
+  }
+  else
+  {
+    lv_obj_clear_state(ui_navStateSwitch, LV_STATE_CHECKED);
+  }
+#endif
 
   screenTimer.active = true;
   screenTimer.time = millis();
@@ -1729,6 +1847,25 @@ void hal_setup()
   Rtc.SetSquareWavePin(PCF8563SquareWavePinMode_None);
 #endif
 
+  ui_update_seconds(watch.getSecond());
+
+  lv_rand_set_seed(millis());
+
+  navigateInfo("Navigation", "Chronos", "Start navigation on Google maps");
+
+  watch.clearNotifications();
+  notificationsUpdate = false;
+  lv_obj_clean(ui_messageList);
+  lv_obj_t *info = lv_label_create(ui_messageList);
+  lv_obj_set_width(info, 180);
+  lv_obj_set_y(info, 20);
+  lv_obj_set_height(info, LV_SIZE_CONTENT); /// 1
+  lv_label_set_long_mode(info, LV_LABEL_LONG_WRAP);
+  lv_obj_set_style_text_font(info, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_label_set_text(info, "No notifications available. Connect Chronos app to receive phone notifications");
+
+  ui_setup();
+
   Timber.i("Setup done");
   Timber.i(about);
 }
@@ -1750,9 +1887,20 @@ void hal_loop()
     }
 #endif
 
-    lv_timer_handler(); /* let the GUI do its work */
+    static uint32_t lastTick = millis();
     delay(5);
+    uint32_t current = millis();
+    lv_tick_inc(current - lastTick); // Update the tick timer. Tick is new for LVGL 9
+    lastTick = current;
+    lv_timer_handler(); // Update the UI-
+
     watch.loop();
+
+    if (updateSeconds)
+    {
+      updateSeconds = false;
+      ui_update_seconds(watch.getSecond());
+    }
 
     if (ui_home == ui_clockScreen)
     {
@@ -1771,6 +1919,66 @@ void hal_loop()
     lv_obj_t *actScr = lv_disp_get_scr_act(display);
     if (actScr != ui_home)
     {
+    }
+
+    if (navChanged)
+    {
+      navChanged = false;
+      nav = watch.getNavigation();
+      if (!nav.active)
+      {
+        nav.directions = "Start navigation on Google maps";
+        nav.title = "Chronos";
+        nav.duration = watch.isConnected() ? "Inactive" : "Disconnected";
+        nav.eta = "Navigation";
+        nav.distance = "";
+        navIcCRC = 0xFFFFFFFF;
+      }
+      navIconState(nav.active && nav.hasIcon);
+
+      if (!nav.isNavigation){
+        nav.directions = nav.title;
+        nav.title = "";
+      }
+
+      String navText = nav.eta + "\n" + nav.duration + " " + nav.distance;
+      navigateInfo(navText.c_str(), nav.title.c_str(), nav.directions.c_str());
+
+#ifdef ENABLE_APP_NAVIGATION
+      if (actScr != ui_navScreen && nav.active && navSwitch)
+      {
+        lastActScr = actScr;
+        lv_scr_load_anim(ui_navScreen, LV_SCR_LOAD_ANIM_FADE_IN, 500, 0, false);
+        gameActive = true;
+        screenTimer.active = true;
+      }
+      if (actScr == ui_navScreen && !nav.active && navSwitch && lastActScr != nullptr)
+      {
+        screenTimer.active = true;
+        lv_scr_load_anim(lastActScr, LV_SCR_LOAD_ANIM_FADE_OUT, 500, 0, false);
+      }
+#endif
+    }
+    if (navIcChanged)
+    {
+      navIcChanged = false;
+      nav = watch.getNavigation();
+
+      if (nav.iconCRC != navIcCRC)
+      {
+        navIcCRC = nav.iconCRC;
+        navIconState(nav.active && nav.hasIcon);
+        for (int y = 0; y < 48; y++)
+        {
+          for (int x = 0; x < 48; x++)
+          {
+            int byte_index = (y * 48 + x) / 8;
+            int bit_pos = 7 - (x % 8);
+            bool px_on = (nav.icon[byte_index] >> bit_pos) & 0x01;
+            setNavIconPx(x, y, px_on);
+          }
+        }
+      }
     }
 
     if (actScr == ui_appInfoScreen)
@@ -1806,7 +2014,7 @@ void hal_loop()
         // Timber.w("Always On active");
         screenTimer.active = false;
       }
-      else if (watch.isCameraReady())
+      else if (watch.isCameraReady() || gameActive)
       {
         screenTimer.active = false;
       }

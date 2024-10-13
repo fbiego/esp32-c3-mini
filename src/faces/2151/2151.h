@@ -150,12 +150,13 @@ extern "C"
 	LV_IMG_DECLARE(face_2151_dial_img_57_97232_0);
 	LV_IMG_DECLARE(face_2151_dial_img_58_98351_0);
 	LV_IMG_DECLARE(face_2151_dial_img_preview_0);
+	LV_IMG_DECLARE(face_2151_dial_img_preview_0);
 
 
 #endif
     void onFaceEvent(lv_event_t * e);
 
-    void init_face_2151(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_t **));
+    void init_face_2151(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_t **, lv_obj_t **));
     void update_time_2151(int second, int minute, int hour, bool mode, bool am, int day, int month, int year, int weekday);
     void update_weather_2151(int temp, int icon);
     void update_status_2151(int battery, bool connection);

@@ -230,12 +230,13 @@ extern "C"
 	LV_IMG_DECLARE(face_b_w_resized_dial_img_46_141488_0);
 	LV_IMG_DECLARE(face_b_w_resized_dial_img_47_141944_0);
 	LV_IMG_DECLARE(face_b_w_resized_dial_img_preview_0);
+	LV_IMG_DECLARE(face_b_w_resized_dial_img_preview_0);
 
 
 #endif
     void onFaceEvent(lv_event_t * e);
 
-    void init_face_b_w_resized(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_t **));
+    void init_face_b_w_resized(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_t **, lv_obj_t **));
     void update_time_b_w_resized(int second, int minute, int hour, bool mode, bool am, int day, int month, int year, int weekday);
     void update_weather_b_w_resized(int temp, int icon);
     void update_status_b_w_resized(int battery, bool connection);

@@ -3,6 +3,7 @@ A demo LVGL Watch project for ESP32 C3 mini 240*240 touch display development bo
 
 ## Videos
 
+- [`LVGL 9 update, Navigation`](https://youtu.be/qGODX6ALO_U)
 - [`ESP32 C3 mini LVGL`](https://youtu.be/u96OkjxC0Ro)
 - [`ESP32  Watchfaces LVGL`](https://youtu.be/lvRsTp9v6_k)
 - [`Waveshare ESP32 S3 (240x240 1.28” Round & 240x280 1.69” Rectangular)`](https://youtu.be/WXER_NX7LWI)
@@ -22,17 +23,18 @@ https://github.com/user-attachments/assets/3cdc30e3-8383-4227-b88c-32bd1d464c70
 
 ## Screens
  - Time (Time, Date, Day, Weather[Icon, Temp]) + Custom Watchfaces
- - Installable custom watchfaces from Chronos app
- - Weather (City,Icon, Temp, Update time) (1 week forecast [Day, Icon, Temp])
+ - ~~Installable custom watchfaces from Chronos app~~ ToDo - LVGL 9
+ - Weather (City,Icon, Temp, Update time) (1 week forecast [Day, Icon, Temp]) (Hourly forecast [+wind, ])
  - Notifications (Icon, Time, Text) (List [Icon, Text] - 10 notifications) (Incoming call)
  - Settings (Brightness, Timeout, Battery, About)
  - Control (Music Control, Find Phone, Bluetooth State) (Camera Capture)
- - QR Codes
- - A racing game (Need to enable)
+ - QR Codes, Contacts
+ - Games - Simon Says, Racing (Need to enable)
+ - Navigation (Get Google Maps Navigation instructions on ESP32)
 
  ## Building
 
- Select your build environment in platformio. Default is `emulator_64bits` native.
+ Select your build environment in platformio.ini by uncommenting only one `default_envs`
 
  When building for native check that you have configured SDL according to your platform. Follow the instructions here
  https://github.com/lvgl/lv_platformio?tab=readme-ov-file#install-sdl-drivers
@@ -67,7 +69,9 @@ These watchfaces are binary files converted into LVGL code and compiled along wi
 
 #### 2. External Installable Binary Watchfaces
 
-This project now supports the installation of binary watchfaces after the initial code compilation and flashing. You can add or remove watchfaces via the Chronos app using BLE. Once transferred to the ESP32, the watchface will be parsed and executed.
+- [ ] Work in progress for LVGL 9
+
+~~This project now supports the installation of binary watchfaces after the initial code compilation and flashing. You can add or remove watchfaces via the Chronos app using BLE. Once transferred to the ESP32, the watchface will be parsed and executed.~~
 
 - Ensure there is sufficient storage space on the ESP32 flash. Using the FFAT partition is recommended.
 
@@ -77,7 +81,7 @@ This project now supports the installation of binary watchfaces after the initia
 
 > [!WARNING]  
 > This has issues running on ESP32 C3 Mini due to smaller SRAM size
-
+> Not ported to LVGL 9 yet. Work in progess
 
 ## Chronos App
 This is needed for additional functions on esp32 hardware as listed below.
@@ -91,9 +95,10 @@ This is needed for additional functions on esp32 hardware as listed below.
 ### App functions (ESP32)
 [ChronosESP32](https://github.com/fbiego/chronos-esp32) library handles communication with the Chronos app over BLE
 - Sync time
-- Install additional watchfaces
+- ~~Install additional watchfaces~~ LVGL 9 Work in progress
 - Send notifications and call alerts
 - Sync weather info
-- Sync QR Links
+- Sync QR Links, & Contacts
 - Music control, find phone & Camera
+- Send Navigation instructions
 

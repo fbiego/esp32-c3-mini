@@ -1,3 +1,10 @@
+
+/*
+    Copyright (c) 2024 Felix Biego. All rights reserved.
+    This work is licensed under the terms of the MIT license.  
+    For a copy, see <https://opensource.org/licenses/MIT>.
+*/
+
 #include "custom_face.h"
 
 #ifdef ENABLE_CUSTOM_FACE
@@ -485,7 +492,7 @@ void set_obj_flag(lv_obj_t *obj, bool visible)
     }
 }
 
-void init_face_custom(void (*callback)(const char *, const lv_img_dsc_t *, lv_obj_t **))
+void init_face_custom(void (*callback)(const char *, const lv_image_dsc_t *, lv_obj_t **))
 {
 }
 void update_time_custom(int second, int minute, int hour, bool mode, bool am, int day, int month, int year, int weekday)
@@ -503,7 +510,7 @@ void update_time_custom(int second, int minute, int hour, bool mode, bool am, in
     {
         set_obj_src(c_minute.obj0.element, c_minute.obj0.path[(minute / 1) % 10]);
         set_obj_src(c_minute.obj1.element, c_minute.obj1.path[(minute / 10) % 10]);
-        // set_obj_angle(c_minuteA.obj0.element, minute * 60);
+        // set_obj_angle(c_minuteA.obj0.element, (minute * 60) + second);
         b_minute = minute;
     }
 
@@ -511,7 +518,7 @@ void update_time_custom(int second, int minute, int hour, bool mode, bool am, in
     {
         set_obj_src(c_hour.obj0.element, c_hour.obj0.path[(hour / 1) % 10]);
         set_obj_src(c_hour.obj1.element, c_hour.obj1.path[(hour / 10) % 10]);
-        // set_obj_angle(c_hourA.obj0.element, hour * 300 + (minute * 5));
+        // set_obj_angle(c_hourA.obj0.element, hour * 300 + (minute * 5) + (second * (5 / 60)));
         b_hour = hour;
     }
 

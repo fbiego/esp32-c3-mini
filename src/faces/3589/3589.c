@@ -25,10 +25,6 @@ lv_obj_t *face_3589_11_132664;
 #if LV_COLOR_DEPTH != 16
 #error "LV_COLOR_DEPTH should be 16bit for watchfaces"
 #endif
-#if LV_COLOR_16_SWAP != 1
-#error "LV_COLOR_16_SWAP should be 1 for watchfaces"
-#endif
-
 
 const lv_img_dsc_t *face_3589_dial_img_1_194882_group[] = {
 	&face_3589_dial_img_1_194882_0,
@@ -110,9 +106,11 @@ const lv_img_dsc_t *face_3589_dial_img_11_132664_group[] = {
 };
 
 
+
+
 #endif
 
-void init_face_3589(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_t **)){
+void init_face_3589(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_t **, lv_obj_t **)){
 #ifdef ENABLE_FACE_3589
     face_3589 = lv_obj_create(NULL);
     lv_obj_clear_flag(face_3589, LV_OBJ_FLAG_SCROLLABLE);

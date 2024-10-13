@@ -17,7 +17,6 @@ extern "C"
 
 //#define ENABLE_FACE_174 // (174) uncomment to enable or define it elsewhere
 
-
 #ifdef ENABLE_FACE_174
     extern lv_obj_t *face_174;
 	extern lv_obj_t *face_174_0_24536;
@@ -127,12 +126,13 @@ extern "C"
 	LV_IMG_DECLARE(face_174_dial_img_36_124040_5);
 	LV_IMG_DECLARE(face_174_dial_img_36_124040_6);
 	LV_IMG_DECLARE(face_174_dial_img_preview_0);
+	LV_IMG_DECLARE(face_174_dial_img_preview_0);
 
 
 #endif
     void onFaceEvent(lv_event_t * e);
 
-    void init_face_174(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_t **));
+    void init_face_174(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_t **, lv_obj_t **));
     void update_time_174(int second, int minute, int hour, bool mode, bool am, int day, int month, int year, int weekday);
     void update_weather_174(int temp, int icon);
     void update_status_174(int battery, bool connection);
