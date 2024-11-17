@@ -30,9 +30,7 @@
 
 */
 
-#include <ChronosESP32.h>
 
-#define UI_VERSION "4.1.0"
 
 #ifdef ELECROW_C3
 
@@ -154,11 +152,11 @@
 
 #define BL 15
 
-#define BUZZER 33
+#define BUZZER -1 //33
 
 #define MAX_FILE_OPEN 20
 
-#define CS_CONFIG CS_240x296_191_RTF
+
 
 #else
 

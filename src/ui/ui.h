@@ -31,6 +31,7 @@ extern "C"
 #include "apps/navigation/navigation.h"
 #include "apps/contacts/contacts.h"
 #include "apps/piobot/piobot.h"
+#include "apps/attitude/attitude.h"
 
     extern const char *ui_info_text;
     void pulseCall_Animation(lv_obj_t *TargetObject, int delay);
@@ -177,6 +178,11 @@ extern "C"
     extern lv_obj_t *ui_lvglLogoGreen;
     extern lv_obj_t *ui_lvglLogoRed;
 
+    void ui_event_connectScreen(lv_event_t *e);
+    extern lv_obj_t *ui_connectScreen;
+    extern lv_obj_t * ui_connectImage;
+    extern lv_obj_t * ui_connectText;
+
     void ui_event_callScreen(lv_event_t *e);
     extern lv_obj_t *ui_callScreen;
     extern lv_obj_t *ui_callIcon;
@@ -262,6 +268,7 @@ extern "C"
 
     extern Face faces[MAX_FACES];
     extern Face games[MAX_GAMES];
+
 
     void registerWatchface_cb(const char *name, const lv_image_dsc_t *preview, lv_obj_t **watchface, lv_obj_t **seconds);
     void ui_update_watchfaces(int second, int minute, int hour, bool mode, bool am, int day, int month, int year, int weekday,
@@ -388,6 +395,9 @@ extern "C"
 
     void ui_init(void);
     void ui_setup(void);
+
+    
+    
 
 #ifdef __cplusplus
 } /*extern "C"*/

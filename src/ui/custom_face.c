@@ -162,7 +162,7 @@ void add_item(lv_obj_t *root, int id, int x, int y, int pvX, int pvY, const char
             lv_obj_set_x(c_hour.obj0.element, x);
             lv_obj_set_y(c_hour.obj0.element, y);
             lv_obj_add_flag(c_hour.obj0.element, LV_OBJ_FLAG_ADV_HITTEST);
-            lv_obj_clear_flag(c_hour.obj0.element, LV_OBJ_FLAG_SCROLLABLE);
+            lv_obj_remove_flag(c_hour.obj0.element, LV_OBJ_FLAG_SCROLLABLE);
 
             for (int i = 0; i < group_size && i < 20; i++)
             {

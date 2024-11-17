@@ -9,6 +9,7 @@
         "app_hal.h": "c",
         "elecrow.h": "c",
         "contacts.h": "c",
-        "variant": "c"
+        "variant": "c",
+        "lv_indev_private.h": "c"
     }
 }

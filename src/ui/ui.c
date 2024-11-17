@@ -35,11 +35,13 @@
 #include "./faces/2151/2151.h"
 #include "./faces/3589/3589.h"
 
+#include "display/lv_display_private.h"
 #include "indev/lv_indev_private.h"
 #include "misc/lv_timer_private.h"
+#include "misc/lv_event_private.h"
 #include <string.h>
 
-#define UI_VERSION "5.0"
+#define UI_VERSION "5.1"
 
 const char *ui_info_text = "v" UI_VERSION " [fbiego]";
 
@@ -194,6 +196,11 @@ lv_obj_t *ui_lvglLogoBlack;
 lv_obj_t *ui_lvglLogoBlue;
 lv_obj_t *ui_lvglLogoGreen;
 lv_obj_t *ui_lvglLogoRed;
+
+void ui_event_connectScreen(lv_event_t *e);
+lv_obj_t *ui_connectScreen;
+lv_obj_t *ui_connectImage;
+lv_obj_t *ui_connectText;
 
 void ui_event_callScreen(lv_event_t *e);
 lv_obj_t *ui_callScreen;
@@ -866,6 +873,23 @@ void ui_event_logoScreen(lv_event_t *e)
       }
 }
 
+void ui_event_connectScreen(lv_event_t *e)
+{
+      lv_disp_t *display = lv_disp_get_default();
+      lv_obj_t *actScr = lv_disp_get_scr_act(display);
+      if (actScr != ui_connectScreen)
+      {
+            return;
+      }
+
+      lv_event_code_t event_code = lv_event_get_code(e);
+      lv_obj_t *target = lv_event_get_target(e);
+      if (event_code == LV_EVENT_GESTURE && lv_indev_get_gesture_dir(lv_indev_get_act()) == LV_DIR_RIGHT)
+      {
+            _ui_screen_change(ui_settingsScreen, LV_SCR_LOAD_ANIM_FADE_OUT, 500, 0);
+      }
+}
+
 void ui_event_brightnessSlider(lv_event_t *e)
 {
       lv_disp_t *display = lv_disp_get_default();
@@ -1021,6 +1045,23 @@ void ui_event_kenyaPanel(lv_event_t *e)
       if (event_code == LV_EVENT_CLICKED)
       {
             _ui_screen_change(ui_logoScreen, LV_SCR_LOAD_ANIM_FADE_ON, 500, 0);
+      }
+}
+
+void ui_event_aboutPanel(lv_event_t *e)
+{
+      lv_disp_t *display = lv_disp_get_default();
+      lv_obj_t *actScr = lv_disp_get_scr_act(display);
+      if (actScr != ui_settingsScreen)
+      {
+            return;
+      }
+
+      lv_event_code_t event_code = lv_event_get_code(e);
+      lv_obj_t *target = lv_event_get_target(e);
+      if (event_code == LV_EVENT_CLICKED)
+      {
+            _ui_screen_change(ui_connectScreen, LV_SCR_LOAD_ANIM_FADE_ON, 500, 0);
       }
 }
 
@@ -3139,12 +3180,15 @@ void ui_settingsScreen_screen_init(void)
       lv_label_set_text(ui_kenyaText, "Made with love\nin Kenya\nusing LVGL");
 
       lv_obj_add_event_cb(ui_kenyaPanel, ui_event_kenyaPanel, LV_EVENT_ALL, NULL);
+      lv_obj_add_event_cb(ui_aboutPanel, ui_event_aboutPanel, LV_EVENT_ALL, NULL);
 
       lv_obj_add_event_cb(ui_settingsList, onScroll, LV_EVENT_SCROLL, NULL);
       lv_obj_add_event_cb(ui_brightnessSlider, ui_event_brightnessSlider, LV_EVENT_ALL, NULL);
       lv_obj_add_event_cb(ui_Switch2, ui_event_scrollMode, LV_EVENT_ALL, NULL);
       lv_obj_add_event_cb(ui_alertStateSwitch, ui_event_alertStateSwitch, LV_EVENT_ALL, NULL);
+#ifdef ENABLE_APP_NAVIGATION
       lv_obj_add_event_cb(ui_navStateSwitch, ui_event_navStateSwitch, LV_EVENT_ALL, NULL);
+#endif
       lv_obj_add_event_cb(ui_timeoutSelect, ui_event_timeoutSelect, LV_EVENT_ALL, NULL);
       lv_obj_add_event_cb(ui_rotateSelect, ui_event_rotateSelect, LV_EVENT_ALL, NULL);
       // lv_obj_add_event_cb(ui_languageSelect, ui_event_languageSelect, LV_EVENT_ALL, NULL);
@@ -3761,6 +3805,47 @@ void ui_filesScreen_screen_init(void)
       lv_obj_add_event_cb(ui_filesScreen, ui_event_appInfoScreen, LV_EVENT_ALL, NULL);
 }
 
+void ui_connectScreen_screen_init(void)
+{
+      ui_connectScreen = lv_obj_create(NULL);
+      lv_obj_remove_flag(ui_connectScreen, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+      lv_obj_set_style_bg_color(ui_connectScreen, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_bg_opa(ui_connectScreen, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+#ifdef LV_USE_QRCODE
+      ui_connectImage = lv_qrcode_create(ui_connectScreen); // 150, lv_color_hex(0x000000), lv_color_hex(0xFFFFFF));
+      lv_qrcode_set_size(ui_connectImage, 150);
+      lv_qrcode_set_dark_color(ui_connectImage, lv_color_black());
+      lv_qrcode_set_light_color(ui_connectImage, lv_color_white());
+      lv_obj_set_x(ui_connectImage, 0);
+      lv_obj_set_y(ui_connectImage, 10);
+      lv_obj_set_style_border_color(ui_connectImage, lv_color_hex(0xFFFFFF), 0);
+      lv_obj_set_style_border_width(ui_connectImage, 5, 0);
+      lv_obj_set_align(ui_connectImage, LV_ALIGN_CENTER);
+      lv_obj_remove_flag(ui_connectImage, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+      lv_obj_set_style_bg_color(ui_connectImage, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_bg_opa(ui_connectImage, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+#endif
+      ui_connectText = lv_label_create(ui_connectScreen);
+      lv_obj_set_width(ui_connectText, 150);  /// 1
+      lv_obj_set_height(ui_connectText, LV_SIZE_CONTENT); /// 1
+      lv_obj_set_x(ui_connectText, 0);
+      lv_obj_set_y(ui_connectText, 25);
+      lv_obj_set_align(ui_connectText, LV_ALIGN_TOP_MID);
+      lv_label_set_text(ui_connectText, "Download Chronos");
+      lv_obj_set_style_text_font(ui_connectText, &lv_font_montserrat_16, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+#ifdef LV_USE_QRCODE
+      const char* connect = "https://play.google.com/store/apps/details?id=com.fbiego.chronos";
+      lv_qrcode_update(ui_connectImage, connect, strlen(connect));
+#else
+      lv_label_set_text(ui_connectText, "QR feature has been disabled. (LV_USE_QRCODE) definition not found");
+#endif
+      
+
+      lv_obj_add_event_cb(ui_connectScreen, ui_event_connectScreen, LV_EVENT_ALL, NULL);
+}
+
 void ui_watchfaces_init(void)
 {
       numFaces = 0;
@@ -3839,6 +3924,7 @@ void ui_games_init(void)
       ui_contactScreen_screen_init(registerGame_cb);
       ui_raceScreen_screen_init(registerGame_cb);
       ui_imuScreen_screen_init(registerGame_cb);
+      ui_attiudeScreen_screen_init(registerGame_cb);
       ui_navScreen_screen_init(registerGame_cb);
       ui_simonScreen_screen_init(registerGame_cb);
       ui_pioScreen_screen_init(registerGame_cb);
@@ -3968,6 +4054,7 @@ void ui_init(void)
       ui_appInfoScreen_screen_init();
       ui_callScreen_screen_init();
       ui_qrScreen_screen_init();
+      ui_connectScreen_screen_init();
 
       ui_findPhone_screen_init();
       ui_logoScreen_screen_init();
@@ -3990,6 +4077,11 @@ void ui_init(void)
 
       lv_disp_load_scr(ui____initial_actions0);
       lv_disp_load_scr(ui_home);
+
+      if (dispp->hor_res != dispp->ver_res)
+      {
+            lv_obj_add_flag(ui_rotatePanel, LV_OBJ_FLAG_HIDDEN); /// Flags
+      }
 }
 
 void ui_setup(void)

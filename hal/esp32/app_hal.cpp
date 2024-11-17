@@ -33,8 +33,6 @@
 #define LGFX_USE_V1
 #include "Arduino.h"
 #include <LovyanGFX.hpp>
-#include <ESP32Time.h>
-#include <NimBLEDevice.h>
 #include <ChronosESP32.h>
 #include <Timber.h>
 #include <Preferences.h>
@@ -48,6 +46,7 @@
 #include "ui/ui.h"
 
 #include "ui/custom_face.h"
+#include "common/api.h"
 
 #include "main.h"
 #include "splash.h"
@@ -56,9 +55,9 @@
 #include "FFat.h"
 
 #ifdef ENABLE_APP_QMI8658C
-#include "Qmi8658c.h"                // Include the library for QMI8658C sensor
-#define QMI_ADDRESS 0x6B             // Define QMI8658C I2C address
-#define QMI8658C_I2C_FREQUENCY 40000 // Define I2C frequency as 80kHz (in Hz)
+#include "FastIMU.h"
+#define QMI_ADDRESS 0x6B
+
 #endif
 
 #ifdef ENABLE_RTC
@@ -151,7 +150,7 @@ public:
       cfg.y_max = HEIGHT;   // タッチスクリーンから得られる最大のY値(生の値)
       cfg.pin_int = TP_INT; // INTが接続されているピン番号
       // cfg.pin_rst = TP_RST;
-      cfg.bus_shared = false;  // 画面と共通のバスを使用している場合 trueを設定
+      cfg.bus_shared = true;   // 画面と共通のバスを使用している場合 trueを設定
       cfg.offset_rotation = 0; // 表示とタッチの向きのが一致しない場合の調整 0~7の値で設定
       cfg.i2c_port = 0;        // 使用するI2Cを選択 (0 or 1)
       cfg.i2c_addr = 0x15;     // I2Cデバイスアドレス番号
@@ -169,28 +168,14 @@ public:
 
 LGFX tft;
 
-#ifdef CS_CONFIG
-ChronosESP32 watch("Chronos C3", CS_CONFIG);
-#else
 ChronosESP32 watch("Chronos C3");
-#endif
 Preferences prefs;
 
 #ifdef ENABLE_APP_QMI8658C
-// Declare an instance of Qmi8658c
-Qmi8658c qmi8658c(QMI_ADDRESS, QMI8658C_I2C_FREQUENCY);
-
-/* QMI8658C configuration */
-qmi8658_cfg_t qmi8658_cfg = {
-    .qmi8658_mode = qmi8658_mode_dual, // Set the QMI8658C mode to dual mode
-    .acc_scale = acc_scale_2g,         // Set the accelerometer scale to ±2g
-    .acc_odr = acc_odr_8000,           // Set the accelerometer output data rate (ODR) to 8000Hz
-    .gyro_scale = gyro_scale_16dps,    // Set the gyroscope scale to ±16 dps
-    .gyro_odr = gyro_odr_8000,         // Set the gyroscope output data rate (ODR) to 8000Hz
-};
-
-qmi8658_result_t qmi8658_result;
-qmi_data_t data; // Declare a variable to store sensor data
+QMI8658 qmi8658c;
+calData calib = {0};
+AccelData acc;
+GyroData gyro;
 #endif
 
 static const uint32_t screenWidth = WIDTH;
@@ -199,7 +184,7 @@ static const uint32_t screenHeight = HEIGHT;
 const unsigned int lvBufferSize = screenWidth * buf_size;
 uint8_t lvBuffer[2][lvBufferSize];
 
-bool weatherUpdate = true, notificationsUpdate = true;
+bool weatherUpdate = true, notificationsUpdate = true, weatherUpdateFace = true;
 
 ChronosTimer screenTimer;
 ChronosTimer alertTimer;
@@ -224,7 +209,6 @@ String customFacePaths[15];
 int customFaceIndex;
 static bool transfer = false;
 #ifdef ENABLE_CUSTOM_FACE
-
 #error "Custom Watchface has not been migrated to LVGL 9 yet"
 // watchface transfer
 int cSize, pos, recv;
@@ -254,7 +238,7 @@ void updateQrLinks();
 void flashDrive_cb(lv_event_t *e);
 void driveList_cb(lv_event_t *e);
 
-void checkLocal();
+void checkLocal(bool faces = false);
 void registerWatchface_cb(const char *name, const lv_image_dsc_t *preview, lv_obj_t **watchface, lv_obj_t **second);
 void registerCustomFace(const char *name, const lv_image_dsc_t *preview, lv_obj_t **watchface, String path);
 
@@ -264,8 +248,8 @@ bool loadCustomFace(String file);
 bool deleteCustomFace(String file);
 bool readDialBytes(const char *path, uint8_t *data, size_t offset, size_t size);
 bool isKnown(uint8_t id);
-void parseDial(const char *path);
-bool lvImgHeader(uint8_t *byteArray, uint8_t cf, uint16_t w, uint16_t h);
+void parseDial(const char *path, bool restart = false);
+bool lvImgHeader(uint8_t *byteArray, uint8_t cf, uint16_t w, uint16_t h, uint16_t stride);
 
 /* Display flushing */
 void my_disp_flush(lv_display_t *display, const lv_area_t *area, unsigned char *data)
@@ -280,9 +264,8 @@ void my_disp_flush(lv_display_t *display, const lv_area_t *area, unsigned char *
     tft.endWrite();
   }
 
-  // tft.pushImageDMA(area->x1, area->y1, area->x2 - area->x1 + 1, area->y2 - area->y1 + 1, (lgfx::swap565_t *)&color_p->full);
   tft.pushImageDMA(area->x1, area->y1, area->x2 - area->x1 + 1, area->y2 - area->y1 + 1, (uint16_t *)data);
-  lv_disp_flush_ready(display); /* tell lvgl that flushing is done */
+  lv_display_flush_ready(display); /* tell lvgl that flushing is done */
 }
 
 /*Read the touchpad*/
@@ -552,7 +535,7 @@ lv_fs_res_t sd_close_cb(lv_fs_drv_t *drv, void *file_p)
   return LV_FS_RES_OK;
 }
 
-void checkLocal()
+void checkLocal(bool faces)
 {
 
   File root = FLASH.open("/");
@@ -576,13 +559,33 @@ void checkLocal()
     else
     {
 #ifdef ENABLE_CUSTOM_FACE
-      // addListFile(file.name(), file.size());
       String nm = String(file.name());
-      if (nm.endsWith(".jsn"))
+      // addListFile(file.name(), file.size());
+      if (faces)
       {
-        // load watchface elements
-        nm = "/" + nm;
-        registerCustomFace(nm.c_str(), &ui_img_custom_preview_png, &face_custom_root, nm);
+        if (nm.endsWith(".js")){
+          Serial.print("Found raw face file: ");
+          Serial.println(nm);
+          String js = "/" + nm + "on";
+          nm = "/" + nm;
+          if(!FLASH.exists(js.c_str())){
+            Serial.println("Parsing");
+            parseDial(nm.c_str(), false);
+          } else {
+            Serial.println("Skipping, already parsed");
+          }
+          
+        }
+      }
+      else
+      {
+       
+        if (nm.endsWith(".json"))
+        {
+          // load watchface elements
+          nm = "/" + nm;
+          registerCustomFace(nm.c_str(), &ui_img_custom_preview_png, &face_custom_root, nm);
+        }
       }
 #endif
     }
@@ -656,7 +659,9 @@ bool setupFS()
   sd_drv.tell_cb = sd_tell_cb;
   lv_fs_drv_register(&sd_drv);
 
-  checkLocal();
+  checkLocal(true); // parse new faces
+
+  checkLocal(); // register the local faces
 
   return true;
 }
@@ -1000,11 +1005,11 @@ void configCallback(Config config, uint32_t a, uint32_t b)
 
 #endif
     // ui_update_seconds(watch.getSecond());
-    if (!hasUpdatedSec){
+    if (!hasUpdatedSec)
+    {
       hasUpdatedSec = true;
       updateSeconds = true;
     }
-    
 
     break;
   case CF_RST:
@@ -1019,9 +1024,7 @@ void configCallback(Config config, uint32_t a, uint32_t b)
 
     if (a)
     {
-      lv_label_set_text_fmt(ui_weatherTemp, "%d°C", watch.getWeatherAt(0).temp);
-      // set icon ui_weatherIcon
-      setWeatherIcon(ui_weatherIcon, watch.getWeatherAt(0).icon, isDay());
+      weatherUpdateFace = true;
     }
     if (a == 2)
     {
@@ -1188,13 +1191,14 @@ void onNavState(lv_event_t *e)
   prefs.putBool("autonav", navSwitch);
 }
 
-void savePrefInt(const char* key, int value)
+void savePrefInt(const char *key, int value)
 {
   prefs.putInt(key, value);
 }
 
-int getPrefInt(const char* key, int def_value){
-    return prefs.getInt(key, def_value);
+int getPrefInt(const char *key, int def_value)
+{
+  return prefs.getInt(key, def_value);
 }
 
 void onNotificationsOpen(lv_event_t *e)
@@ -1220,6 +1224,9 @@ void onNotificationsOpen(lv_event_t *e)
 
 void onWeatherLoad(lv_event_t *e)
 {
+  lv_obj_clear_flag(ui_weatherPanel, LV_OBJ_FLAG_HIDDEN);
+  lv_obj_add_flag(ui_forecastList, LV_OBJ_FLAG_HIDDEN);
+  lv_obj_add_flag(ui_hourlyList, LV_OBJ_FLAG_HIDDEN);
 
   if (!weatherUpdate)
   {
@@ -1227,17 +1234,6 @@ void onWeatherLoad(lv_event_t *e)
   }
   weatherUpdate = false;
 
-  // if (isDay())
-  // {
-  //   lv_obj_set_style_bg_img_src(ui_weatherScreen, &ui_img_857483832, LV_PART_MAIN | LV_STATE_DEFAULT);
-  // }
-  // else
-  // {
-  //   lv_obj_set_style_bg_img_src(ui_weatherScreen, &ui_img_753022056, LV_PART_MAIN | LV_STATE_DEFAULT);
-  // }
-  lv_obj_clear_flag(ui_weatherPanel, LV_OBJ_FLAG_HIDDEN);
-  lv_obj_add_flag(ui_forecastList, LV_OBJ_FLAG_HIDDEN);
-  lv_obj_add_flag(ui_hourlyList, LV_OBJ_FLAG_HIDDEN);
   if (watch.getWeatherCount() > 0)
   {
     String updateTime = "Updated at\n" + watch.getWeatherTime();
@@ -1254,11 +1250,12 @@ void onWeatherLoad(lv_event_t *e)
       addForecast(watch.getWeatherAt(i).day, watch.getWeatherAt(i).temp, watch.getWeatherAt(i).icon);
     }
 
-    lv_obj_scroll_by(ui_forecastList, 0, -1, LV_ANIM_OFF);
+    // lv_obj_scroll_by(ui_forecastList, 0, -1, LV_ANIM_OFF);
 
     lv_obj_clean(ui_hourlyList);
     addHourlyWeather(0, watch.getWeatherAt(0).icon, 0, 0, 0, 0, true);
-    for (int h = watch.getHour(true); h < 24; h++){
+    for (int h = watch.getHour(true); h < 24; h++)
+    {
       HourlyForecast hf = watch.getForecastHour(h);
       addHourlyWeather(hf.hour, hf.icon, hf.temp, hf.humidity, hf.wind, hf.uv, false);
     }
@@ -1366,7 +1363,7 @@ void onTimeoutChange(lv_event_t *e)
   prefs.putInt("timeout", sel);
 }
 
-void onRotateChange(lv_event_t * e)
+void onRotateChange(lv_event_t *e)
 {
   lv_obj_t *obj = (lv_obj_t *)lv_event_get_target(e);
   uint16_t sel = lv_dropdown_get_selected(obj);
@@ -1377,7 +1374,6 @@ void onRotateChange(lv_event_t * e)
   tft.setRotation(sel);
   // screen rotation has changed, invalidate to redraw
   lv_obj_invalidate(lv_scr_act());
-
 }
 
 void onLanguageChange(lv_event_t *e)
@@ -1598,14 +1594,68 @@ void dataCallback(uint8_t *data, int length)
   // Serial.println();
 }
 
+
+void imu_init()
+{
+#ifdef ENABLE_APP_QMI8658C
+  int err = qmi8658c.init(calib, QMI_ADDRESS);
+  if (err != 0)
+  {
+    showError("IMU State", "Failed to init");
+  }
+#endif
+}
+
+imu_data_t get_imu_data()
+{
+  imu_data_t qmi;
+#ifdef ENABLE_APP_QMI8658C
+
+  qmi8658c.update();
+  qmi8658c.getAccel(&acc);
+  qmi8658c.getGyro(&gyro);
+
+
+  qmi.ax = acc.accelX;
+  qmi.ay = acc.accelY;
+  qmi.az = acc.accelZ;
+  qmi.gx = gyro.gyroX;
+  qmi.gy = gyro.gyroY;
+  qmi.gz = gyro.gyroZ;
+  qmi.temp = qmi8658c.getTemp();
+  qmi.success = true;
+#else
+  qmi.success = false;
+#endif
+  return qmi;
+}
+
+void imu_close()
+{
+#ifdef ENABLE_APP_QMI8658C
+
+#endif
+}
+
 void logCallback(Level level, unsigned long time, String message)
 {
   Serial.print(message);
+  Serial1.print(message);
 }
 
-void my_log_cb(const char *buf)
-{
-  Serial.write(buf, strlen(buf));
+// void lv_log_register_print_cb(lv_log_print_g_cb_t print_cb) {
+//   // Do nothing, not needed here!
+// }
+
+// void my_log_cb(lv_log_level_t level, const char *buf)
+// {
+//   Serial.write(buf, strlen(buf));
+//   Serial1.write(buf, strlen(buf));
+// }
+
+int putchar(int ch) {
+    Serial.write(ch);  // Send character to Serial
+    return ch;
 }
 
 void loadSplash()
@@ -1627,10 +1677,16 @@ void loadSplash()
   delay(2000);
 }
 
+static uint32_t my_tick(void)
+{
+  return millis();
+}
+
 void hal_setup()
 {
 
   Serial.begin(115200); /* prepare for possible serial debug */
+  Serial1.begin(115200);
 
   Timber.setLogCallback(logCallback);
 
@@ -1663,6 +1719,8 @@ void hal_setup()
   Serial.println(heapUsage());
 
   lv_init();
+
+  lv_tick_set_cb(my_tick);
 
   static auto *lvDisplay = lv_display_create(screenWidth, screenHeight);
   lv_display_set_color_format(lvDisplay, LV_COLOR_FORMAT_RGB565);
@@ -1702,14 +1760,14 @@ void hal_setup()
     wf = 0; // default
   }
   currentIndex = wf;
-  if (custom != "" && fsState && loadCustomFace(custom))
-  {
-    ui_home = face_custom_root;
-  }
-  else
-  {
+  // if (custom != "" && fsState && loadCustomFace(custom))
+  // {
+  //   ui_home = face_custom_root;
+  // }
+  // else
+  // {
     ui_home = *faces[wf].watchface; // load saved watchface power on
-  }
+  // }
   lv_disp_load_scr(ui_home);
 
   int ch = lv_obj_get_child_count(ui_faceSelect);
@@ -1718,6 +1776,11 @@ void hal_setup()
     lv_obj_scroll_to_view(lv_obj_get_child(ui_faceSelect, wf), LV_ANIM_OFF);
   }
 
+#ifdef ESPS3_1_69
+  watch.setScreen(CS_240x296_191_RTF);
+#endif
+  String chip = String(ESP.getChipModel());
+  watch.setName(chip);
   watch.setConnectionCallback(connectionCallback);
   watch.setNotificationCallback(notificationCallback);
   watch.setConfigurationCallback(configCallback);
@@ -1728,9 +1791,16 @@ void hal_setup()
   watch.set24Hour(true);
   watch.setBattery(85);
 
-  String about = String(ui_info_text) + "\nESP32 C3 Mini\n" + watch.getAddress();
+  String about = String(ui_info_text) + "\n" + chip + "\n" + watch.getAddress();
   lv_label_set_text(ui_aboutText, about.c_str());
 
+#ifdef LV_USE_QRCODE
+  String address = watch.getAddress();
+  address.toUpperCase();
+  String qrCode = "{\"Name\":\"" + chip + "\", \"Mac\":\"" + address + "\"}";
+  lv_qrcode_update(ui_connectImage, qrCode.c_str(), qrCode.length());
+  lv_label_set_text(ui_connectText, "Scan to connect");
+#endif
   // bool intro = prefs.getBool("intro", true);
 
   // if (intro)
@@ -1745,7 +1815,7 @@ void hal_setup()
 
   // load saved preferences
   int tm = prefs.getInt("timeout", 0);
-  
+
   int br = prefs.getInt("brightness", 100);
   circular = prefs.getBool("circular", false);
   alertSwitch = prefs.getBool("alerts", false);
@@ -1815,15 +1885,7 @@ void hal_setup()
     Serial.println("Drive S is not ready");
   }
 
-#ifdef ENABLE_APP_QMI8658C
-
-  qmi8658_result = qmi8658c.open(&qmi8658_cfg);
-  delay(100); // Delay for sensor initialization
-  ui_imu_set_info(qmi8658_result == qmi8658_result_open_success, qmi8658c.deviceID, qmi8658c.deviceRevisionID);
-
-  // showError("IMU State", qmi8658c.resultToString(qmi8658_result));
-
-#endif
+  imu_init();
 
 #ifdef ENABLE_RTC
   Rtc.Begin();
@@ -1875,24 +1937,8 @@ void hal_loop()
 
   if (!transfer)
   {
-
-#ifdef ENABLE_APP_QMI8658C
-    if (qmi8658c_active)
-    {
-      delay(10);
-      qmi8658c.read(&data); // Read sensor data from QMI8658C sensor
-      ui_imu_update_acc(data.acc_xyz.x, data.acc_xyz.y, data.acc_xyz.z);
-      ui_imu_update_gyro(data.gyro_xyz.x, data.gyro_xyz.y, data.gyro_xyz.z);
-      ui_imu_update_temp(data.temperature);
-    }
-#endif
-
-    static uint32_t lastTick = millis();
-    delay(5);
-    uint32_t current = millis();
-    lv_tick_inc(current - lastTick); // Update the tick timer. Tick is new for LVGL 9
-    lastTick = current;
     lv_timer_handler(); // Update the UI-
+    delay(5);
 
     watch.loop();
 
@@ -1915,10 +1961,18 @@ void hal_loop()
       update_faces();
     }
 
+
     lv_disp_t *display = lv_disp_get_default();
     lv_obj_t *actScr = lv_disp_get_scr_act(display);
     if (actScr != ui_home)
     {
+    }
+
+    if (weatherUpdateFace){
+      lv_label_set_text_fmt(ui_weatherTemp, "%d°C", watch.getWeatherAt(0).temp);
+      // set icon ui_weatherIcon
+      setWeatherIcon(ui_weatherIcon, watch.getWeatherAt(0).icon, isDay());
+      weatherUpdateFace = false;
     }
 
     if (navChanged)
@@ -1936,7 +1990,8 @@ void hal_loop()
       }
       navIconState(nav.active && nav.hasIcon);
 
-      if (!nav.isNavigation){
+      if (!nav.isNavigation)
+      {
         nav.directions = nav.title;
         nav.title = "";
       }
@@ -2089,7 +2144,7 @@ void hal_loop()
         tft.setCursor(60, 80);
         tft.print("Processing");
 
-        parseDial(fName.c_str()); // process the file
+        parseDial(fName.c_str(), true); // process the file
       }
     }
     else
@@ -2214,7 +2269,7 @@ String longHexString(unsigned long l)
   return String(buffer);
 }
 
-void parseDial(const char *path)
+void parseDial(const char *path, bool restart)
 {
 
 #ifdef ENABLE_CUSTOM_FACE
@@ -2459,8 +2514,9 @@ void parseDial(const char *path)
     {
       continue;
     }
-    uint8_t cf = (id == 0x09 && i == 0) || (id == 0x19) ? 0x04 : 0x05;
-    bool tr = cf == 0x05;
+    uint8_t cf = (id == 0x09 && i == 0) || (id == 0x19) ? 0x12 : 0x13;
+    bool tr = cf == 0x13;
+    uint16_t st = (cf == 0x12) ? 2 : 3;
 
     for (int b = 0; b < cmp; b++)
     {
@@ -2472,17 +2528,17 @@ void parseDial(const char *path)
 
       assetArray.add(asset);
 
-      uint8_t header[4];
+      uint8_t header[12];
 
-      lvImgHeader(header, cf, xSz, ySz / cmp);
+      lvImgHeader(header, cf, xSz, ySz / cmp, xSz * st);
 
       Serial.print("\t");
-      Serial.println(hexString(header, 4));
+      Serial.println(hexString(header, 12));
 
       File ast = FLASH.open(asset.c_str(), FILE_WRITE);
       if (ast)
       {
-        ast.write(header, 4);
+        ast.write(header, 12);
 
         if (!readDialBytes(path, table, clt, 512))
         {
@@ -2530,15 +2586,15 @@ void parseDial(const char *path)
             uint8_t pixel[3];
             if (tr)
             {
-              pixel[0] = table[(index * 2) + 1];
               pixel[1] = table[index * 2];
-              pixel[2] = (uint16_t(pixel[0] * 256 + pixel[1]) == 0) ? 0x00 : 0xFF; // alpha byte (black pixel [0] is transparent)
+              pixel[2] = table[(index * 2) + 1];
+              pixel[0] = (uint16_t(pixel[1] * 256 + pixel[2]) == 0) ? 0x00 : 0xFF; // alpha byte (black pixel [0] is transparent)
               ast.write(pixel, 3);
             }
             else
             {
-              pixel[0] = table[(index * 2) + 1];
-              pixel[1] = table[index * 2];
+              pixel[0] = table[index * 2];
+              pixel[1] = table[(index * 2) + 1];
 
               ast.write(pixel, 2);
             }
@@ -2563,9 +2619,9 @@ void parseDial(const char *path)
   json["elements"] = elements;
   json["assets"] = assetFiles;
 
-  // serializeJsonPretty(json, Serial);
+  serializeJsonPretty(json, Serial);
 
-  String jsnFile = "/" + name + ".jsn";
+  String jsnFile = "/" + name + ".json";
   assetArray.add(jsnFile);
   File jsn = FLASH.open(jsnFile, FILE_WRITE);
 
@@ -2608,28 +2664,36 @@ void parseDial(const char *path)
 
     prefs.putString("custom", jsnFile);
   }
-  delay(500);
-  ESP.restart();
+
+  if (restart)
+  {
+    delay(500);
+    ESP.restart();
+  }
 
 #endif
 }
 
-bool lvImgHeader(uint8_t *byteArray, uint8_t cf, uint16_t w, uint16_t h)
+bool lvImgHeader(uint8_t *byteArray, uint8_t cf, uint16_t w, uint16_t h, uint16_t stride)
 {
-  // Ensure the input values fit within the specified bit field sizes
-  if (cf >= (1 << 5) || w >= (1 << 11) || h >= (1 << 11))
-  {
-    // Invalid input values
-    return false;
-  }
 
-  uint32_t header = (cf & 0x1F) | (0 << 5) | (0 << 8) | ((w & 0x07FF) << 10) | ((h & 0x07FF) << 21);
+  byteArray[0] = LV_IMAGE_HEADER_MAGIC;
+  byteArray[1] = cf;
+  byteArray[2] = 0;
+  byteArray[3] = 0;
 
-  // Convert the 32-bit integer to bytes in little-endian format
-  byteArray[0] = header & 0xFF;
-  byteArray[1] = (header >> 8) & 0xFF;
-  byteArray[2] = (header >> 16) & 0xFF;
-  byteArray[3] = (header >> 24) & 0xFF;
+
+  byteArray[4] = (w & 0xFF);
+  byteArray[5] = (w >> 8) & 0xFF;
+
+  byteArray[6] = (h & 0xFF);
+  byteArray[7] = (h >> 8) & 0xFF;
+
+  byteArray[8] = (stride & 0xFF);
+  byteArray[9] = (stride >> 8) & 0xFF;
+
+  byteArray[10] = 0;
+  byteArray[11] = 0;
 
   return true;
 }

@@ -49,6 +49,7 @@ void hal_loop(void);
 
 void update_faces();
 void setupContacts();
+void setupWeather();
 
 // some pre-generated data just for preview
 Notification notifications[10] = {
@@ -126,7 +127,10 @@ void onClickAlert(lv_event_t *e) {}
 
 void onForecastOpen(lv_event_t *e) {}
 
-void onWeatherLoad(lv_event_t *e) {}
+void onWeatherLoad(lv_event_t *e) 
+{
+    setupWeather();
+}
 
 void onNotificationsOpen(lv_event_t *e) {}
 
@@ -325,18 +329,10 @@ void hal_setup(void)
     ui_init();
 
     setupNotifications();
-    setupWeather();
+    // setupWeather();
 
     setupFiles();
     setupContacts();
-
-    // int wf = 4; // load watchface 4
-    // if (wf >= numFaces)
-    // {
-    //     wf = 0; // default
-    // }
-    // ui_home = *faces[wf].watchface;
-    // lv_disp_load_scr(ui_home);
 
     circular = true;
 

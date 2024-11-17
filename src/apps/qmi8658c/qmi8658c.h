@@ -16,6 +16,7 @@ extern "C"
 
 #include "lvgl.h"
 #include "app_hal.h"
+#include "../../common/api.h"
 
 #ifdef ENABLE_APP_QMI8658C
     // extern lv_obj_t *ui_imuScreen;
@@ -48,9 +49,16 @@ extern "C"
 
     void ui_imuScreen_screen_init(void (*callback)(const char *, const lv_image_dsc_t *, lv_obj_t **));
     void ui_imu_set_info(bool status, uint8_t id, uint8_t rev);
+
     void ui_imu_update_acc(float x, float y, float z);
-    void ui_imu_update_gyro(float x, float y, float z);
-    void ui_imu_update_temp(float t);
+
+    // bool get_imu_data(float *ax, float *ay, float *az, float *gx, float *gy, float *gz, float *temp);
+    void imu_init();
+    imu_data_t get_imu_data();
+    void imu_close();
+
+    void onGameOpened(void);
+    void onGameClosed(void);
 
     void ui_gameExit(void);
     void onRTWState(bool state);

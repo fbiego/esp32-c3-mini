@@ -1,7 +1,7 @@
 
 /*
     Copyright (c) 2024 Felix Biego. All rights reserved.
-    This work is licensed under the terms of the MIT license.  
+    This work is licensed under the terms of the MIT license.
     For a copy, see <https://opensource.org/licenses/MIT>.
 */
 
@@ -33,23 +33,73 @@ lv_obj_t *ui_rtwSwitch;
 
 bool qmi8658c_active;
 
+float ax, ay, az, gx, gy, gz, temp;
+imu_data_t d;
+
+lv_timer_t *qmi8658c_timer = NULL;
+
+void qmi8658c_timer_cb(lv_timer_t *timer)
+{
+    d = get_imu_data();
+
+    // counter++;
+
+    // if (d.success){
+    //     lv_label_set_text(ui_accTitle, "Raw Accelerometer");
+    // } else {
+    //     lv_label_set_text(ui_accTitle, "Read Failed");
+    // }
+
+    lv_label_set_text_fmt(ui_tempLabel, "Temp: %.2f°C", d.temp);
+
+    lv_label_set_text_fmt(ui_accXText, "X: %.3f", d.ax);
+    lv_label_set_text_fmt(ui_accYText, "Y: %.3f", d.ay);
+    lv_label_set_text_fmt(ui_accZText, "Z: %.3f", d.az);
+
+    lv_bar_set_value(ui_accXBar, lv_map((d.ax * 100), -100, 100, 0, 100), LV_ANIM_OFF);
+    lv_bar_set_value(ui_accYBar, lv_map((d.ay * 100), -100, 100, 0, 100), LV_ANIM_OFF);
+    lv_bar_set_value(ui_accZBar, lv_map((d.az * 100), -100, 100, 0, 100), LV_ANIM_OFF);
+    lv_label_set_text_fmt(ui_gyroXText, "X: %.3f", d.gx);
+    lv_label_set_text_fmt(ui_gyroYText, "Y: %.3f", d.gy);
+    lv_label_set_text_fmt(ui_gyroZText, "Z: %.3f", d.gz);
+
+    // lv_bar_set_value(ui_gyroXBar, lv_map((d.gx * 100), -100, 100, 0, 100), LV_ANIM_OFF);
+    // lv_bar_set_value(ui_gyroYBar, lv_map((d.gy * 100), -100, 100, 0, 100), LV_ANIM_OFF);
+    // lv_bar_set_value(ui_gyroZBar, lv_map((d.gz * 100), -100, 100, 0, 100), LV_ANIM_OFF);
+
+}
+
 void ui_event_imuScreen(lv_event_t *e)
 {
     lv_event_code_t event_code = lv_event_get_code(e);
     lv_obj_t *target = lv_event_get_target(e);
     if (event_code == LV_EVENT_SCREEN_LOAD_START)
     {
+        // imu_init();
     }
     if (event_code == LV_EVENT_SCREEN_LOADED)
     {
         qmi8658c_active = true;
+        onGameOpened();
+
+        qmi8658c_timer = lv_timer_create(qmi8658c_timer_cb, 100, NULL);
+        lv_timer_set_repeat_count(qmi8658c_timer, -1);
+        qmi8658c_timer_cb(qmi8658c_timer); // Trigger first run
     }
     if (event_code == LV_EVENT_SCREEN_UNLOAD_START)
     {
         qmi8658c_active = false;
+
+        if (qmi8658c_timer != NULL)
+        {
+            lv_timer_delete(qmi8658c_timer);
+            qmi8658c_timer = NULL;
+        }
     }
     if (event_code == LV_EVENT_SCREEN_UNLOADED)
     {
+        // imu_close();
+        onGameClosed();
     }
 
     if (event_code == LV_EVENT_GESTURE && lv_indev_get_gesture_dir(lv_indev_get_act()) == LV_DIR_RIGHT)

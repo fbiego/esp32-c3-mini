@@ -47,6 +47,7 @@ int main(void){
 };
 #else
 // esp32 hardware
+#include <Arduino.h>
 void setup(){
     hal_setup();
 }
