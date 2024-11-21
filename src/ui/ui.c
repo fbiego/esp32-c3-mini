@@ -3650,7 +3650,7 @@ void ui_qrScreen_screen_init(void)
       lv_obj_set_style_pad_top(ui_qrPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
       lv_obj_set_style_pad_bottom(ui_qrPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-#ifdef LV_USE_QRCODE
+#if LV_USE_QRCODE == 1
 
       addQrList(0, "https://chronos.ke/");
       addQrList(1, "https://www.youtube.com/c/fbiego");
@@ -3812,7 +3812,7 @@ void ui_connectScreen_screen_init(void)
       lv_obj_set_style_bg_color(ui_connectScreen, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
       lv_obj_set_style_bg_opa(ui_connectScreen, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-#ifdef LV_USE_QRCODE
+#if LV_USE_QRCODE == 1
       ui_connectImage = lv_qrcode_create(ui_connectScreen); // 150, lv_color_hex(0x000000), lv_color_hex(0xFFFFFF));
       lv_qrcode_set_size(ui_connectImage, 150);
       lv_qrcode_set_dark_color(ui_connectImage, lv_color_black());
@@ -3835,7 +3835,7 @@ void ui_connectScreen_screen_init(void)
       lv_label_set_text(ui_connectText, "Download Chronos");
       lv_obj_set_style_text_font(ui_connectText, &lv_font_montserrat_16, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-#ifdef LV_USE_QRCODE
+#if LV_USE_QRCODE == 1
       const char* connect = "https://play.google.com/store/apps/details?id=com.fbiego.chronos";
       lv_qrcode_update(ui_connectImage, connect, strlen(connect));
 #else

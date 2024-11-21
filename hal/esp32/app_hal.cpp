@@ -1754,7 +1754,7 @@ void hal_setup()
   Serial.println(heapUsage());
 
   int wf = prefs.getInt("watchface", 0);
-  String custom = prefs.getString("custom", "");
+  // String custom = prefs.getString("custom", "");
   if (wf >= numFaces)
   {
     wf = 0; // default
@@ -1794,7 +1794,7 @@ void hal_setup()
   String about = String(ui_info_text) + "\n" + chip + "\n" + watch.getAddress();
   lv_label_set_text(ui_aboutText, about.c_str());
 
-#ifdef LV_USE_QRCODE
+#if LV_USE_QRCODE == 1
   String address = watch.getAddress();
   address.toUpperCase();
   String qrCode = "{\"Name\":\"" + chip + "\", \"Mac\":\"" + address + "\"}";
@@ -2066,7 +2066,7 @@ void hal_loop()
 
       if (screenTimer.duration < 0)
       {
-        // Timber.w("Always On active");
+        Timber.w("Always On active");
         screenTimer.active = false;
       }
       else if (watch.isCameraReady() || gameActive)
