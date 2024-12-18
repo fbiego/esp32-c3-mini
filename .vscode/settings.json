@@ -10,6 +10,9 @@
         "elecrow.h": "c",
         "contacts.h": "c",
         "variant": "c",
-        "lv_indev_private.h": "c"
+        "lv_indev_private.h": "c",
+        "piobot.h": "c",
+        "lv_timer_private.h": "c",
+        "smart_resized.h": "c"
     }
 }

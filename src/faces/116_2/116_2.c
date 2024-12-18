@@ -192,7 +192,7 @@ void init_face_116_2(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_
     lv_obj_clear_flag(face_116_2_18_162424, LV_OBJ_FLAG_SCROLLABLE );
 
 
-    callback("Outline", &face_116_2_dial_img_preview_0, &face_116_2);
+    callback("Outline", &face_116_2_dial_img_preview_0, &face_116_2, NULL);
 
 #endif
 }

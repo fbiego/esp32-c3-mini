@@ -42,87 +42,116 @@
 #include "ui/custom_face.h"
 
 #include "main.h"
+#include "pins.h"
 #include "splash.h"
 
-
+#ifdef ENABLE_APP_QMI8658C
+#include "FastIMU.h"
+#define QMI_ADDRESS 0x6B
+#endif
 
 #define buf_size 20
 
 class LGFX : public lgfx::LGFX_Device
 {
-
+public:
   lgfx::Panel_GC9A01 _panel_instance;
-  // lgfx::Light_PWM _light_instance;
+  lgfx::Light_PWM _light_instance;
   lgfx::Bus_SPI _bus_instance;
   lgfx::Touch_CST816S _touch_instance;
 
-public:
+
   LGFX(void)
   {
     {
       auto cfg = _bus_instance.config();
-      cfg.spi_host = 1;
-      cfg.spi_mode = 0;
-      cfg.freq_write = 10000000;
-      cfg.pin_sclk = 10;
-      cfg.pin_miso = -1;
-      cfg.pin_mosi = 11;
-      cfg.pin_dc = 8;
-      _bus_instance.config(cfg);
-      _panel_instance.setBus(&_bus_instance);
+
+      // SPI bus settings
+      // cfg.spi_host = 1; // Select the SPI to use ESP32-S2,C3 : SPI2_HOST or SPI3_HOST / ESP32 : VSPI_HOST or HSPI_HOST
+      // * Due to the ESP-IDF version upgrade, VSPI_HOST, The HSPI_HOST description is deprecated, so if an error occurs, use SPI2_HOST or SPI3_HOST instead.
+      cfg.spi_mode = 0; // Set SPI communication mode (0 ~ 3)
+      // cfg.freq_write = 10000000;              // Transferred SPI clock (maximum 80MHz, 40MHz is an integer value excluding 80MHz)
+      cfg.pin_sclk = SCLK;                    // Set SPI SCLK pin number
+      cfg.pin_mosi = MOSI;                    // Set SPI CLK pin number
+      cfg.pin_miso = MISO;                    // Set SPI MISO pin number (-1 = disable)
+      cfg.pin_dc = DC;                        // Set SPI D/C pin number (-1 = disable)
+      _bus_instance.config(cfg);              // Reflect the setting value to the bus.
+      _panel_instance.setBus(&_bus_instance); // Set the bus to the panel.
     }
 
-    {
-      auto cfg = _panel_instance.config();
-      cfg.pin_cs = 9;
-      cfg.pin_rst = 12;
-      cfg.panel_width = 240;
-      cfg.panel_height = 240;
-      cfg.offset_x = 0;
-      cfg.offset_y = 0;
-      cfg.invert = true; // パネルの明暗が反転してしまう場合 trueに設定
+    {                                      // Set the display panel control.
+      auto cfg = _panel_instance.config(); // Get the structure for display panel settings.
+
+      cfg.pin_cs = CS;   // Pin number to which CS is connected (-1 = disable)
+      cfg.pin_rst = RST; // Pin number to which RST is connected (-1 = disable)
+      cfg.pin_busy = -1; // Pin number to which BUSY is connected (-1 = disable)
+
+      // * The following settings are set to general initial values ​​for each panel, so try commenting out any unknown items.
+
+      cfg.memory_width = WIDTH;   // Maximum width supported by driver IC
+      cfg.memory_height = HEIGHT; // Maximum height supported by driver IC
+      cfg.panel_width = WIDTH;    // Actual displayable width
+      cfg.panel_height = HEIGHT;  // Actual displayable height
+      cfg.offset_x = OFFSET_X;    // Panel offset in X direction
+      cfg.offset_y = OFFSET_Y;    // Panel offset in Y direction
+      cfg.offset_rotation = 0;    // Value 0~7 in rotation direction (4~7 is inverted)
+      cfg.dummy_read_pixel = 8;   // Virtual number of positions read before reading image
+      cfg.dummy_read_bits = 1;    // The number of imaginary words other than the image element
+      cfg.readable = false;       // As long as the number of acquisitions is as high as possible, the setting is true
+      cfg.invert = true;          // As a result, the brightness and darkness of the face plate is reversed, and the setting is true
+      cfg.rgb_order = RGB_ORDER;  // As a result, the red color and the blue color are replaced on the face plate, and the setting is true
+      cfg.dlen_16bit = false;     // From 16th position to 16th position, the length of the number of transfers is set to true
+      cfg.bus_shared = false;     // How to use drawJpgFile (e.g. summary control)
 
       _panel_instance.config(cfg);
     }
 
-    // {                                      // Set backlight control. (delete if not necessary)
-    //   auto cfg = _light_instance.config(); // Get the structure for backlight configuration.
-
-    //   cfg.pin_bl = 13;     // pin number to which the backlight is connected
-    //   cfg.invert = false;  // true to invert backlight brightness
-    //   cfg.freq = 44100;    // backlight PWM frequency
-    //   cfg.pwm_channel = 1; // PWM channel number to use
-
-    //   _light_instance.config(cfg);
-    //   _panel_instance.setLight(&_light_instance); // Sets the backlight to the panel.
-    // }
-
-    { // タッチスクリーン制御の設定を行います。（必要なければ削除）
-      auto cfg = _touch_instance.config();
-
-      cfg.x_min = 0;        // タッチスクリーンから得られる最小のX値(生の値)
-      cfg.x_max = WIDTH;    // タッチスクリーンから得られる最大のX値(生の値)
-      cfg.y_min = 0;        // タッチスクリーンから得られる最小のY値(生の値)
-      cfg.y_max = HEIGHT;   // タッチスクリーンから得られる最大のY値(生の値)
-      cfg.pin_int = 2; // INTが接続されているピン番号
-      // cfg.pin_rst = TP_RST;
-      cfg.bus_shared = false;  // 画面と共通のバスを使用している場合 trueを設定
-      cfg.offset_rotation = 0; // 表示とタッチの向きのが一致しない場合の調整 0~7の値で設定
-      cfg.i2c_port = 1;        // 使用するI2Cを選択 (0 or 1)
-      cfg.i2c_addr = 0x15;     // I2Cデバイスアドレス番号
-      cfg.pin_sda = 6;   // SDAが接続されているピン番号
-      cfg.pin_scl = 7;   // SCLが接続されているピン番号
-      cfg.freq = 100000;       // I2Cクロックを設定
-
-      _touch_instance.config(cfg);
-      _panel_instance.setTouch(&_touch_instance); // タッチスクリーンをパネルにセットします。
+    {                                      // Set backlight control. (delete if not necessary)
+      auto cfg = _light_instance.config(); // Get the structure for backlight configuration.
+      cfg.pin_bl = BL;                     // pin number to which the backlight is connected
+      cfg.invert = false;                  // true to invert backlight brightness
+      cfg.freq = 44100;                    // backlight PWM frequency
+      cfg.pwm_channel = 1;                 // PWM channel number to use
+      _light_instance.config(cfg);
+      _panel_instance.setLight(&_light_instance); // Sets the backlight to the panel.
     }
 
-    setPanel(&_panel_instance); // 使用するパネルをセットします。
+    { // Sets touchscreen control. (Delete if not needed)
+
+      auto cfg = _touch_instance.config();
+
+      cfg.x_min = 0;      // Minimum X value obtained from touch screen (raw value)
+      cfg.x_max = WIDTH;  // Maximum X value obtained from touch screen (raw value)
+      cfg.y_min = 0;      // Minimum Y value obtained from touch screen (raw value)
+      cfg.y_max = HEIGHT; // Maximum Y value obtained from touch screen (raw value)
+
+      cfg.pin_int = TP_INT; // Pin number to which INT is connected
+      cfg.pin_rst = TP_RST;
+      cfg.bus_shared = true; // Set true if using a bus shared with the screen
+
+      cfg.offset_rotation = 0; // Adjust if display and touch orientation do not match. Set to a value between 0 and 7
+
+      cfg.i2c_port = 1;      // Select the I2C to use (0 or 1)
+      cfg.i2c_addr = 0x15;   // I2C device address number
+      cfg.pin_sda = I2C_SDA; // Pin number to which SDA is connected
+      cfg.pin_scl = I2C_SCL; // Pin number to which SCL is connected
+      cfg.freq = 100000;      // Set the I2C clock
+      _touch_instance.config(cfg);
+      _panel_instance.setTouch(&_touch_instance); // Set the touch screen to the panel.
+    }
+
+    setPanel(&_panel_instance); // Set the panel to use.
   }
 };
 
 LGFX tft;
+
+#ifdef ENABLE_APP_QMI8658C
+QMI8658 qmi8658c;
+calData calib = {0};
+AccelData acc;
+GyroData gyro;
+#endif
 
 static const uint32_t screenWidth = WIDTH;
 static const uint32_t screenHeight = HEIGHT;
@@ -133,6 +162,13 @@ static uint8_t *lvBuffer2;
 
 static lv_display_t *lvDisplay;
 static lv_indev_t *lvInput;
+
+struct ChronosTimer
+{
+  unsigned long time;
+  long duration = 5000;
+  bool active;
+};
 
 struct Notification
 {
@@ -162,11 +198,9 @@ struct HourlyForecast
   int wind;     // wind speed km/h
 };
 
-
 void update_faces();
 void setupContacts();
 void setupWeather();
-
 
 // some pre-generated data just for preview
 Notification notifications[10] = {
@@ -218,6 +252,8 @@ HourlyForecast hourly[24] = {
     {1, 23, 0, 18, 0, 95, 8}    // Day 1, 23:00, Partly Cloudy, 18°C, UV 0, 95% humidity, 8 km/h wind
 };
 
+ChronosTimer screenTimer;
+
 const char *daysWk[7] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
 const char *months[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
@@ -234,6 +270,7 @@ void my_disp_flush(lv_display_t *display, const lv_area_t *area, unsigned char *
   }
 
   tft.pushImageDMA(area->x1, area->y1, area->x2 - area->x1 + 1, area->y2 - area->y1 + 1, (uint16_t *)data);
+
   lv_display_flush_ready(display); /* tell lvgl that flushing is done */
 }
 
@@ -256,6 +293,32 @@ void my_touchpad_read(lv_indev_t *indev_driver, lv_indev_data_t *data)
     /*Set the coordinates*/
     data->point.x = touchX;
     data->point.y = touchY;
+
+    screenTimer.time = millis();
+    screenTimer.active = true;
+  }
+}
+
+void screenBrightness(uint8_t value)
+{
+  tft.setBrightness(value);
+}
+
+void setTimeout(int i)
+{
+  if (i == 4)
+  {
+    screenTimer.duration = -1; // always on
+  }
+  else if (i == 0)
+  {
+    screenTimer.duration = 5000; // 5 seconds
+    screenTimer.active = true;
+  }
+  else if (i < 4)
+  {
+    screenTimer.duration = 10000 * i; // 10, 20, 30 seconds
+    screenTimer.active = true;
   }
 }
 
@@ -265,25 +328,35 @@ void onClickAlert(lv_event_t *e) {}
 
 void onForecastOpen(lv_event_t *e) {}
 
-void onWeatherLoad(lv_event_t *e) 
+void onWeatherLoad(lv_event_t *e)
 {
   setupWeather();
 }
 
 void onNotificationsOpen(lv_event_t *e) {}
 
-void onBrightnessChange(lv_event_t *e) {}
+void onBrightnessChange(lv_event_t *e)
+{
+  lv_obj_t *slider = (lv_obj_t *)lv_event_get_target(e);
+  int v = lv_slider_get_value(slider);
+  screenBrightness(v);
+}
 
 void onScrollMode(lv_event_t *e) {}
 
-void onTimeoutChange(lv_event_t *e) {}
+void onTimeoutChange(lv_event_t *e) {
+  lv_obj_t *obj = (lv_obj_t *)lv_event_get_target(e);
+  uint16_t sel = lv_dropdown_get_selected(obj);
+  setTimeout(sel);
+}
 
-void onRotateChange(lv_event_t *e) {
+void onRotateChange(lv_event_t *e)
+{
   lv_obj_t *obj = (lv_obj_t *)lv_event_get_target(e);
   uint16_t sel = lv_dropdown_get_selected(obj);
   tft.setRotation(sel);
   // screen rotation has changed, invalidate to redraw
-  lv_obj_invalidate(lv_scr_act());
+  lv_obj_invalidate(lv_screen_active());
 }
 
 void onBatteryChange(lv_event_t *e) {}
@@ -408,7 +481,7 @@ void setupWeather()
 
   lv_obj_clean(ui_hourlyList);
   addHourlyWeather(0, 1, 0, 0, 0, 0, true);
-  for (int h = 0; h < 24; h++)
+  for (int h = 0; h < 4; h++)
   {
     addHourlyWeather(hourly[h].hour, hourly[h].icon, hourly[h].temp, hourly[h].humidity, hourly[h].wind, hourly[h].uv, false);
   }
@@ -455,9 +528,50 @@ void setupContacts()
   }
 }
 
+void imu_init()
+{
+#ifdef ENABLE_APP_QMI8658C
+  int err = qmi8658c.init(calib, QMI_ADDRESS);
+  if (err != 0)
+  {
+    showError("IMU State", "Failed to init");
+  }
+#endif
+}
+
+imu_data_t get_imu_data()
+{
+  imu_data_t qmi;
+#ifdef ENABLE_APP_QMI8658C
+
+  qmi8658c.update();
+  qmi8658c.getAccel(&acc);
+  qmi8658c.getGyro(&gyro);
+
+  qmi.ax = acc.accelX;
+  qmi.ay = acc.accelY;
+  qmi.az = acc.accelZ;
+  qmi.gx = gyro.gyroX;
+  qmi.gy = gyro.gyroY;
+  qmi.gz = gyro.gyroZ;
+  qmi.temp = qmi8658c.getTemp();
+  qmi.success = true;
+#else
+  qmi.success = false;
+#endif
+  return qmi;
+}
+
+void imu_close()
+{
+#ifdef ENABLE_APP_QMI8658C
+
+#endif
+}
+
 void my_log_cb(const char *buf)
 {
-  Serial2.write(buf, strlen(buf));
+  Serial.write(buf, strlen(buf));
 }
 
 void loadSplash()
@@ -467,7 +581,7 @@ void loadSplash()
   int xOffset = 63;
   int yOffset = 55;
   tft.fillScreen(TFT_BLACK);
-  // screenBrightness(200);
+  screenBrightness(200);
   for (int y = 0; y < h; y++)
   {
     for (int x = 0; x < w; x++)
@@ -481,43 +595,41 @@ void loadSplash()
 
 static uint32_t my_tick(void)
 {
-    return millis();
+  return millis();
 }
 
 void logCallback(Level level, unsigned long time, String message)
 {
-  Serial2.print(message);
+  // Serial.print(message);
 }
 
-int putchar(int ch) {
-    Serial2.write(ch);  // Send character to Serial
-    return ch;
+int putchar(int ch)
+{
+  // Serial.write(ch); // Send character to Serial
+  return ch;
 }
 
 void my_log_cb(lv_log_level_t level, const char *buf)
 {
-  Serial2.write(buf, strlen(buf));
+  // Serial.write(buf, strlen(buf));
 }
-
-UART Serial2(0,1, NC, NC);
 
 void hal_setup()
 {
 
-  Serial2.begin(115200); /* prepare for possible serial debug */
+  Serial.begin(115200); /* prepare for possible serial debug */
 
   Timber.setLogCallback(logCallback);
 
   Timber.i("Starting up device");
 
-  pinMode(13, OUTPUT);
-  digitalWrite(13, HIGH);
-
   tft.init();
   tft.initDMA();
   tft.startWrite();
   tft.fillScreen(TFT_BLACK);
+
   
+
   // tft.setRotation(rt);
   loadSplash();
 
@@ -529,19 +641,25 @@ void hal_setup()
 
   lv_tick_set_cb(my_tick);
 
-  lvBuffer = (uint8_t*)malloc(lvBufferSize);
-  if (lvBuffer == NULL) {
-      // Handle memory allocation failure
-      Timber.e("Failed to allocate memory %d", lvBufferSize);
-  } else {
+  lvBuffer = (uint8_t *)malloc(lvBufferSize);
+  if (lvBuffer == NULL)
+  {
+    // Handle memory allocation failure
+    Timber.e("Failed to allocate memory %d", lvBufferSize);
+  }
+  else
+  {
     Timber.i("Memory allocated %d", lvBufferSize);
   }
 
-  lvBuffer2 = (uint8_t*)malloc(lvBufferSize);
-  if (lvBuffer2 == NULL) {
-      // Handle memory allocation failure
-      Timber.e("Failed to allocate buffer2 %d", lvBufferSize);
-  } else {
+  lvBuffer2 = (uint8_t *)malloc(lvBufferSize);
+  if (lvBuffer2 == NULL)
+  {
+    // Handle memory allocation failure
+    Timber.e("Failed to allocate buffer2 %d", lvBufferSize);
+  }
+  else
+  {
     Timber.i("Buffer2 allocated %d", lvBufferSize);
   }
 
@@ -556,12 +674,15 @@ void hal_setup()
 
   ui_init();
 
-  // lv_obj_t *label = lv_label_create( lv_screen_active() );
-  // lv_label_set_text( label, "Hello Arduino, I'm LVGL!" );
-  // lv_obj_align( label, LV_ALIGN_CENTER, 0, 0 );
+  screenTimer.active = true;
+  screenTimer.time = millis();
+
+  setTimeout(0);
+
+  imu_init();
 
   setupNotifications();
-  // setupWeather();
+  setupWeather();
 
   setupFiles();
   setupContacts();
@@ -585,7 +706,7 @@ void hal_loop()
 {
 
   lv_timer_handler(); /* let the GUI do its work */
-  delay(5); /* let this time pass */
+  delay(5);           /* let this time pass */
 
   if (ui_home == ui_clockScreen)
   {
@@ -610,6 +731,24 @@ void hal_loop()
   else
   {
     update_faces();
+  }
+
+  if (screenTimer.active)
+  {
+    uint8_t lvl = lv_slider_get_value(ui_brightnessSlider);
+    screenBrightness(lvl);
+
+    if (screenTimer.duration < 0)
+    {
+      screenTimer.active = false;
+    }
+    else if (screenTimer.time + screenTimer.duration < millis())
+    {
+      screenTimer.active = false;
+
+      screenBrightness(0);
+      lv_disp_load_scr(ui_home);
+    }
   }
 }
 

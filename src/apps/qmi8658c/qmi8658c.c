@@ -34,38 +34,38 @@ lv_obj_t *ui_rtwSwitch;
 bool qmi8658c_active;
 
 float ax, ay, az, gx, gy, gz, temp;
-imu_data_t d;
+imu_data_t qmi_d;
 
 lv_timer_t *qmi8658c_timer = NULL;
 
 void qmi8658c_timer_cb(lv_timer_t *timer)
 {
-    d = get_imu_data();
+    qmi_d = get_imu_data();
 
     // counter++;
 
-    // if (d.success){
+    // if (qmi_d.success){
     //     lv_label_set_text(ui_accTitle, "Raw Accelerometer");
     // } else {
     //     lv_label_set_text(ui_accTitle, "Read Failed");
     // }
 
-    lv_label_set_text_fmt(ui_tempLabel, "Temp: %.2f°C", d.temp);
+    lv_label_set_text_fmt(ui_tempLabel, "Temp: %.2f°C", qmi_d.temp);
 
-    lv_label_set_text_fmt(ui_accXText, "X: %.3f", d.ax);
-    lv_label_set_text_fmt(ui_accYText, "Y: %.3f", d.ay);
-    lv_label_set_text_fmt(ui_accZText, "Z: %.3f", d.az);
+    lv_label_set_text_fmt(ui_accXText, "X: %.3f", qmi_d.ax);
+    lv_label_set_text_fmt(ui_accYText, "Y: %.3f", qmi_d.ay);
+    lv_label_set_text_fmt(ui_accZText, "Z: %.3f", qmi_d.az);
 
-    lv_bar_set_value(ui_accXBar, lv_map((d.ax * 100), -100, 100, 0, 100), LV_ANIM_OFF);
-    lv_bar_set_value(ui_accYBar, lv_map((d.ay * 100), -100, 100, 0, 100), LV_ANIM_OFF);
-    lv_bar_set_value(ui_accZBar, lv_map((d.az * 100), -100, 100, 0, 100), LV_ANIM_OFF);
-    lv_label_set_text_fmt(ui_gyroXText, "X: %.3f", d.gx);
-    lv_label_set_text_fmt(ui_gyroYText, "Y: %.3f", d.gy);
-    lv_label_set_text_fmt(ui_gyroZText, "Z: %.3f", d.gz);
+    lv_bar_set_value(ui_accXBar, lv_map((qmi_d.ax * 100), -100, 100, 0, 100), LV_ANIM_OFF);
+    lv_bar_set_value(ui_accYBar, lv_map((qmi_d.ay * 100), -100, 100, 0, 100), LV_ANIM_OFF);
+    lv_bar_set_value(ui_accZBar, lv_map((qmi_d.az * 100), -100, 100, 0, 100), LV_ANIM_OFF);
+    lv_label_set_text_fmt(ui_gyroXText, "X: %.3f", qmi_d.gx);
+    lv_label_set_text_fmt(ui_gyroYText, "Y: %.3f", qmi_d.gy);
+    lv_label_set_text_fmt(ui_gyroZText, "Z: %.3f", qmi_d.gz);
 
-    // lv_bar_set_value(ui_gyroXBar, lv_map((d.gx * 100), -100, 100, 0, 100), LV_ANIM_OFF);
-    // lv_bar_set_value(ui_gyroYBar, lv_map((d.gy * 100), -100, 100, 0, 100), LV_ANIM_OFF);
-    // lv_bar_set_value(ui_gyroZBar, lv_map((d.gz * 100), -100, 100, 0, 100), LV_ANIM_OFF);
+    // lv_bar_set_value(ui_gyroXBar, lv_map((qmi_d.gx * 100), -100, 100, 0, 100), LV_ANIM_OFF);
+    // lv_bar_set_value(ui_gyroYBar, lv_map((qmi_d.gy * 100), -100, 100, 0, 100), LV_ANIM_OFF);
+    // lv_bar_set_value(ui_gyroZBar, lv_map((qmi_d.gz * 100), -100, 100, 0, 100), LV_ANIM_OFF);
 
 }
 

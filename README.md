@@ -41,10 +41,11 @@ https://github.com/user-attachments/assets/3cdc30e3-8383-4227-b88c-32bd1d464c70
 
  The SDL path might be different depending on your configuration and you will need to update [`platformio.ini`](platformio.ini) accordingly
 
- ### Prebuilt Native
+ ### Prebuilt Native 
 
  The prebuilt native applications have been included in the [`test folder`](test/), however you might still require SDL installed before running them.
-
+ 
+ You can also find binary files for various boards.
 
 ## Boards
 
@@ -54,6 +55,8 @@ https://github.com/user-attachments/assets/3cdc30e3-8383-4227-b88c-32bd1d464c70
 - [ESP32 C3 Mini 1.28 240x240](https://www.aliexpress.com/item/1005006451631422.html)
 - [Waveshare S3 1.28 240x240](https://www.waveshare.com/product/esp32-s3-touch-lcd-1.28.htm)
 - [Waveshare S3 1.69 240x280](https://www.waveshare.com/esp32-s3-touch-lcd-1.69.htm)
+- [Waveshare RP2040 1.28 240x240](https://www.waveshare.com/rp2040-touch-lcd-1.28.htm)
+- [Waveshare RP2040 1.69 240x280](https://www.waveshare.com/product/rp2040-touch-lcd-1.69.htm)
 
  ## Watchfaces
 

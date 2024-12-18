@@ -49,6 +49,7 @@
 #include "common/api.h"
 
 #include "main.h"
+#include "pins.h"
 #include "splash.h"
 
 #include "FS.h"
@@ -57,7 +58,6 @@
 #ifdef ENABLE_APP_QMI8658C
 #include "FastIMU.h"
 #define QMI_ADDRESS 0x6B
-
 #endif
 
 #ifdef ENABLE_RTC
@@ -83,53 +83,51 @@ public:
     {
       auto cfg = _bus_instance.config();
 
-      // SPIバスの設定
-      cfg.spi_host = SPI; // 使用するSPIを選択  ESP32-S2,C3 : SPI2_HOST or SPI3_HOST / ESP32 : VSPI_HOST or HSPI_HOST
-      // ※ ESP-IDFバージョンアップに伴い、VSPI_HOST , HSPI_HOSTの記述は非推奨になるため、エラーが出る場合は代わりにSPI2_HOST , SPI3_HOSTを使用してください。
-      cfg.spi_mode = 0;                  // SPI通信モードを設定 (0 ~ 3)
-      cfg.freq_write = 80000000;         // 传输时的SPI时钟（最高80MHz，四舍五入为80MHz除以整数得到的值）
-      cfg.freq_read = 20000000;          // 接收时的SPI时钟
-      cfg.spi_3wire = true;              // 受信をMOSIピンで行う場合はtrueを設定
-      cfg.use_lock = true;               // 使用事务锁时设置为 true
-      cfg.dma_channel = SPI_DMA_CH_AUTO; // 使用するDMAチャンネルを設定 (0=DMA不使用 / 1=1ch / 2=ch / SPI_DMA_CH_AUTO=自動設定)
-      // ※ ESP-IDFバージョンアップに伴い、DMAチャンネルはSPI_DMA_CH_AUTO(自動設定)が推奨になりました。1ch,2chの指定は非推奨になります。
-      cfg.pin_sclk = SCLK; // SPIのSCLKピン番号を設定
-      cfg.pin_mosi = MOSI; // SPIのCLKピン番号を設定
-      cfg.pin_miso = MISO; // SPIのMISOピン番号を設定 (-1 = disable)
-      cfg.pin_dc = DC;     // SPIのD/Cピン番号を設定  (-1 = disable)
-
-      _bus_instance.config(cfg);              // 設定値をバスに反映します。
-      _panel_instance.setBus(&_bus_instance); // バスをパネルにセットします。
+      // SPI bus settings
+      cfg.spi_host = SPI; // Select the SPI to use ESP32-S2,C3 : SPI2_HOST or SPI3_HOST / ESP32 : VSPI_HOST or HSPI_HOST
+      // * Due to the ESP-IDF version upgrade, VSPI_HOST, The HSPI_HOST specification is deprecated, so if you get an error, use SPI2_HOST or SPI3_HOST instead.
+      cfg.spi_mode = 0;                       // Set SPI communication mode (0 ~ 3)
+      cfg.freq_write = 80000000;              // SPI time (up to 80MHz, four or five inputs divided by 80MHz to get an integer)
+      cfg.freq_read = 20000000;               // SPI time when connected cfg.spi_3wire = true; // Set true if receiving is done via MOSI pin
+      cfg.use_lock = true;                    // Usage lock time setting true
+      cfg.dma_channel = SPI_DMA_CH_AUTO;      // Set the DMA channel to use (0=DMA not used / 1=1ch / 2=ch / SPI_DMA_CH_AUTO=automatic setting) // * Due to the ESP-IDF version upgrade, SPI_DMA_CH_AUTO (automatic setting) is now recommended for the DMA channel. Specifying 1ch or 2ch is no longer recommended.
+      cfg.pin_sclk = SCLK;                    // Set the SPI SCLK pin number
+      cfg.pin_mosi = MOSI;                    // Set the SPI CLK pin number
+      cfg.pin_miso = MISO;                    // Set the SPI MISO pin number (-1 = disable)
+      cfg.pin_dc = DC;                        // Set the SPI D/C pin number (-1 = disable)
+      _bus_instance.config(cfg);              // Reflect the setting value to the bus.
+      _panel_instance.setBus(&_bus_instance); // Set the bus to the panel.
     }
 
-    {                                      // 表示パネル制御の設定を行います。
-      auto cfg = _panel_instance.config(); // 表示パネル設定用の構造体を取得します。
+    {                                      // Set the display panel control.
+      auto cfg = _panel_instance.config(); // Get the structure for display panel settings.
 
-      cfg.pin_cs = CS;   // CSが接続されているピン番号   (-1 = disable)
-      cfg.pin_rst = RST; // RSTが接続されているピン番号  (-1 = disable)
-      cfg.pin_busy = -1; // BUSYが接続されているピン番号 (-1 = disable)
+      cfg.pin_cs = CS;   // Pin number to which CS is connected (-1 = disable)
+      cfg.pin_rst = RST; // Pin number to which RST is connected (-1 = disable)
+      cfg.pin_busy = -1; // Pin number to which BUSY is connected (-1 = disable)
 
-      // ※ 以下の設定値はパネル毎に一般的な初期値が設定さ BUSYが接続されているピン番号 (-1 = disable)れていますので、不明な項目はコメントアウトして試してみてください。
+      /* The following settings are set to general initial values ​​for each panel, so try commenting out any items you are unsure of. */
 
-      cfg.memory_width = WIDTH;   // ドライバICがサポートしている最大の幅
-      cfg.memory_height = HEIGHT; // ドライバICがサポートしている最大の高さ
-      cfg.panel_width = WIDTH;    // 実際に表示可能な幅
-      cfg.panel_height = HEIGHT;  // 実際に表示可能な高さ
-      cfg.offset_x = OFFSET_X;    // パネルのX方向オフセット量
-      cfg.offset_y = OFFSET_Y;    // パネルのY方向オフセット量
-      cfg.offset_rotation = 0;    // 值在旋转方向的偏移0~7（4~7是倒置的）
-      cfg.dummy_read_pixel = 8;   // 在读取像素之前读取的虚拟位数
-      cfg.dummy_read_bits = 1;    // 读取像素以外的数据之前的虚拟读取位数
-      cfg.readable = false;       // 如果可以读取数据，则设置为 true
-      cfg.invert = true;          // 如果面板的明暗反转，则设置为 true
-      cfg.rgb_order = RGB_ORDER;  // 如果面板的红色和蓝色被交换，则设置为 true
-      cfg.dlen_16bit = false;     // 对于以 16 位单位发送数据长度的面板，设置为 true
-      cfg.bus_shared = false;     // 如果总线与 SD 卡共享，则设置为 true（使用 drawJpgFile 等执行总线控制）
+      cfg.memory_width = WIDTH;   // Maximum width supported by driver IC
+      cfg.memory_height = HEIGHT; // Maximum height supported by driver IC
+      cfg.panel_width = WIDTH;    // Actual displayable width
+      cfg.panel_height = HEIGHT;  // Actual displayable height
+      cfg.offset_x = OFFSET_X;    // Panel offset in X direction
+      cfg.offset_y = OFFSET_Y;    // Panel offset in Y direction
+      cfg.offset_rotation = 0;    // Value 0~7 in rotation direction (4~7 is inverted)
+      cfg.dummy_read_pixel = 8;   // Virtual number of positions read before reading image
+      cfg.dummy_read_bits = 1;    // The number of imaginary words other than the image element
+      cfg.readable = false;       // As long as the number of acquisitions is as high as possible, the setting is true
+      cfg.invert = true;          // As a result, the brightness and darkness of the face plate is reversed, and the setting is true
+      cfg.rgb_order = RGB_ORDER;  // As a result, the red color and the blue color are replaced on the face plate, and the setting is true
+      cfg.dlen_16bit = false;     // From 16th position to 16th position, the length of the number of transfers is set to true
+      cfg.bus_shared = false;     // How to use drawJpgFile (e.g. summary control)
 
       _panel_instance.config(cfg);
     }
 
-    {                                      // Set backlight control. (delete if not necessary)
+    { // Set backlight control. (delete if not necessary)
+
       auto cfg = _light_instance.config(); // Get the structure for backlight configuration.
 
       cfg.pin_bl = BL;     // pin number to which the backlight is connected
@@ -141,28 +139,28 @@ public:
       _panel_instance.setLight(&_light_instance); // Sets the backlight to the panel.
     }
 
-    { // タッチスクリーン制御の設定を行います。（必要なければ削除）
+    { // Sets touchscreen control. (Delete if not needed)
+
       auto cfg = _touch_instance.config();
+      cfg.x_min = 0;        // Minimum X value obtained from touch screen (raw value)
+      cfg.x_max = WIDTH;    // Maximum X value obtained from touch screen (raw value)
+      cfg.y_min = 0;        // Minimum Y value obtained from touch screen (raw value)
+      cfg.y_max = HEIGHT;   // Maximum Y value obtained from touch screen (raw value)
+      cfg.pin_int = TP_INT; // Pin number to which INT is connected
+      cfg.pin_rst = TP_RST;
+      cfg.bus_shared = true;   // Set true if using a common bus with the screen
+      cfg.offset_rotation = 0; // Adjust if display and touch orientation do not match. Set to a value between 0 and 7
 
-      cfg.x_min = 0;        // タッチスクリーンから得られる最小のX値(生の値)
-      cfg.x_max = WIDTH;    // タッチスクリーンから得られる最大のX値(生の値)
-      cfg.y_min = 0;        // タッチスクリーンから得られる最小のY値(生の値)
-      cfg.y_max = HEIGHT;   // タッチスクリーンから得られる最大のY値(生の値)
-      cfg.pin_int = TP_INT; // INTが接続されているピン番号
-      // cfg.pin_rst = TP_RST;
-      cfg.bus_shared = true;   // 画面と共通のバスを使用している場合 trueを設定
-      cfg.offset_rotation = 0; // 表示とタッチの向きのが一致しない場合の調整 0~7の値で設定
-      cfg.i2c_port = 0;        // 使用するI2Cを選択 (0 or 1)
-      cfg.i2c_addr = 0x15;     // I2Cデバイスアドレス番号
-      cfg.pin_sda = I2C_SDA;   // SDAが接続されているピン番号
-      cfg.pin_scl = I2C_SCL;   // SCLが接続されているピン番号
-      cfg.freq = 400000;       // I2Cクロックを設定
-
+      cfg.i2c_port = 0;      // Select the I2C to use (0 or 1)
+      cfg.i2c_addr = 0x15;   // I2C device address number
+      cfg.pin_sda = I2C_SDA; // Pin number to which SDA is connected
+      cfg.pin_scl = I2C_SCL; // Pin number to which SCL is connected
+      cfg.freq = 400000;     // Set the I2C clock
       _touch_instance.config(cfg);
-      _panel_instance.setTouch(&_touch_instance); // タッチスクリーンをパネルにセットします。
+      _panel_instance.setTouch(&_touch_instance); // Set the touch screen to the panel.
     }
 
-    setPanel(&_panel_instance); // 使用するパネルをセットします。
+    setPanel(&_panel_instance); // Set the panel to use.
   }
 };
 
@@ -197,7 +195,7 @@ uint32_t navIcCRC = 0xFFFFFFFF;
 
 lv_obj_t *lastActScr;
 
-bool circular = false;
+// bool circular = false;
 bool alertSwitch = false;
 bool gameActive = false;
 bool readIMU = false;
@@ -563,23 +561,26 @@ void checkLocal(bool faces)
       // addListFile(file.name(), file.size());
       if (faces)
       {
-        if (nm.endsWith(".js")){
+        if (nm.endsWith(".js"))
+        {
           Serial.print("Found raw face file: ");
           Serial.println(nm);
           String js = "/" + nm + "on";
           nm = "/" + nm;
-          if(!FLASH.exists(js.c_str())){
+          if (!FLASH.exists(js.c_str()))
+          {
             Serial.println("Parsing");
             parseDial(nm.c_str(), false);
-          } else {
+          }
+          else
+          {
             Serial.println("Skipping, already parsed");
           }
-          
         }
       }
       else
       {
-       
+
         if (nm.endsWith(".json"))
         {
           // load watchface elements
@@ -1373,7 +1374,7 @@ void onRotateChange(lv_event_t *e)
 
   tft.setRotation(sel);
   // screen rotation has changed, invalidate to redraw
-  lv_obj_invalidate(lv_scr_act());
+  lv_obj_invalidate(lv_screen_active());
 }
 
 void onLanguageChange(lv_event_t *e)
@@ -1594,7 +1595,6 @@ void dataCallback(uint8_t *data, int length)
   // Serial.println();
 }
 
-
 void imu_init()
 {
 #ifdef ENABLE_APP_QMI8658C
@@ -1614,7 +1614,6 @@ imu_data_t get_imu_data()
   qmi8658c.update();
   qmi8658c.getAccel(&acc);
   qmi8658c.getGyro(&gyro);
-
 
   qmi.ax = acc.accelX;
   qmi.ay = acc.accelY;
@@ -1653,9 +1652,10 @@ void logCallback(Level level, unsigned long time, String message)
 //   Serial1.write(buf, strlen(buf));
 // }
 
-int putchar(int ch) {
-    Serial.write(ch);  // Send character to Serial
-    return ch;
+int putchar(int ch)
+{
+  Serial.write(ch); // Send character to Serial
+  return ch;
 }
 
 void loadSplash()
@@ -1766,7 +1766,7 @@ void hal_setup()
   // }
   // else
   // {
-    ui_home = *faces[wf].watchface; // load saved watchface power on
+  ui_home = *faces[wf].watchface; // load saved watchface power on
   // }
   lv_disp_load_scr(ui_home);
 
@@ -1961,14 +1961,14 @@ void hal_loop()
       update_faces();
     }
 
-
     lv_disp_t *display = lv_disp_get_default();
     lv_obj_t *actScr = lv_disp_get_scr_act(display);
     if (actScr != ui_home)
     {
     }
 
-    if (weatherUpdateFace){
+    if (weatherUpdateFace)
+    {
       lv_label_set_text_fmt(ui_weatherTemp, "%d°C", watch.getWeatherAt(0).temp);
       // set icon ui_weatherIcon
       setWeatherIcon(ui_weatherIcon, watch.getWeatherAt(0).icon, isDay());
@@ -2681,7 +2681,6 @@ bool lvImgHeader(uint8_t *byteArray, uint8_t cf, uint16_t w, uint16_t h, uint16_
   byteArray[1] = cf;
   byteArray[2] = 0;
   byteArray[3] = 0;
-
 
   byteArray[4] = (w & 0xFF);
   byteArray[5] = (w >> 8) & 0xFF;
