@@ -749,7 +749,7 @@ bool loadCustomFace(String file)
   DeserializationError err = deserializeJson(face, read);
   if (!err)
   {
-    if (!face.containsKey("elements"))
+    if (!face["elements"].is<JsonArray>())
     {
       return false;
     }
@@ -806,7 +806,7 @@ bool deleteCustomFace(String file)
   DeserializationError err = deserializeJson(face, read);
   if (!err)
   {
-    if (!face.containsKey("assets"))
+    if (!face["assets"].is<JsonArray>())
     {
       return false;
     }
