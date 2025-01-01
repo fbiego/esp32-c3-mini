@@ -1263,7 +1263,11 @@ void ui_event_faceSelected(lv_event_t *e)
 {
       lv_event_code_t event_code = lv_event_get_code(e);
       lv_obj_t *target = lv_event_get_target(e);
+      
+      #pragma GCC diagnostic push
+      #pragma GCC diagnostic ignored "-Wpointer-to-int-cast"
       int index = (int)lv_event_get_user_data(e);
+      #pragma GCC diagnostic pop
 
       if (target == ui_home)
       {
@@ -1301,6 +1305,8 @@ void ui_event_faceSelected(lv_event_t *e)
       }
 }
 
+#pragma GCC diagnostic pop
+
 void ui_event_messageClick(lv_event_t *e)
 {
       lv_disp_t *display = lv_disp_get_default();
@@ -1336,7 +1342,10 @@ void onAppListClicked(lv_event_t *e)
       {
             return;
       }
+      #pragma GCC diagnostic push
+      #pragma GCC diagnostic ignored "-Wpointer-to-int-cast"
       int index = (int)lv_event_get_user_data(e);
+      #pragma GCC diagnostic pop
       switch (index)
       {
       case 0:
@@ -1508,7 +1517,10 @@ void ui_event_gameSelected(lv_event_t *e)
 {
       lv_event_code_t event_code = lv_event_get_code(e);
       lv_obj_t *target = lv_event_get_target(e);
+      #pragma GCC diagnostic push
+      #pragma GCC diagnostic ignored "-Wpointer-to-int-cast"
       int index = (int)lv_event_get_user_data(e);
+      #pragma GCC diagnostic pop
 
       lv_disp_t *display = lv_disp_get_default();
       lv_obj_t *actScr = lv_disp_get_scr_act(display);
@@ -1676,7 +1688,10 @@ void add_appList(const char *appName, int index, const void *img)
       lv_label_set_long_mode(ui_appListLabel, LV_LABEL_LONG_CLIP);
       lv_obj_set_style_text_font(ui_appListLabel, &lv_font_montserrat_20, LV_PART_MAIN | LV_STATE_DEFAULT);
 
+      #pragma GCC diagnostic push
+      #pragma GCC diagnostic ignored "-Wint-to-pointer-cast"
       lv_obj_add_event_cb(ui_appListPanel, onAppListClicked, LV_EVENT_CLICKED, (void *)index);
+      #pragma GCC diagnostic pop
 }
 
 void add_gameList(const char *appName, int index, const void *img)
@@ -1718,8 +1733,10 @@ void add_gameList(const char *appName, int index, const void *img)
       lv_label_set_text(ui_gameListLabel, appName);
       lv_label_set_long_mode(ui_gameListLabel, LV_LABEL_LONG_CLIP);
       lv_obj_set_style_text_font(ui_gameListLabel, &lv_font_montserrat_20, LV_PART_MAIN | LV_STATE_DEFAULT);
-
+      #pragma GCC diagnostic push
+      #pragma GCC diagnostic ignored "-Wint-to-pointer-cast"
       lv_obj_add_event_cb(ui_gameListPanel, ui_event_gameSelected, LV_EVENT_CLICKED, (void *)index);
+      #pragma GCC diagnostic pop
 }
 
 void addWatchface(const char *name, const lv_image_dsc_t *src, int index)
@@ -1761,7 +1778,10 @@ void addWatchface(const char *name, const lv_image_dsc_t *src, int index)
       lv_obj_set_style_text_align(ui_faceLabel, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
       lv_obj_set_style_text_font(ui_faceLabel, &lv_font_montserrat_16, LV_PART_MAIN | LV_STATE_DEFAULT);
 
+      #pragma GCC diagnostic push
+      #pragma GCC diagnostic ignored "-Wint-to-pointer-cast"
       lv_obj_add_event_cb(ui_faceItem, ui_event_faceSelected, LV_EVENT_ALL, (void *)index);
+      #pragma GCC diagnostic pop
 }
 
 void addSelectItem(lv_obj_t *parent)
@@ -1956,7 +1976,10 @@ void addNotificationList(int appId, const char *message, int index)
       lv_label_set_long_mode(notificationText, LV_LABEL_LONG_DOT);
       lv_label_set_text(notificationText, message);
 
+      #pragma GCC diagnostic push
+      #pragma GCC diagnostic ignored "-Wint-to-pointer-cast"
       lv_obj_add_event_cb(notificationItem, ui_event_messageClick, LV_EVENT_CLICKED, (void *)index);
+      #pragma GCC diagnostic pop
 }
 
 void addQrList(uint8_t id, const char *link)
