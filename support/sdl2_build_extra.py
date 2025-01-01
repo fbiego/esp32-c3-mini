@@ -4,7 +4,7 @@ import datetime
 
 sep = os.sep
 
-Import("env", "projenv")
+Import("env", "projenv") # type: ignore
 
 for e in [ env, projenv ]:
     # If compiler uses `-m32`, propagate it to linker.
@@ -44,5 +44,5 @@ def after_upload(source, target, env):
     
     
     
-env.AddPostAction("upload", after_upload)
-env.AddPostAction("buildprog", after_upload)
+env.AddPostAction("upload", after_upload) # type: ignore
+env.AddPostAction("buildprog", after_upload) # type: ignore
