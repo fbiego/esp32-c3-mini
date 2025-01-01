@@ -321,7 +321,7 @@ void hal_setup(void)
     lv_init();
 
     lvDisplay = lv_sdl_window_create(SDL_HOR_RES, SDL_VER_RES);
-    lv_sdl_window_set_title(lvDisplay, "C3 Mini");
+    lv_sdl_window_set_title(lvDisplay, "PlatformIO Emulator");
     lvMouse = lv_sdl_mouse_create();
     lvMousewheel = lv_sdl_mousewheel_create();
     lvKeyboard = lv_sdl_keyboard_create();
