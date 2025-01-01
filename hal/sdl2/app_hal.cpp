@@ -167,13 +167,10 @@ void onEndSearch(lv_event_t *e) {}
 
 void onVolumeUp(lv_event_t *e)
 {
-    clearContactList();
-    setupContacts();
 }
 
 void onVolumeDown(lv_event_t *e)
 {
-    setNoContacts();
 }
 
 void onAutoNavigation(lv_event_t *e) {}
@@ -300,16 +297,6 @@ void setupFiles()
     lv_obj_scroll_to_y(ui_fileManagerPanel, 1, LV_ANIM_ON);
 }
 
-void setupContacts()
-{
-
-    clearContactList();
-    for (int i = 0; i < 8; i++)
-    {
-        addContact("fbiego Chronos", "1234567890", i == 2);
-    }
-}
-
 void hal_setup(void)
 {
 // Workaround for sdl2 `-m32` crash
@@ -332,7 +319,6 @@ void hal_setup(void)
     // setupWeather();
 
     setupFiles();
-    setupContacts();
 
     circular = true;
 

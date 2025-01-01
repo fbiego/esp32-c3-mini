@@ -1103,36 +1103,6 @@ void configCallback(Config config, uint32_t a, uint32_t b)
       Timber.w("Navigation icon received. CRC 0x%04X", b);
     }
     break;
-  case CF_CONTACT:
-    if (a == 0)
-    {
-      Serial.println("Receiving contacts");
-      Serial.print("SOS index: ");
-      Serial.print(uint8_t(b >> 8));
-      Serial.print("\tSize: ");
-      Serial.println(uint8_t(b));
-      setNoContacts();
-    }
-    if (a == 1)
-    {
-      Serial.println("Received all contacts");
-      int n = uint8_t(b);      // contacts size -> watch.getContactCount();
-      int s = uint8_t(b >> 8); // sos contact index -> watch.getSOSContactIndex();
-
-      clearContactList();
-
-      for (int i = 0; i < n; i++)
-      {
-        Contact cn = watch.getContact(i);
-        Serial.print("Name: ");
-        Serial.print(cn.name);
-        Serial.print(s == i ? " [SOS]" : "");
-        Serial.print("\tNumber: ");
-        Serial.println(cn.number);
-        addContact(cn.name.c_str(), cn.number.c_str(), s == i);
-      }
-    }
-    break;
   }
 }
 

@@ -3921,7 +3921,6 @@ void ui_update_seconds(int second)
 void ui_games_init(void)
 {
       numGames = 0;
-      ui_contactScreen_screen_init(registerGame_cb);
       ui_raceScreen_screen_init(registerGame_cb);
       ui_imuScreen_screen_init(registerGame_cb);
       ui_attiudeScreen_screen_init(registerGame_cb);

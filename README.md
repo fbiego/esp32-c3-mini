@@ -28,7 +28,7 @@ https://github.com/user-attachments/assets/3cdc30e3-8383-4227-b88c-32bd1d464c70
  - Notifications (Icon, Time, Text) (List [Icon, Text] - 10 notifications) (Incoming call)
  - Settings (Brightness, Timeout, Battery, About)
  - Control (Music Control, Find Phone, Bluetooth State) (Camera Capture)
- - QR Codes, Contacts
+ - QR Codes
  - Games - Simon Says, Racing (Need to enable)
  - Navigation (Get Google Maps Navigation instructions on ESP32)
 
@@ -101,7 +101,7 @@ This is needed for additional functions on esp32 hardware as listed below.
 - ~~Install additional watchfaces~~ LVGL 9 Work in progress
 - Send notifications and call alerts
 - Sync weather info
-- Sync QR Links, & Contacts
+- Sync QR Links
 - Music control, find phone & Camera
 - Send Navigation instructions
 

@@ -37,7 +37,6 @@
 
 // #define ENABLE_APP_QMI8658C
 #define ENABLE_APP_NAVIGATION
-#define ENABLE_APP_CONTACTS
 
 
 #ifdef __cplusplus

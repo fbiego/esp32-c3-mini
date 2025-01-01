@@ -29,7 +29,6 @@ extern "C"
 #include "games/simon/simon.h"
 #include "apps/qmi8658c/qmi8658c.h"
 #include "apps/navigation/navigation.h"
-#include "apps/contacts/contacts.h"
 #include "apps/piobot/piobot.h"
 #include "apps/attitude/attitude.h"
 

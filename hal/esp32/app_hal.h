@@ -48,7 +48,6 @@
 #define ENABLE_GAME_SIMON
 
 #define ENABLE_APP_NAVIGATION
-#define ENABLE_APP_CONTACTS
 
 #ifdef __cplusplus
 extern "C" {
