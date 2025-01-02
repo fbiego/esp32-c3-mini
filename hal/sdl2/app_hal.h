@@ -33,7 +33,6 @@
 #endif
 
 // #define ENABLE_GAME_RACING
-// #define ENABLE_GAME_SIMON
 
 #define ENABLE_APP_QMI8658C
 #define ENABLE_APP_ATTITUDE

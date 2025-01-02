@@ -26,7 +26,6 @@ extern "C"
 #include "ui_events.h"
 
 #include "games/racing/racing.h"
-#include "games/simon/simon.h"
 #include "apps/qmi8658c/qmi8658c.h"
 #include "apps/navigation/navigation.h"
 #include "apps/piobot/piobot.h"

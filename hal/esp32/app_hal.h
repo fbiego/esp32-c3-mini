@@ -44,8 +44,7 @@
 #define ENABLE_RTC
 #endif
 
-// #define ENABLE_GAME_RACING
-#define ENABLE_GAME_SIMON
+// #define ENABLE_GAME_RACING  /* crashed auf ESPS3 */
 
 #define ENABLE_APP_NAVIGATION
 

@@ -29,7 +29,7 @@ https://github.com/user-attachments/assets/3cdc30e3-8383-4227-b88c-32bd1d464c70
  - Settings (Brightness, Timeout, Battery, About)
  - Control (Music Control, Find Phone, Bluetooth State) (Camera Capture)
  - QR Codes
- - Games - Simon Says, Racing (Need to enable)
+ - Games - Racing (Need to enable)
  - Navigation (Get Google Maps Navigation instructions on ESP32)
 
  ## Building

@@ -3925,7 +3925,6 @@ void ui_games_init(void)
       ui_imuScreen_screen_init(registerGame_cb);
       ui_attiudeScreen_screen_init(registerGame_cb);
       ui_navScreen_screen_init(registerGame_cb);
-      ui_simonScreen_screen_init(registerGame_cb);
       ui_pioScreen_screen_init(registerGame_cb);
 
       if (numGames == 0)
