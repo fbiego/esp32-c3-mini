@@ -426,3 +426,35 @@ void update_faces()
     ui_update_watchfaces(second, minute, hour, mode, am, day, month, year, weekday,
                          temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
 }
+
+void imu_init()
+{
+#ifdef ENABLE_APP_QMI8658C
+    // no init required due to absence of sensor at emulator
+#endif
+}
+
+imu_data_t get_imu_data()
+{
+  imu_data_t qmi;
+#ifdef ENABLE_APP_QMI8658C
+  // fixed data to mock sensor at emulator
+  qmi.ax = 0.0;
+  qmi.ay = 0.0;
+  qmi.az = 1.0;
+  qmi.gx = 0.0;
+  qmi.gy = 0.0;
+  qmi.gz = 0.0;
+  qmi.temp = 20.0;
+  qmi.success = true;
+#else
+  qmi.success = false;
+#endif
+  return qmi;
+}
+
+void imu_close()
+{
+#ifdef ENABLE_APP_QMI8658C
+#endif
+}
