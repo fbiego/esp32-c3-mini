@@ -28,7 +28,6 @@ extern "C"
 #include "games/racing/racing.h"
 #include "apps/qmi8658c/qmi8658c.h"
 #include "apps/navigation/navigation.h"
-#include "apps/piobot/piobot.h"
 #include "apps/attitude/attitude.h"
 
     extern const char *ui_info_text;
