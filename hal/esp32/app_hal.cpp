@@ -1292,16 +1292,6 @@ void onBatteryChange(lv_event_t *e)
   watch.setBattery(lvl);
 }
 
-void onStartSearch(lv_event_t *e)
-{
-  watch.findPhone(true);
-}
-
-void onEndSearch(lv_event_t *e)
-{
-  watch.findPhone(false);
-}
-
 void onClickAlert(lv_event_t *e)
 {
 

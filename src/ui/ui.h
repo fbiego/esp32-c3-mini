@@ -132,8 +132,6 @@ extern "C"
     extern lv_obj_t *ui_musicNextButton;
     extern lv_obj_t *ui_btStateButton;
     extern lv_obj_t *ui_searchPanel;
-    void ui_event_phoneSearchButton(lv_event_t *e);
-    extern lv_obj_t *ui_phoneSearchButton;
     void ui_event_volumeUpButton(lv_event_t *e);
     extern lv_obj_t *ui_volumeUpButton;
     void ui_event_volumeDownButton(lv_event_t *e);
@@ -158,9 +156,6 @@ extern "C"
     extern lv_obj_t *ui_appBatteryText;
     extern lv_obj_t *ui_appBatteryLevel;
 
-    void ui_event_findPhone(lv_event_t *e);
-    extern lv_obj_t *ui_findPhoneScreen;
-    extern lv_obj_t *ui_findTitle;
     void ui_event_findButton(lv_event_t *e);
     extern lv_obj_t *ui_findButton;
     extern lv_obj_t *ui_findButtonText;

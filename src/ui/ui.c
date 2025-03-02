@@ -154,8 +154,6 @@ void ui_event_musicNextButton(lv_event_t *e);
 lv_obj_t *ui_musicNextButton;
 lv_obj_t *ui_btStateButton;
 lv_obj_t *ui_searchPanel;
-void ui_event_phoneSearchButton(lv_event_t *e);
-lv_obj_t *ui_phoneSearchButton;
 void ui_event_volumeUpButton(lv_event_t *e);
 lv_obj_t *ui_volumeUpButton;
 void ui_event_volumeDownButton(lv_event_t *e);
@@ -180,14 +178,6 @@ lv_obj_t *ui_appBatteryIcon;
 lv_obj_t *ui_appBatteryText;
 lv_obj_t *ui_appBatteryLevel;
 
-void ui_event_findPhone(lv_event_t *e);
-lv_obj_t *ui_findPhoneScreen;
-lv_obj_t *ui_findTitle;
-void ui_event_findButton(lv_event_t *e);
-lv_obj_t *ui_findButton;
-lv_obj_t *ui_findButtonText;
-lv_obj_t *ui_findPanel;
-lv_obj_t *ui_findIcon;
 void ui_event_logoScreen(lv_event_t *e);
 lv_obj_t *ui_logoScreen;
 void ui_event_lvglLogo(lv_event_t *e);
@@ -391,46 +381,6 @@ void pulseCall_Animation(lv_obj_t *TargetObject, int delay)
       lv_anim_start(&PropertyAnimation_1);
 }
 
-void findPhone_Animation(lv_obj_t *TargetObject, int delay)
-{
-      ui_anim_user_data_t *PropertyAnimation_0_user_data = lv_malloc(sizeof(ui_anim_user_data_t));
-      PropertyAnimation_0_user_data->target = TargetObject;
-      PropertyAnimation_0_user_data->val = -1;
-      lv_anim_t PropertyAnimation_0;
-      lv_anim_init(&PropertyAnimation_0);
-      lv_anim_set_time(&PropertyAnimation_0, 500);
-      lv_anim_set_user_data(&PropertyAnimation_0, PropertyAnimation_0_user_data);
-      lv_anim_set_custom_exec_cb(&PropertyAnimation_0, _ui_anim_callback_set_width);
-      lv_anim_set_values(&PropertyAnimation_0, 64, 110);
-      lv_anim_set_path_cb(&PropertyAnimation_0, lv_anim_path_linear);
-      lv_anim_set_delay(&PropertyAnimation_0, delay + 0);
-      lv_anim_set_deleted_cb(&PropertyAnimation_0, _ui_anim_callback_free_user_data);
-      lv_anim_set_playback_time(&PropertyAnimation_0, 500);
-      lv_anim_set_playback_delay(&PropertyAnimation_0, 0);
-      lv_anim_set_repeat_count(&PropertyAnimation_0, LV_ANIM_REPEAT_INFINITE);
-      lv_anim_set_repeat_delay(&PropertyAnimation_0, 0);
-      lv_anim_set_early_apply(&PropertyAnimation_0, false);
-      lv_anim_start(&PropertyAnimation_0);
-      ui_anim_user_data_t *PropertyAnimation_1_user_data = lv_malloc(sizeof(ui_anim_user_data_t));
-      PropertyAnimation_1_user_data->target = TargetObject;
-      PropertyAnimation_1_user_data->val = -1;
-      lv_anim_t PropertyAnimation_1;
-      lv_anim_init(&PropertyAnimation_1);
-      lv_anim_set_time(&PropertyAnimation_1, 500);
-      lv_anim_set_user_data(&PropertyAnimation_1, PropertyAnimation_1_user_data);
-      lv_anim_set_custom_exec_cb(&PropertyAnimation_1, _ui_anim_callback_set_height);
-      lv_anim_set_values(&PropertyAnimation_1, 64, 110);
-      lv_anim_set_path_cb(&PropertyAnimation_1, lv_anim_path_linear);
-      lv_anim_set_delay(&PropertyAnimation_1, delay + 0);
-      lv_anim_set_deleted_cb(&PropertyAnimation_1, _ui_anim_callback_free_user_data);
-      lv_anim_set_playback_time(&PropertyAnimation_1, 500);
-      lv_anim_set_playback_delay(&PropertyAnimation_1, 0);
-      lv_anim_set_repeat_count(&PropertyAnimation_1, LV_ANIM_REPEAT_INFINITE);
-      lv_anim_set_repeat_delay(&PropertyAnimation_1, 0);
-      lv_anim_set_early_apply(&PropertyAnimation_1, false);
-      lv_anim_start(&PropertyAnimation_1);
-}
-
 void analogSecond_Animation(lv_obj_t *TargetObject, int delay)
 {
       ui_anim_user_data_t *secondsAnimation_0_user_data = lv_malloc(sizeof(ui_anim_user_data_t));
@@ -594,8 +544,6 @@ void ui_event____initial_actions0(lv_event_t *e)
       if (event_code == LV_EVENT_SCREEN_LOAD_START)
       {
             pulseCall_Animation(ui_callIcon, 0);
-            // findPhone_Animation(ui_searchPanel, 0);
-            findPhone_Animation(ui_findPanel, 0);
 
             // analogSecond_Animation(face_radar_33_212563, 0);
       }
@@ -1073,13 +1021,11 @@ void ui_event_controlScreen(lv_event_t *e)
       if (event_code == LV_EVENT_GESTURE && lv_indev_get_gesture_dir(lv_indev_get_act()) == LV_DIR_TOP)
       {
             _ui_screen_change(ui_home, LV_SCR_LOAD_ANIM_MOVE_TOP, 500, 0);
-            _ui_state_modify(ui_phoneSearchButton, LV_STATE_CHECKED, _UI_MODIFY_STATE_ADD);
 
             onEndSearch(e);
       }
       if (event_code == LV_EVENT_SCREEN_UNLOAD_START)
       {
-            _ui_state_modify(ui_findButtonText, LV_STATE_CHECKED, _UI_MODIFY_STATE_REMOVE);
             _ui_flag_modify(ui_searchPanel, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
       }
 }
@@ -1132,62 +1078,7 @@ void ui_event_musicNextButton(lv_event_t *e)
       }
 }
 
-void ui_event_phoneSearchButton(lv_event_t *e)
-{
-      lv_disp_t *display = lv_disp_get_default();
-      lv_obj_t *actScr = lv_disp_get_scr_act(display);
-      if (actScr != ui_controlScreen)
-      {
-            return;
-      }
-      lv_event_code_t event_code = lv_event_get_code(e);
-      lv_obj_t *target = lv_event_get_target(e);
-      if (event_code == LV_EVENT_VALUE_CHANGED && !lv_obj_has_state(target, LV_STATE_CHECKED))
-      {
-            _ui_flag_modify(ui_searchPanel, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_REMOVE);
-            onStartSearch(e);
-      }
-      if (event_code == LV_EVENT_VALUE_CHANGED && lv_obj_has_state(target, LV_STATE_CHECKED))
-      {
-            onEndSearch(e);
-            _ui_flag_modify(ui_searchPanel, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
-      }
-}
 
-void ui_event_findButton(lv_event_t *e)
-{
-      lv_event_code_t event_code = lv_event_get_code(e);
-      lv_obj_t *target = lv_event_get_target(e);
-      if (event_code == LV_EVENT_VALUE_CHANGED && lv_obj_has_state(target, LV_STATE_CHECKED))
-      {
-            _ui_flag_modify(ui_findPanel, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_REMOVE);
-            _ui_label_set_property(ui_findButtonText, _UI_LABEL_PROPERTY_TEXT, "Stop");
-            onStartSearch(e);
-      }
-      if (event_code == LV_EVENT_VALUE_CHANGED && !lv_obj_has_state(target, LV_STATE_CHECKED))
-      {
-            _ui_flag_modify(ui_findPanel, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
-            _ui_label_set_property(ui_findButtonText, _UI_LABEL_PROPERTY_TEXT, "Start");
-            onEndSearch(e);
-      }
-}
-
-void ui_event_findPhone(lv_event_t *e)
-{
-      lv_event_code_t event_code = lv_event_get_code(e);
-      lv_obj_t *target = lv_event_get_target(e);
-      if (event_code == LV_EVENT_GESTURE && lv_indev_get_gesture_dir(lv_indev_get_act()) == LV_DIR_RIGHT)
-      {
-            _ui_screen_change(ui_appListScreen, LV_SCR_LOAD_ANIM_MOVE_RIGHT, 500, 0);
-      }
-
-      if (event_code == LV_EVENT_SCREEN_UNLOAD_START)
-      {
-            _ui_label_set_property(ui_findButtonText, _UI_LABEL_PROPERTY_TEXT, "Start");
-            _ui_state_modify(ui_findButton, LV_STATE_CHECKED, _UI_MODIFY_STATE_REMOVE);
-            _ui_flag_modify(ui_findPanel, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_ADD);
-      }
-}
 
 void ui_event_volumeUpButton(lv_event_t *e)
 {
@@ -1234,7 +1125,6 @@ void ui_event_qrCodeButton(lv_event_t *e)
       if (event_code == LV_EVENT_CLICKED)
       {
             toAppList = false;
-            _ui_state_modify(ui_phoneSearchButton, LV_STATE_CHECKED, _UI_MODIFY_STATE_ADD);
             onEndSearch(e);
             lv_scr_load_anim(ui_qrScreen, LV_SCR_LOAD_ANIM_MOVE_BOTTOM, 500, 0, false);
       }
@@ -1253,7 +1143,6 @@ void ui_event_closeControlButton(lv_event_t *e)
       if (event_code == LV_EVENT_CLICKED)
       {
             _ui_screen_change(ui_home, LV_SCR_LOAD_ANIM_MOVE_TOP, 500, 0);
-            _ui_state_modify(ui_phoneSearchButton, LV_STATE_CHECKED, _UI_MODIFY_STATE_ADD);
 
             onEndSearch(e);
       }
@@ -1383,9 +1272,6 @@ void onAppListClicked(lv_event_t *e)
 
             _ui_screen_change(ui_filesScreen, LV_SCR_LOAD_ANIM_MOVE_LEFT, 500, 0);
 #endif
-            break;
-      case 6:
-            _ui_screen_change(ui_findPhoneScreen, LV_SCR_LOAD_ANIM_MOVE_LEFT, 500, 0);
             break;
       case 7:
             _ui_screen_change(ui_gameListScreen, LV_SCR_LOAD_ANIM_MOVE_LEFT, 500, 0);
@@ -2606,7 +2492,6 @@ void ui_appListScreen_screen_init(void)
       add_appList("Apps", 7, &ui_img_game_icon_png);
       add_appList("Watchfaces", 5, &ui_img_smartwatch_png);
       add_appList("QR Codes", 4, &ui_img_qr_icon_png);
-      add_appList("Find Phone", 6, &ui_img_search_png);
       add_appList("Settings", 2, &ui_img_general_settings_png);
 
       lv_obj_add_event_cb(ui_appList, onScroll, LV_EVENT_SCROLL, NULL);
@@ -3296,23 +3181,6 @@ void ui_controlScreen_screen_init(void)
       lv_obj_set_style_bg_opa(ui_searchPanel, 100, LV_PART_MAIN | LV_STATE_DEFAULT);
       lv_obj_set_style_border_width(ui_searchPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-      ui_phoneSearchButton = lv_img_create(ui_controlScreen);
-      lv_img_set_src(ui_phoneSearchButton, &ui_img_search_png);
-      lv_obj_set_width(ui_phoneSearchButton, LV_SIZE_CONTENT);  /// 1
-      lv_obj_set_height(ui_phoneSearchButton, LV_SIZE_CONTENT); /// 1
-      lv_obj_set_x(ui_phoneSearchButton, 40);
-      lv_obj_set_y(ui_phoneSearchButton, -60);
-      lv_obj_set_align(ui_phoneSearchButton, LV_ALIGN_CENTER);
-      lv_obj_add_state(ui_phoneSearchButton, LV_STATE_CHECKED);                                     /// States
-      lv_obj_add_flag(ui_phoneSearchButton, LV_OBJ_FLAG_CLICKABLE);                                 /// Flags
-      lv_obj_clear_flag(ui_phoneSearchButton, LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SCROLLABLE); /// Flags
-      lv_img_set_zoom(ui_phoneSearchButton, 200);
-      lv_obj_set_style_img_recolor(ui_phoneSearchButton, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_CHECKED);
-      lv_obj_set_style_img_recolor_opa(ui_phoneSearchButton, 230, LV_PART_MAIN | LV_STATE_CHECKED);
-      lv_obj_set_style_radius(ui_phoneSearchButton, 5, LV_PART_MAIN | LV_STATE_PRESSED);
-      lv_obj_set_style_bg_color(ui_phoneSearchButton, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_PRESSED);
-      lv_obj_set_style_bg_opa(ui_phoneSearchButton, 255, LV_PART_MAIN | LV_STATE_PRESSED);
-
       ui_volumeUpButton = lv_img_create(ui_controlScreen);
       lv_img_set_src(ui_volumeUpButton, &ui_img_vol_down_png);
       lv_obj_set_width(ui_volumeUpButton, LV_SIZE_CONTENT);  /// 1
@@ -3370,7 +3238,6 @@ void ui_controlScreen_screen_init(void)
       lv_obj_add_event_cb(ui_musicPlayButton, ui_event_musicPlayButton, LV_EVENT_ALL, NULL);
       lv_obj_add_event_cb(ui_musicPrevButton, ui_event_musicPrevButton, LV_EVENT_ALL, NULL);
       lv_obj_add_event_cb(ui_musicNextButton, ui_event_musicNextButton, LV_EVENT_ALL, NULL);
-      lv_obj_add_event_cb(ui_phoneSearchButton, ui_event_phoneSearchButton, LV_EVENT_ALL, NULL);
       lv_obj_add_event_cb(ui_volumeUpButton, ui_event_volumeUpButton, LV_EVENT_ALL, NULL);
       lv_obj_add_event_cb(ui_volumeDownButton, ui_event_volumeDownButton, LV_EVENT_ALL, NULL);
       lv_obj_add_event_cb(ui_qrCodeButton, ui_event_qrCodeButton, LV_EVENT_ALL, NULL);
@@ -3697,71 +3564,6 @@ void ui_qrScreen_screen_init(void)
       lv_obj_add_event_cb(ui_qrScreen, ui_event_qrScreen, LV_EVENT_ALL, NULL);
 }
 
-void ui_findPhone_screen_init(void)
-{
-      ui_findPhoneScreen = lv_obj_create(NULL);
-      lv_obj_clear_flag(ui_findPhoneScreen, LV_OBJ_FLAG_SCROLLABLE); /// Flags
-      lv_obj_set_style_bg_color(ui_findPhoneScreen, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
-      lv_obj_set_style_bg_opa(ui_findPhoneScreen, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-
-      ui_findTitle = lv_label_create(ui_findPhoneScreen);
-      lv_obj_set_width(ui_findTitle, 150);
-      lv_obj_set_height(ui_findTitle, LV_SIZE_CONTENT); /// 1
-      lv_obj_set_x(ui_findTitle, 0);
-      lv_obj_set_y(ui_findTitle, 24);
-      lv_obj_set_align(ui_findTitle, LV_ALIGN_TOP_MID);
-      lv_label_set_text(ui_findTitle, "Find Phone");
-      lv_obj_set_style_text_align(ui_findTitle, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
-      lv_obj_set_style_text_font(ui_findTitle, &lv_font_montserrat_20, LV_PART_MAIN | LV_STATE_DEFAULT);
-      lv_obj_set_style_border_color(ui_findTitle, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
-      lv_obj_set_style_border_opa(ui_findTitle, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-      lv_obj_set_style_border_width(ui_findTitle, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
-      lv_obj_set_style_border_side(ui_findTitle, LV_BORDER_SIDE_BOTTOM, LV_PART_MAIN | LV_STATE_DEFAULT);
-
-      ui_findButton = lv_btn_create(ui_findPhoneScreen);
-      lv_obj_set_width(ui_findButton, 100);
-      lv_obj_set_height(ui_findButton, 40);
-      lv_obj_set_x(ui_findButton, 0);
-      lv_obj_set_y(ui_findButton, 77);
-      lv_obj_set_align(ui_findButton, LV_ALIGN_CENTER);
-      lv_obj_add_flag(ui_findButton, LV_OBJ_FLAG_CHECKABLE | LV_OBJ_FLAG_SCROLL_ON_FOCUS); /// Flags
-      lv_obj_clear_flag(ui_findButton, LV_OBJ_FLAG_SCROLLABLE);                            /// Flags
-      lv_obj_set_style_radius(ui_findButton, 20, LV_PART_MAIN | LV_STATE_DEFAULT);
-
-      ui_findButtonText = lv_label_create(ui_findButton);
-      lv_obj_set_width(ui_findButtonText, LV_SIZE_CONTENT);  /// 1
-      lv_obj_set_height(ui_findButtonText, LV_SIZE_CONTENT); /// 1
-      lv_obj_set_align(ui_findButtonText, LV_ALIGN_CENTER);
-      lv_label_set_text(ui_findButtonText, "Start");
-      lv_obj_set_style_text_font(ui_findButtonText, &lv_font_montserrat_16, LV_PART_MAIN | LV_STATE_DEFAULT);
-
-      ui_findPanel = lv_obj_create(ui_findPhoneScreen);
-      lv_obj_set_width(ui_findPanel, 64);
-      lv_obj_set_height(ui_findPanel, 64);
-      lv_obj_set_x(ui_findPanel, 0);
-      lv_obj_set_y(ui_findPanel, -10);
-      lv_obj_set_align(ui_findPanel, LV_ALIGN_CENTER);
-      lv_obj_add_flag(ui_findPanel, LV_OBJ_FLAG_HIDDEN);       /// Flags
-      lv_obj_clear_flag(ui_findPanel, LV_OBJ_FLAG_SCROLLABLE); /// Flags
-      lv_obj_set_style_radius(ui_findPanel, 64, LV_PART_MAIN | LV_STATE_DEFAULT);
-      lv_obj_set_style_bg_color(ui_findPanel, lv_color_hex(0xFF6910), LV_PART_MAIN | LV_STATE_DEFAULT);
-      lv_obj_set_style_bg_opa(ui_findPanel, 100, LV_PART_MAIN | LV_STATE_DEFAULT);
-      lv_obj_set_style_border_width(ui_findPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-
-      ui_findIcon = lv_img_create(ui_findPhoneScreen);
-      lv_img_set_src(ui_findIcon, &ui_img_search_png);
-      lv_obj_set_width(ui_findIcon, LV_SIZE_CONTENT);  /// 1
-      lv_obj_set_height(ui_findIcon, LV_SIZE_CONTENT); /// 1
-      lv_obj_set_x(ui_findIcon, -1);
-      lv_obj_set_y(ui_findIcon, -10);
-      lv_obj_set_align(ui_findIcon, LV_ALIGN_CENTER);
-      lv_obj_add_flag(ui_findIcon, LV_OBJ_FLAG_ADV_HITTEST);  /// Flags
-      lv_obj_clear_flag(ui_findIcon, LV_OBJ_FLAG_SCROLLABLE); /// Flags
-
-      lv_obj_add_event_cb(ui_findButton, ui_event_findButton, LV_EVENT_ALL, NULL);
-      lv_obj_add_event_cb(ui_findPhoneScreen, ui_event_findPhone, LV_EVENT_ALL, NULL);
-}
-
 void ui_logoScreen_screen_init(void)
 {
       ui_logoScreen = lv_obj_create(NULL);
@@ -4076,7 +3878,6 @@ void ui_init(void)
       ui_qrScreen_screen_init();
       ui_connectScreen_screen_init();
 
-      ui_findPhone_screen_init();
       ui_logoScreen_screen_init();
 
       ui_cameraScreen_screen_init();
