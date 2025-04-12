@@ -207,7 +207,7 @@ ChronosTimer searchTimer;
 
 lv_obj_t *lastActScr;
 
-bool circular = false;
+// bool circular = false;
 bool alertSwitch = false;
 bool gameActive = false;
 bool readIMU = false;
@@ -786,7 +786,7 @@ bool deleteCustomFace(String file)
   DeserializationError err = deserializeJson(face, read);
   if (!err)
   {
-    if (!face.containsKey("assets"))
+    if (!face["assets"])
     {
       return false;
     }
@@ -805,7 +805,7 @@ bool deleteCustomFace(String file)
   }
   else
   {
-    Serial.println("Deserialize failed");
+    Timber.e("Deserialize failed, error %d", err.code());
   }
 
   return false;
