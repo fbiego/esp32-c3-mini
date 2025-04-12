@@ -85,6 +85,8 @@ void init_face_kenya(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_
     lv_obj_set_style_pad_right(face_kenya, 0, LV_PART_MAIN| LV_STATE_DEFAULT);
     lv_obj_set_style_pad_top(face_kenya, 0, LV_PART_MAIN| LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(face_kenya, 0, LV_PART_MAIN| LV_STATE_DEFAULT);
+    lv_obj_set_style_radius(face_kenya, LV_RADIUS_CIRCLE, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_clip_corner(face_kenya, true, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_add_event_cb(face_kenya, onFaceEvent, LV_EVENT_ALL, NULL);
 

@@ -73,9 +73,8 @@ These watchfaces are binary files converted into LVGL code and compiled along wi
 
 #### 2. External Installable Binary Watchfaces
 
+- [x] Custom watchfaces works on LVGL 8. [Checkout this branch](https://github.com/fbiego/esp32-c3-mini/tree/lvgl_8)
 - [ ] Work in progress for LVGL 9
-
-~~This project now supports the installation of binary watchfaces after the initial code compilation and flashing. You can add or remove watchfaces via the Chronos app using BLE. Once transferred to the ESP32, the watchface will be parsed and executed.~~
 
 - Ensure there is sufficient storage space on the ESP32 flash. Using the FFAT partition is recommended.
 
