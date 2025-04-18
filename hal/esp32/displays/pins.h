@@ -58,6 +58,7 @@
 #define RST -1
 
 #define BL -1 // unused (connected on IO extender)
+#define VIBRATION_PIN 0 // dummy (connected on IO extender)
 
 #define BUZZER 3
 

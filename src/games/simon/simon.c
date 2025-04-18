@@ -27,7 +27,9 @@ int current_sequence_length = 1; // Start with a sequence of 1
 bool is_player_turn = false;
 int highScoreSimon;
 
-lv_obj_t *ui_simonScreen;
+
+REGISTER_APP("Simon Says", &ui_img_colors_png, ui_simonScreen, ui_simonScreen_screen_init);
+
 lv_obj_t *ui_simonMainPanel;
 lv_obj_t *ui_simonScorePanel;
 lv_obj_t *ui_simonScoreText;
@@ -89,6 +91,8 @@ void ui_event_simonScreen(lv_event_t *e)
         lv_label_set_text(ui_simonScoreText, "0");
         lv_label_set_text_fmt(ui_simonScore, "%d", highScoreSimon);
         lv_obj_clear_flag(ui_simonPanel, LV_OBJ_FLAG_HIDDEN); /// Flags
+
+        simonTone(0, 0);
     }
     if (event_code == LV_EVENT_SCREEN_UNLOAD_START)
     {
@@ -96,7 +100,11 @@ void ui_event_simonScreen(lv_event_t *e)
     if (event_code == LV_EVENT_SCREEN_UNLOADED)
     {
         onGameClosed();
+
+        lv_obj_delete(ui_simonScreen);
+        ui_simonScreen = NULL;
     }
+
     if (event_code == LV_EVENT_GESTURE && lv_indev_get_gesture_dir(lv_indev_get_act()) == LV_DIR_RIGHT)
     {
         if (lv_obj_has_flag(ui_simonPanel, LV_OBJ_FLAG_HIDDEN))
@@ -105,7 +113,7 @@ void ui_event_simonScreen(lv_event_t *e)
         }
         else
         {
-            ui_gameExit();
+            ui_app_exit();
         }
     }
 }
@@ -139,7 +147,7 @@ void add_state_cb(lv_timer_t *timer)
     lv_timer_set_repeat_count(remove_t, 1);
     lv_timer_set_auto_delete(remove_t, true);
 
-    toneOut(data->tone, 200);
+    simonTone(2, data->tone);
 }
 
 /* Event handler for when a panel is clicked */
@@ -155,9 +163,7 @@ void panel_event_handler(lv_event_t *e)
     // Check if the clicked panel matches the current step in the sequence
     if (panel_idx != sequence[current_step])
     {
-        toneOut(392 * 2, 170);
-        toneOut(370 * 2, 170);
-        toneOut(330 * 2, 170);
+        simonTone(1, 0);
 
         lv_label_set_text_fmt(ui_simonScore, "%d/%d", current_sequence_length - 1, MAX_SEQUENCE_LENGTH);
         float div = (MAX_SEQUENCE_LENGTH / 10.0);
@@ -178,7 +184,7 @@ void panel_event_handler(lv_event_t *e)
         return;
     }
 
-    toneOut(tones[panel_idx], 200);
+    simonTone(2, tones[panel_idx]);
 
     current_step++;
 
@@ -271,24 +277,20 @@ void start_game()
     play_sequence(NULL);
 }
 
-#endif
 
 void ui_event_exitSimon(lv_event_t *e)
 {
-#ifdef ENABLE_GAME_SIMON
     lv_event_code_t event_code = lv_event_get_code(e);
     lv_obj_t *target = lv_event_get_target(e);
     if (event_code == LV_EVENT_CLICKED)
     {
-        ui_gameExit();
+        ui_app_exit();
     }
-#endif
 }
 
-void ui_simonScreen_screen_init(void (*callback)(const char *, const lv_image_dsc_t *, lv_obj_t **))
+void ui_simonScreen_screen_init()
 {
 
-#ifdef ENABLE_GAME_SIMON
     ui_simonScreen = lv_obj_create(NULL);
     lv_obj_clear_flag(ui_simonScreen, LV_OBJ_FLAG_SCROLLABLE); /// Flags
     lv_obj_set_style_bg_color(ui_simonScreen, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -478,7 +480,8 @@ void ui_simonScreen_screen_init(void (*callback)(const char *, const lv_image_ds
     lv_obj_add_event_cb(ui_exitSimon, ui_event_exitSimon, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui_simonScreen, ui_event_simonScreen, LV_EVENT_ALL, NULL);
 
-    callback("Simon Says", &ui_img_colors_png, &ui_simonScreen);
+
+}
 
 #endif
-}
+

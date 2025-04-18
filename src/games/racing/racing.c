@@ -8,7 +8,18 @@
 
 #include "racing.h"
 
+
+
 #ifdef ENABLE_GAME_RACING
+
+#ifndef LV_USE_SDL
+#warning "Racing game works best with SDL emulator" // hardware needs rewrite
+
+#if !defined(ENABLE_GAME_TASK)
+#error "Racing game needs separate task to run on hardware"
+#endif
+
+#endif
 
 #define ROAD_HEIGHT 270
 #define NPC_CAR_HEIGHT 400
@@ -20,8 +31,10 @@
 #define INITIAL_SPEED 3.5
 #define SPEED_LIMIT_FACTOR 3.5
 
+
+REGISTER_APP("Racing", &ui_img_car_png, ui_raceScreen, ui_raceScreen_screen_init);
+
 void ui_event_raceScreen(lv_event_t *e);
-lv_obj_t *ui_raceScreen;
 void ui_event_roadPanel(lv_event_t *e);
 lv_obj_t *ui_roadPanel;
 lv_obj_t *ui_roadImage;
@@ -82,6 +95,7 @@ CarP player;
 CarP npc1;
 CarP npcBuf;
 CarP plBuf;
+
 
 // Function to check if two cars have crashed into each other
 bool haveCrashed(CarP car1, CarP car2)
@@ -153,7 +167,7 @@ void ui_event_raceScreen(lv_event_t *e)
         }
         else
         {
-            ui_gameExit();
+            ui_app_exit();
         }
     }
 }
@@ -238,23 +252,19 @@ void ui_event_raceStart(lv_event_t *e)
     }
 }
 
-#endif
-
 void ui_event_exitRace(lv_event_t *e)
 {
-#ifdef ENABLE_GAME_RACING
     lv_event_code_t event_code = lv_event_get_code(e);
     lv_obj_t *target = lv_event_get_target(e);
     if (event_code == LV_EVENT_CLICKED)
     {
-        ui_gameExit();
+        ui_app_exit();
     }
-#endif
 }
 
-void ui_raceScreen_screen_init(void (*callback)(const char *, const lv_image_dsc_t *, lv_obj_t **))
+void ui_raceScreen_screen_init()
 {
-#ifdef ENABLE_GAME_RACING
+
     ui_raceScreen = lv_obj_create(NULL);
     lv_obj_clear_flag(ui_raceScreen, LV_OBJ_FLAG_SCROLLABLE); /// Flags
     lv_obj_set_style_bg_color(ui_raceScreen, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -488,11 +498,13 @@ void ui_raceScreen_screen_init(void (*callback)(const char *, const lv_image_dsc
     lv_obj_add_event_cb(ui_exitRace, ui_event_exitRace, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui_raceScreen, ui_event_raceScreen, LV_EVENT_ALL, NULL);
 
-    callback("Racing", &ui_img_car_png, &ui_raceScreen);
+
     active = false;
 
-#endif
+
 }
+
+#endif
 
 void ui_raceScreen_screen_loop()
 {

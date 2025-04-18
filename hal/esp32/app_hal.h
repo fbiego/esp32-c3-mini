@@ -44,11 +44,16 @@
 #define ENABLE_RTC
 #endif
 
+#define ENABLE_APP_CALENDAR
+#define ENABLE_APP_SAMPLE
+// #define ENABLE_GAME_TASK
 // #define ENABLE_GAME_RACING
+
 #define ENABLE_GAME_SIMON
 
 #define ENABLE_APP_NAVIGATION
 #define ENABLE_APP_CONTACTS
+#define ENABLE_APP_TIMER
 
 #ifdef __cplusplus
 extern "C" {
@@ -58,6 +63,8 @@ extern "C" {
 void hal_setup(void);
 void hal_loop(void);
 
+
+void vibratePin(bool state);
 
 #ifdef __cplusplus
 } /* extern "C" */

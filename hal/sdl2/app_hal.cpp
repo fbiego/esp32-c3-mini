@@ -238,6 +238,10 @@ void onCaptureClick(lv_event_t *e)
 
 void addFaceList(lv_obj_t *parent, Face face) {}
 
+void timerEnded(int x){}
+
+void simonTone(int type, int pitch){}
+
 void setupWeather()
 {
     // lv_obj_set_style_bg_img_src(ui_weatherScreen, &ui_img_753022056, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -397,6 +401,21 @@ void hal_loop(void)
         // this works just okay on native, esp32 implementation is different
         ui_games_update();
     }
+}
+
+void contacts_app_launched()
+{
+    setupContacts();
+}
+
+void calendar_app_launched(void)
+{
+    time_t now = time(0);
+    tm *ltm = localtime(&now);
+    int day = ltm->tm_mday;
+    int month = 1 + ltm->tm_mon;    // Month starts from 0
+    int year = 1900 + ltm->tm_year; // Year is since 1900
+    calendar_set_today(year, month, day);
 }
 
 void update_faces()

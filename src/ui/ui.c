@@ -12,36 +12,13 @@
 #include "ui.h"
 #include "ui_helpers.h"
 
-#include "./faces/elecrow/elecrow.h"
-#include "./faces/34_2/34_2.h"
-#include "./faces/75_2/75_2.h"
-#include "./faces/79_2/79_2.h"
-#include "./faces/116_2/116_2.h"
-#include "./faces/756_2/756_2.h"
-#include "./faces/b_w_resized/b_w_resized.h"
-#include "./faces/kenya/kenya.h"
-#include "./faces/pixel_resized/pixel_resized.h"
-#include "./faces/radar/radar.h"
-#include "./faces/smart_resized/smart_resized.h"
-#include "./faces/tix_resized/tix_resized.h"
-#include "./faces/wfb_resized/wfb_resized.h"
-
-#include "./faces/174/174.h"
-#include "./faces/228/228.h"
-#include "./faces/1041/1041.h"
-#include "./faces/1167/1167.h"
-#include "./faces/1169/1169.h"
-#include "./faces/2051/2051.h"
-#include "./faces/2151/2151.h"
-#include "./faces/3589/3589.h"
-
 #include "display/lv_display_private.h"
 #include "indev/lv_indev_private.h"
 #include "misc/lv_timer_private.h"
 #include "misc/lv_event_private.h"
 #include <string.h>
 
-#define UI_VERSION "5.1"
+#define UI_VERSION "6.0"
 
 const char *ui_info_text = "v" UI_VERSION " [fbiego]";
 
@@ -1510,8 +1487,8 @@ void ui_event_gameSelected(lv_event_t *e)
       lv_obj_t *target = lv_event_get_target(e);
       int index = (int)lv_event_get_user_data(e);
 
-      lv_disp_t *display = lv_disp_get_default();
-      lv_obj_t *actScr = lv_disp_get_scr_act(display);
+      lv_disp_t *display = lv_display_get_default();
+      lv_obj_t *actScr = lv_display_get_screen_active(display);
 
       if (actScr != ui_gameListScreen)
       {
@@ -1537,7 +1514,28 @@ void ui_event_gameSelected(lv_event_t *e)
 
 void ui_gameExit()
 {
-      lv_scr_load_anim(ui_gameListScreen, LV_SCR_LOAD_ANIM_MOVE_RIGHT, 500, 0, false);
+      lv_screen_load_anim(ui_gameListScreen, LV_SCR_LOAD_ANIM_MOVE_RIGHT, 500, 0, false);
+}
+
+void ui_app_exit()
+{
+      
+      lv_screen_load_anim(ui_gameListScreen, LV_SCR_LOAD_ANIM_MOVE_RIGHT, 500, 0, false);
+}
+
+void ui_app_load(lv_obj_t **screen, void (*screen_init)(void)) 
+{
+      lv_disp_t *display = lv_display_get_default();
+      lv_obj_t *actScr = lv_display_get_screen_active(display);
+      if (actScr != ui_gameListScreen)
+      {
+            return;
+      }
+
+      if(*screen == NULL)
+            screen_init();
+      
+      lv_screen_load_anim(*screen, LV_SCR_LOAD_ANIM_MOVE_LEFT, 500, 0, false);
 }
 
 void ui_event_errorClose(lv_event_t *e)
@@ -1722,11 +1720,54 @@ void add_gameList(const char *appName, int index, const void *img)
       lv_obj_add_event_cb(ui_gameListPanel, ui_event_gameSelected, LV_EVENT_CLICKED, (void *)index);
 }
 
+void add_app_list(const char *appName, const void *icon, void (*callback)(lv_event_t *e))
+{
+      lv_obj_t *ui_gameListPanel = lv_obj_create(ui_gameList);
+      lv_obj_set_width(ui_gameListPanel, 200);
+      lv_obj_set_height(ui_gameListPanel, 64);
+      lv_obj_set_align(ui_gameListPanel, LV_ALIGN_CENTER);
+      lv_obj_clear_flag(ui_gameListPanel, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+      lv_obj_set_style_radius(ui_gameListPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_bg_color(ui_gameListPanel, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_bg_opa(ui_gameListPanel, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_border_color(ui_gameListPanel, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_border_opa(ui_gameListPanel, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_border_width(ui_gameListPanel, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_border_side(ui_gameListPanel, LV_BORDER_SIDE_BOTTOM, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_pad_left(ui_gameListPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_pad_right(ui_gameListPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_pad_top(ui_gameListPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_pad_bottom(ui_gameListPanel, 5, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+      lv_obj_t *ui_gameListIcon = lv_img_create(ui_gameListPanel);
+      lv_img_set_src(ui_gameListIcon, icon);
+      lv_obj_set_width(ui_gameListIcon, LV_SIZE_CONTENT);  /// 1
+      lv_obj_set_height(ui_gameListIcon, LV_SIZE_CONTENT); /// 1
+      lv_obj_set_x(ui_gameListIcon, -74);
+      lv_obj_set_y(ui_gameListIcon, 2);
+      lv_obj_set_align(ui_gameListIcon, LV_ALIGN_CENTER);
+      lv_obj_add_flag(ui_gameListIcon, LV_OBJ_FLAG_ADV_HITTEST);  /// Flags
+      lv_obj_clear_flag(ui_gameListIcon, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+      lv_img_set_zoom(ui_gameListIcon, 150);
+
+      lv_obj_t *ui_gameListLabel = lv_label_create(ui_gameListPanel);
+      lv_obj_set_width(ui_gameListLabel, 160);
+      lv_obj_set_height(ui_gameListLabel, LV_SIZE_CONTENT); /// 1
+      lv_obj_set_x(ui_gameListLabel, 54);
+      lv_obj_set_y(ui_gameListLabel, 3);
+      lv_obj_set_align(ui_gameListLabel, LV_ALIGN_LEFT_MID);
+      lv_label_set_text(ui_gameListLabel, appName);
+      lv_label_set_long_mode(ui_gameListLabel, LV_LABEL_LONG_CLIP);
+      lv_obj_set_style_text_font(ui_gameListLabel, &lv_font_montserrat_20, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+      lv_obj_add_event_cb(ui_gameListPanel, callback, LV_EVENT_CLICKED, NULL);
+}
+
 void addWatchface(const char *name, const lv_image_dsc_t *src, int index)
 {
       lv_obj_t *ui_faceItem = lv_obj_create(ui_faceSelect);
-      lv_obj_set_width(ui_faceItem, 160);
-      lv_obj_set_height(ui_faceItem, 180);
+      lv_obj_set_width(ui_faceItem, 170);
+      lv_obj_set_height(ui_faceItem, 190);
       lv_obj_set_align(ui_faceItem, LV_ALIGN_CENTER);
       lv_obj_clear_flag(ui_faceItem, LV_OBJ_FLAG_SCROLLABLE); /// Flags
       // lv_obj_add_flag(ui_faceItem, LV_OBJ_FLAG_SNAPPABLE);
@@ -1735,22 +1776,42 @@ void addWatchface(const char *name, const lv_image_dsc_t *src, int index)
       lv_obj_set_style_bg_color(ui_faceItem, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
       lv_obj_set_style_bg_opa(ui_faceItem, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
       lv_obj_set_style_border_width(ui_faceItem, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-      lv_obj_set_style_outline_color(ui_faceItem, lv_color_hex(0x142ABC), LV_PART_MAIN | LV_STATE_DEFAULT);
-      lv_obj_set_style_outline_opa(ui_faceItem, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-      lv_obj_set_style_outline_width(ui_faceItem, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
-      lv_obj_set_style_outline_pad(ui_faceItem, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+      // lv_obj_set_style_outline_color(ui_faceItem, lv_color_hex(0x142ABC), LV_PART_MAIN | LV_STATE_DEFAULT);
+      // lv_obj_set_style_outline_opa(ui_faceItem, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+      // lv_obj_set_style_outline_width(ui_faceItem, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+      // lv_obj_set_style_outline_pad(ui_faceItem, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
       lv_obj_set_style_pad_left(ui_faceItem, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
       lv_obj_set_style_pad_right(ui_faceItem, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-      lv_obj_set_style_pad_top(ui_faceItem, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_pad_top(ui_faceItem, 3, LV_PART_MAIN | LV_STATE_DEFAULT);
       lv_obj_set_style_pad_bottom(ui_faceItem, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-      lv_obj_t *ui_facePreview = lv_img_create(ui_faceItem);
+      lv_obj_t *cont = lv_obj_create(ui_faceItem);
+      lv_obj_remove_style_all(cont);
+      lv_obj_set_width(cont, 160);
+      lv_obj_set_height(cont, 160);
+      lv_obj_set_align(cont, LV_ALIGN_TOP_MID);
+      lv_obj_set_style_radius(cont, LV_RADIUS_CIRCLE, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_clip_corner(cont, true, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_outline_color(cont, lv_color_hex(0x142ABC), LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_outline_opa(cont, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_outline_width(cont, 3, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_outline_pad(cont, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_add_flag(cont, LV_OBJ_FLAG_EVENT_BUBBLE);  /// Flags
+
+
+      lv_obj_t *ui_facePreview = lv_img_create(cont);
       lv_img_set_src(ui_facePreview, src);
       lv_obj_set_width(ui_facePreview, LV_SIZE_CONTENT);  /// 1
       lv_obj_set_height(ui_facePreview, LV_SIZE_CONTENT); /// 1
       lv_obj_set_align(ui_facePreview, LV_ALIGN_TOP_MID);
       lv_obj_add_flag(ui_facePreview, LV_OBJ_FLAG_ADV_HITTEST);  /// Flags
       lv_obj_clear_flag(ui_facePreview, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+      // lv_obj_set_style_radius(ui_facePreview, LV_RADIUS_CIRCLE, LV_PART_MAIN | LV_STATE_DEFAULT);
+      // lv_obj_set_style_clip_corner(ui_facePreview, true, LV_PART_MAIN | LV_STATE_DEFAULT);
+      // lv_obj_set_style_outline_color(ui_facePreview, lv_color_hex(0x142ABC), LV_PART_MAIN | LV_STATE_DEFAULT);
+      // lv_obj_set_style_outline_opa(ui_facePreview, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+      // lv_obj_set_style_outline_width(ui_facePreview, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+      // lv_obj_set_style_outline_pad(ui_facePreview, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
 
       lv_obj_t *ui_faceLabel = lv_label_create(ui_faceItem);
       lv_obj_set_width(ui_faceLabel, 160);
@@ -2278,6 +2339,11 @@ void registerGame_cb(const char *name, const lv_image_dsc_t *icon, lv_obj_t **ga
       // addGame
       add_gameList(games[numGames].name, numGames, games[numGames].preview);
       numGames++;
+}
+
+void registerApp_cb(const char *name, const lv_image_dsc_t *icon, void (*callback)(lv_event_t *e))
+{
+      add_app_list(name, icon, callback);
 }
 
 void init_face_select()
@@ -3918,18 +3984,12 @@ void ui_update_seconds(int second)
       }
 }
 
-void ui_games_init(void)
+void ui_apps_init(void)
 {
-      numGames = 0;
-      ui_contactScreen_screen_init(registerGame_cb);
-      ui_raceScreen_screen_init(registerGame_cb);
-      ui_imuScreen_screen_init(registerGame_cb);
-      ui_attiudeScreen_screen_init(registerGame_cb);
-      ui_navScreen_screen_init(registerGame_cb);
-      ui_simonScreen_screen_init(registerGame_cb);
-      ui_pioScreen_screen_init(registerGame_cb);
 
-      if (numGames == 0)
+      app_registry_iterate(registerApp_cb);
+
+      if (app_registry_get_count() <= 0)
       {
             lv_obj_t *info = lv_label_create(ui_gameList);
             lv_obj_set_width(info, 180);
@@ -4068,7 +4128,7 @@ void ui_init(void)
       ui_watchfaces_init();
       init_custom_face();
 
-      ui_games_init();
+      ui_apps_init();
 
       ui_home = ui_clockScreen;
 

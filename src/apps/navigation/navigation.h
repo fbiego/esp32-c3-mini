@@ -15,23 +15,30 @@ extern "C"
 
 #include "lvgl.h"
 #include "app_hal.h"
+#include "../../common/app_manager.h"
 
 #ifdef ENABLE_APP_NAVIGATION
 
-extern lv_obj_t *ui_navScreen;
 
 LV_IMG_DECLARE( ui_img_arrow_png);   // assets/arrow.png
 LV_IMG_DECLARE( ui_img_chronos_logo_png);   // assets/chronos_logo.png
 
+
+
+void ui_app_load(lv_obj_t **screen, void (*screen_init)(void));
+void ui_app_exit(void);
+
+
 #endif
 
-    void ui_navScreen_screen_init(void (*callback)(const char *, const lv_image_dsc_t *, lv_obj_t **));
+    void ui_navScreen_screen_init();
 
     void navigateInfo(const char* text, const char* title, const char *directions);
     void navIconState(bool show);
     void setNavIconPx(uint16_t x, uint16_t y, bool on);
+
+    lv_obj_t *get_nav_screen(void);
     
-    void ui_gameExit(void);
 
     void onGameOpened(void);
     void onGameClosed(void);

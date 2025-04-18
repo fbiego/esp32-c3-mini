@@ -8,9 +8,11 @@
 
 #include "attitude.h"
 
+
 #ifdef ENABLE_APP_ATTITUDE
 
-lv_obj_t *ui_attiudeScreen;
+REGISTER_APP("Attitude", &ui_img_airport_png, ui_attiudeScreen, ui_attiudeScreen_screen_init);
+
 lv_obj_t *ui_img_dial_bg;
 lv_obj_t *ui_img_pitch_scale;
 lv_obj_t *ui_img_dum_scale;
@@ -78,15 +80,13 @@ void ui_event_attiudeScreen(lv_event_t *e)
 
     if (event_code == LV_EVENT_GESTURE && lv_indev_get_gesture_dir(lv_indev_get_act()) == LV_DIR_RIGHT)
     {
-        ui_gameExit();
+        ui_app_exit();
     }
 }
 
-#endif
 
-void ui_attiudeScreen_screen_init(void (*callback)(const char *, const lv_image_dsc_t *, lv_obj_t **))
+void ui_attiudeScreen_screen_init()
 {
-#ifdef ENABLE_APP_ATTITUDE
 
     ui_attiudeScreen = lv_obj_create(NULL);
     lv_obj_clear_flag(ui_attiudeScreen, LV_OBJ_FLAG_SCROLLABLE); /// Flags
@@ -173,15 +173,18 @@ void ui_attiudeScreen_screen_init(void (*callback)(const char *, const lv_image_
 
     lv_obj_add_event_cb(ui_attiudeScreen, ui_event_attiudeScreen, LV_EVENT_ALL, NULL);
 
-    callback("Attitude", &ui_img_airport_png, &ui_attiudeScreen);
 
-#endif
 }
+#endif
 
 
 void update_pitch(int pitch_value, int pitch_rotation)
 {
 #ifdef ENABLE_APP_ATTITUDE
+    if (ui_attiudeScreen == NULL)
+    {
+        return;
+    }
     // Calculate the rotation angle in degrees for pitch
     int rotation_angle = pitch_rotation * -1; // Each 100 units corresponds to 10 degrees
     lv_img_set_angle(ui_img_pitch_scale, rotation_angle * 10); // LVGL uses 0.1 degree units
@@ -198,6 +201,10 @@ void update_pitch(int pitch_value, int pitch_rotation)
 void update_roll(int roll_value)
 {
 #ifdef ENABLE_APP_ATTITUDE
+    if (ui_attiudeScreen == NULL)
+    {
+        return;
+    }
     // Calculate the rotation angle in degrees
     int rotation_angle = roll_value; // Each unit corresponds to 1 degree
     lv_img_set_angle(ui_img_roll_scale, rotation_angle * 10); // LVGL uses 0.1 degree units

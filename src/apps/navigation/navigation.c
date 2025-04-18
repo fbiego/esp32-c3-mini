@@ -16,7 +16,8 @@
 #define CANVAS_WIDTH 48
 #define CANVAS_HEIGHT 48
 
-lv_obj_t *ui_navScreen;
+REGISTER_APP("Navigation", &ui_img_arrow_png, ui_navScreen, ui_navScreen_screen_init);
+
 lv_obj_t *ui_navPanel;
 lv_obj_t *ui_navDirection;
 lv_obj_t *ui_navText;
@@ -47,56 +48,13 @@ void ui_event_navScreen(lv_event_t *e)
 
     if (event_code == LV_EVENT_GESTURE && lv_indev_get_gesture_dir(lv_indev_get_act()) == LV_DIR_RIGHT)
     {
-        ui_gameExit();
+        ui_app_exit();
     }
 }
 
-#endif
-
-void navigateInfo(const char *text, const char *title, const char *directions)
+void ui_navScreen_screen_init()
 {
-#ifdef ENABLE_APP_NAVIGATION
-    lv_label_set_text(ui_navText, text);
-    lv_label_set_text(ui_navDirection, directions);
-    lv_label_set_text(ui_navDistance, title);
 
-#endif
-}
-
-void navIconState(bool show)
-{
-#ifdef ENABLE_APP_NAVIGATION
-    if (show)
-    {
-        lv_obj_remove_flag(ui_navIconCanvas, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_add_flag(ui_navIcon, LV_OBJ_FLAG_HIDDEN);
-    }
-    else
-    {
-        lv_obj_add_flag(ui_navIconCanvas, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_remove_flag(ui_navIcon, LV_OBJ_FLAG_HIDDEN);
-    }
-#endif
-}
-
-void setNavIconPx(uint16_t x, uint16_t y, bool on)
-{
-#ifdef ENABLE_APP_NAVIGATION
-    if (on)
-    {
-
-        lv_canvas_set_px(ui_navIconCanvas, x, y, lv_color_make(255, 255, 255), LV_OPA_COVER);
-    }
-    else
-    {
-        lv_canvas_set_px(ui_navIconCanvas, x, y, lv_color_make(0, 0, 0), LV_OPA_COVER);
-    }
-#endif
-}
-
-void ui_navScreen_screen_init(void (*callback)(const char *, const lv_image_dsc_t *, lv_obj_t **))
-{
-#ifdef ENABLE_APP_NAVIGATION
     ui_navScreen = lv_obj_create(NULL);
     lv_obj_clear_flag(ui_navScreen, LV_OBJ_FLAG_SCROLLABLE); /// Flags
     lv_obj_set_style_bg_color(ui_navScreen, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -180,7 +138,65 @@ void ui_navScreen_screen_init(void (*callback)(const char *, const lv_image_dsc_
 
     lv_obj_add_event_cb(ui_navScreen, ui_event_navScreen, LV_EVENT_ALL, NULL);
 
-    callback("Navigation", &ui_img_arrow_png, &ui_navScreen);
+}
 
+#endif
+
+void navigateInfo(const char *text, const char *title, const char *directions)
+{
+#ifdef ENABLE_APP_NAVIGATION
+    if (!ui_navScreen){
+        return;
+    }
+    lv_label_set_text(ui_navText, text);
+    lv_label_set_text(ui_navDirection, directions);
+    lv_label_set_text(ui_navDistance, title);
+
+#endif
+}
+
+void navIconState(bool show)
+{
+#ifdef ENABLE_APP_NAVIGATION
+    if (!ui_navScreen){
+        return;
+    }
+    if (show)
+    {
+        lv_obj_remove_flag(ui_navIconCanvas, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_flag(ui_navIcon, LV_OBJ_FLAG_HIDDEN);
+    }
+    else
+    {
+        lv_obj_add_flag(ui_navIconCanvas, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_remove_flag(ui_navIcon, LV_OBJ_FLAG_HIDDEN);
+    }
+#endif
+}
+
+void setNavIconPx(uint16_t x, uint16_t y, bool on)
+{
+#ifdef ENABLE_APP_NAVIGATION
+    if (!ui_navScreen){
+        return;
+    }
+    if (on)
+    {
+
+        lv_canvas_set_px(ui_navIconCanvas, x, y, lv_color_make(255, 255, 255), LV_OPA_COVER);
+    }
+    else
+    {
+        lv_canvas_set_px(ui_navIconCanvas, x, y, lv_color_make(0, 0, 0), LV_OPA_COVER);
+    }
+#endif
+}
+
+lv_obj_t *get_nav_screen(void)
+{
+#ifdef ENABLE_APP_NAVIGATION
+    return ui_navScreen;
+#else
+    return NULL;
 #endif
 }

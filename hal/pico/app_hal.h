@@ -41,6 +41,8 @@
 // #define ENABLE_APP_ATTITUDE
 #endif
 
+#define ENABLE_APP_CALENDAR
+#define ENABLE_APP_SAMPLE
 // #define ENABLE_GAME_RACING
 #define ENABLE_GAME_SIMON
 

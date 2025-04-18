@@ -15,26 +15,30 @@ extern "C"
 
 #include "lvgl.h"
 #include "app_hal.h"
+#include "../../common/app_manager.h"
 
 #ifdef ENABLE_APP_CONTACTS
 
-extern lv_obj_t *ui_contactScreen;
 
 LV_IMG_DECLARE(ui_img_contact_list_png);   // assets/contact_list.png
 LV_IMG_DECLARE(ui_img_contact_png);   // assets/contact.png
 LV_IMG_DECLARE(ui_img_sos_contact_png);   // assets/sos_contact.png
 
+void ui_contactScreen_screen_init();
+void ui_app_load(lv_obj_t **screen, void (*screen_init)(void));
+    void ui_app_exit(void);
+    
+    void onScroll(lv_event_t *e);
+
 #endif
 
-    void ui_contactScreen_screen_init(void (*callback)(const char *, const lv_image_dsc_t *, lv_obj_t **));
+    void contacts_app_launched();
 
     void clearContactList();
     void addContact(const char* name, const char *number, bool sos);
     void setNoContacts();
 
-    void ui_gameExit(void);
     
-    void onScroll(lv_event_t *e);
 
 #ifdef __cplusplus
 } /*extern "C"*/

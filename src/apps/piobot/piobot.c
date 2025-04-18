@@ -8,7 +8,10 @@
 
 #include "piobot.h"
 
-lv_obj_t *ui_pioScreen;
+
+
+REGISTER_APP("PIO Bot", &ui_img_pio_logo_png, ui_pioScreen, ui_pioScreen_screen_init);
+
 lv_obj_t *ui_pioPanel;
 lv_obj_t *ui_pioEarL;
 lv_obj_t *ui_pioEarR;
@@ -107,11 +110,14 @@ void ui_event_pioScreen(lv_event_t *e)
         look(0, 0, 5);
         move(0, 0);
         stop_pio_animation();
+
+        lv_obj_delete(ui_pioScreen);
+        ui_pioScreen = NULL;
     }
 
     if (event_code == LV_EVENT_GESTURE && lv_indev_get_gesture_dir(lv_indev_get_act()) == LV_DIR_RIGHT)
     {
-        ui_gameExit();
+        ui_app_exit();
     }
 
 
@@ -167,7 +173,7 @@ void ui_event_eye_touched(lv_event_t *e)
 
 }
 
-void ui_pioScreen_screen_init(void (*callback)(const char *, const lv_image_dsc_t *, lv_obj_t **))
+void ui_pioScreen_screen_init()
 {
 
     ui_pioScreen = lv_obj_create(NULL);
@@ -266,7 +272,6 @@ void ui_pioScreen_screen_init(void (*callback)(const char *, const lv_image_dsc_
     // lv_obj_add_event_cb(ui_pioEyeL, ui_event_eye_touched, LV_EVENT_CLICKED | LV_EVENT_PRESSED | LV_EVENT_RELEASED, NULL);
     // lv_obj_add_event_cb(ui_pioEyeR, ui_event_eye_touched, LV_EVENT_CLICKED | LV_EVENT_PRESSED | LV_EVENT_RELEASED, NULL);
 
-    callback("PIO Bot", &ui_img_pio_logo_png, &ui_pioScreen);
 }
 
 void blink(lv_obj_t *eye, int end)

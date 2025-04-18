@@ -24,14 +24,9 @@ extern "C"
 #include "lvgl.h"
 
 #include "ui_events.h"
+#include "../common/app_manager.h"
+#include "../common/generated_features.h"
 
-#include "games/racing/racing.h"
-#include "games/simon/simon.h"
-#include "apps/qmi8658c/qmi8658c.h"
-#include "apps/navigation/navigation.h"
-#include "apps/contacts/contacts.h"
-#include "apps/piobot/piobot.h"
-#include "apps/attitude/attitude.h"
 
     extern const char *ui_info_text;
     void pulseCall_Animation(lv_obj_t *TargetObject, int delay);
@@ -269,6 +264,7 @@ extern "C"
     extern Face faces[MAX_FACES];
     extern Face games[MAX_GAMES];
 
+    void registerGame_cb(const char *name, const lv_image_dsc_t *icon, lv_obj_t **game);
 
     void registerWatchface_cb(const char *name, const lv_image_dsc_t *preview, lv_obj_t **watchface, lv_obj_t **seconds);
     void ui_update_watchfaces(int second, int minute, int hour, bool mode, bool am, int day, int month, int year, int weekday,
@@ -291,6 +287,9 @@ extern "C"
     void addListBack(lv_event_cb_t event_cb);
 
     void addFaceList(lv_obj_t *parent, Face face);
+
+    void timerEnded(int x);
+    void simonTone(int type, int pitch);
 
     // LV_IMG_DECLARE(ui_img_753022056);      // assets\night-sky.png
     LV_IMG_DECLARE(ui_img_602195540);  // assets\dy-6.png

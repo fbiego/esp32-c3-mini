@@ -16,10 +16,10 @@ extern "C"
 
 #include "lvgl.h"
 #include "app_hal.h"
+#include "../../common/app_manager.h"
 
 #include "indev/lv_indev_private.h"
 
-    extern lv_obj_t *ui_pioScreen;
 
     LV_IMG_DECLARE(ui_img_pio_logo_png);  // assets/pio_logo.png
     LV_IMG_DECLARE(ui_img_pio_ear_l_png); // assets/pio_ear_l.png
@@ -28,7 +28,7 @@ extern "C"
     LV_IMG_DECLARE(ui_img_pio_eye_l_png); // assets/pio_eye_l.png
     LV_IMG_DECLARE(ui_img_pio_eye_r_png); // assets/pio_eye_r.png
 
-    void ui_pioScreen_screen_init(void (*callback)(const char *, const lv_image_dsc_t *, lv_obj_t **));
+    void ui_pioScreen_screen_init();
     void ui_event_pioScreen(lv_event_t *e);
 
     void openEyes(int level);
@@ -45,7 +45,8 @@ extern "C"
 
     void showError(const char *title, const char *message);
 
-    void ui_gameExit(void);
+    void ui_app_load(lv_obj_t **screen, void (*screen_init)(void));
+    void ui_app_exit(void);
 
     void onGameOpened(void);
     void onGameClosed(void);

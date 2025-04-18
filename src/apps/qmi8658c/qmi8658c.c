@@ -8,7 +8,9 @@
 #include "qmi8658c.h"
 
 #ifdef ENABLE_APP_QMI8658C
-lv_obj_t *ui_imuScreen;
+
+REGISTER_APP("QMI8658C", &ui_img_gyro_l_png, ui_imuScreen, ui_imuScreen_screen_init);
+
 lv_obj_t *ui_imuPanel;
 lv_obj_t *ui_imuTitle;
 lv_obj_t *ui_imuInfo;
@@ -104,7 +106,7 @@ void ui_event_imuScreen(lv_event_t *e)
 
     if (event_code == LV_EVENT_GESTURE && lv_indev_get_gesture_dir(lv_indev_get_act()) == LV_DIR_RIGHT)
     {
-        ui_gameExit();
+        ui_app_exit();
     }
 }
 
@@ -117,11 +119,9 @@ void ui_event_imuScreen(lv_event_t *e)
 //     }
 // }
 
-#endif
 
-void ui_imuScreen_screen_init(void (*callback)(const char *, const lv_image_dsc_t *, lv_obj_t **))
+void ui_imuScreen_screen_init()
 {
-#ifdef ENABLE_APP_QMI8658C
     ui_imuScreen = lv_obj_create(NULL);
     lv_obj_clear_flag(ui_imuScreen, LV_OBJ_FLAG_SCROLLABLE); /// Flags
     lv_obj_set_style_bg_color(ui_imuScreen, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -281,14 +281,19 @@ void ui_imuScreen_screen_init(void (*callback)(const char *, const lv_image_dsc_
     lv_obj_add_event_cb(ui_imuScreen, ui_event_imuScreen, LV_EVENT_ALL, NULL);
     // lv_obj_add_event_cb(ui_rtwSwitch, ui_event_rtwSwitch, LV_EVENT_ALL, NULL);
 
-    callback("QMI8658C", &ui_img_gyro_l_png, &ui_imuScreen);
+
+}
 
 #endif
-}
+
 
 void ui_imu_set_info(bool status, uint8_t id, uint8_t rev)
 {
 #ifdef ENABLE_APP_QMI8658C
+    if (ui_imuScreen == NULL)
+    {
+        return;
+    }
     if (status)
     {
         lv_label_set_text_fmt(ui_imuInfo, "ID: 0x%02X\nRevision: 0x%02X", id, rev);
@@ -305,6 +310,10 @@ void ui_imu_set_info(bool status, uint8_t id, uint8_t rev)
 void ui_imu_update_acc(float x, float y, float z)
 {
 #ifdef ENABLE_APP_QMI8658C
+    if (ui_imuScreen == NULL)
+    {
+        return;
+    }
     lv_label_set_text_fmt(ui_accXText, "X: %.3f", x);
     lv_label_set_text_fmt(ui_accYText, "Y: %.3f", y);
     lv_label_set_text_fmt(ui_accZText, "Z: %.3f", z);
@@ -318,6 +327,10 @@ void ui_imu_update_acc(float x, float y, float z)
 void ui_imu_update_gyro(float x, float y, float z)
 {
 #ifdef ENABLE_APP_QMI8658C
+    if (ui_imuScreen == NULL)
+    {
+        return;
+    }
     lv_label_set_text_fmt(ui_gyroXText, "X: %.3f", x);
     lv_label_set_text_fmt(ui_gyroYText, "Y: %.3f", y);
     lv_label_set_text_fmt(ui_gyroZText, "Z: %.3f", z);
@@ -331,6 +344,10 @@ void ui_imu_update_gyro(float x, float y, float z)
 void ui_imu_update_temp(float t)
 {
 #ifdef ENABLE_APP_QMI8658C
+    if (ui_imuScreen == NULL)
+    {
+        return;
+    }
     lv_label_set_text_fmt(ui_tempLabel, "Temp: %.2f°C", t);
 #endif
 }

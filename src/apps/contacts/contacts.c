@@ -9,7 +9,8 @@
 
 #ifdef ENABLE_APP_CONTACTS
 
-lv_obj_t *ui_contactScreen;
+REGISTER_APP("Contacts", &ui_img_contact_list_png, ui_contactScreen, ui_contactScreen_screen_init);
+
 lv_obj_t *ui_contactList;
 
 void ui_event_contactScreen(lv_event_t *e)
@@ -20,21 +21,21 @@ void ui_event_contactScreen(lv_event_t *e)
     {
         lv_obj_scroll_by(ui_contactList, 0, -1, LV_ANIM_ON);
     }
-    // if (event_code == LV_EVENT_SCREEN_LOADED)
-    // {
-    //     onGameOpened();
-    // }
-    // if (event_code == LV_EVENT_SCREEN_UNLOAD_START)
-    // {
-    // }
-    // if (event_code == LV_EVENT_SCREEN_UNLOADED)
-    // {
-    //     onGameClosed();
-    // }
+    if (event_code == LV_EVENT_SCREEN_LOADED)
+    {
+        contacts_app_launched();
+    }
+    if (event_code == LV_EVENT_SCREEN_UNLOAD_START)
+    {
+    }
+    if (event_code == LV_EVENT_SCREEN_UNLOADED)
+    {
+        
+    }
 
     if (event_code == LV_EVENT_GESTURE && lv_indev_get_gesture_dir(lv_indev_get_act()) == LV_DIR_RIGHT)
     {
-        ui_gameExit();
+        ui_app_exit();
     }
 }
 #endif
@@ -42,6 +43,10 @@ void ui_event_contactScreen(lv_event_t *e)
 void clearContactList()
 {
 #ifdef ENABLE_APP_CONTACTS
+    if (!ui_contactScreen)
+    {
+        return;
+    }
     lv_obj_clean(ui_contactList);
 #endif
 }
@@ -49,6 +54,10 @@ void clearContactList()
 void addContact(const char *name, const char *number, bool sos)
 {
 #ifdef ENABLE_APP_CONTACTS
+    if (!ui_contactScreen)
+    {
+        return;
+    }
     lv_obj_t *ui_contactPanel = lv_obj_create(ui_contactList);
     lv_obj_set_width(ui_contactPanel, 200);
     lv_obj_set_height(ui_contactPanel, 47);
@@ -99,6 +108,10 @@ void addContact(const char *name, const char *number, bool sos)
 void setNoContacts()
 {
 #ifdef ENABLE_APP_CONTACTS
+    if (!ui_contactScreen)
+    {
+        return;
+    }
     lv_obj_clean(ui_contactList);
     lv_obj_t *info = lv_label_create(ui_contactList);
     lv_obj_set_width(info, 180);
@@ -110,7 +123,7 @@ void setNoContacts()
 #endif
 }
 
-void ui_contactScreen_screen_init(void (*callback)(const char *, const lv_image_dsc_t *, lv_obj_t **))
+void ui_contactScreen_screen_init()
 {
 
 #ifdef ENABLE_APP_CONTACTS
@@ -142,7 +155,6 @@ void ui_contactScreen_screen_init(void (*callback)(const char *, const lv_image_
 
     setNoContacts();
 
-    callback("Contacts", &ui_img_contact_list_png, &ui_contactScreen);
 
 #endif
 }

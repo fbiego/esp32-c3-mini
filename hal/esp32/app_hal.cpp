@@ -30,7 +30,6 @@
 
 */
 
-
 #include "Arduino.h"
 #include <ChronosESP32.h>
 #include <Timber.h>
@@ -39,7 +38,7 @@
 #include <Wire.h>
 #include "app_hal.h"
 
-#include "tone.h"
+#include "feedback.h"
 
 #include <lvgl.h>
 #include "ui/ui.h"
@@ -53,7 +52,6 @@
 
 #include "FS.h"
 #include "FFat.h"
-
 
 #ifdef M5_STACK_DIAL
 #include "M5Dial.h"
@@ -169,8 +167,6 @@ void my_disp_flush(lv_display_t *display, const lv_area_t *area, unsigned char *
   uint32_t h = lv_area_get_height(area);
   lv_draw_sw_rgb565_swap(data, w * h);
 
-  
-
   if (tft.getStartCount() == 0)
   {
     tft.endWrite();
@@ -263,13 +259,13 @@ void set_pin_io(uint8_t pin_number, bool value)
     Wire.write((1 << pin_number) | rxdata); // set pin high
   Wire.endTransmission();
 
-  Wire.beginTransmission(PI4IO_I2C_ADDR);
-  Wire.write(0x05); // test register
-  Wire.endTransmission();
-  Wire.requestFrom(PI4IO_I2C_ADDR, 1);
-  rxdata = Wire.read();
-  Serial.print("after the change: ");
-  Serial.println(rxdata, HEX);
+  // Wire.beginTransmission(PI4IO_I2C_ADDR);
+  // Wire.write(0x05); // test register
+  // Wire.endTransmission();
+  // Wire.requestFrom(PI4IO_I2C_ADDR, 1);
+  // rxdata = Wire.read();
+  // Serial.print("after the change: ");
+  // Serial.println(rxdata, HEX);
 }
 #endif
 
@@ -314,27 +310,6 @@ bool wasError(const char *errorTopic = "")
   return false;
 }
 #endif
-
-void toneOut(int pitch, int duration)
-{ // pitch in Hz, duration in ms
-#if defined(BUZZER) && (BUZZER != -1)
-  int delayPeriod;
-  long cycles, i;
-
-  pinMode(BUZZER, OUTPUT);                        // turn on output pin
-  delayPeriod = (500000 / pitch) - 7;             // calc 1/2 period in us -7 for overhead
-  cycles = ((long)pitch * (long)duration) / 1000; // calc. number of cycles for loop
-
-  for (i = 0; i <= cycles; i++)
-  { // play note for duration ms
-    digitalWrite(BUZZER, HIGH);
-    delayMicroseconds(delayPeriod);
-    digitalWrite(BUZZER, LOW);
-    delayMicroseconds(delayPeriod - 1); // - 1 to make up for digitaWrite overhead
-  }
-  pinMode(BUZZER, INPUT); // shut off pin to avoid noise from other operations
-#endif
-}
 
 String heapUsage()
 {
@@ -510,9 +485,20 @@ void checkLocal(bool faces)
 
 void screenBrightness(uint8_t value)
 {
-  tft.setBrightness(value);
+
 #ifdef ELECROW_C3
   set_pin_io(2, value > 0); // ELECROW C3, no brightness control
+#else
+  tft.setBrightness(value);
+#endif
+}
+
+void vibratePin(bool state)
+{
+#ifdef ELECROW_C3
+  set_pin_io(0, state); // ELECROW C3, vibration pin
+#elif VIBRATION_PIN
+  digitalWrite(VIBRATION_PIN, state);
 #endif
 }
 
@@ -858,6 +844,35 @@ void addFaceList(lv_obj_t *parent, Face face)
   }
 }
 
+void timerEnded(int x)
+{
+  feedbackTone(tone_timer, 6, T_TIMER, 3);
+  feedbackVibrate(pattern, 4, true);
+
+  screenTimer.time = millis() + 50;
+  screenTimer.active = true;
+}
+
+void simonTone(int type, int pitch)
+{
+  switch (type)
+  {
+  case 0:
+    feedbackTone(tone_simonsays_intro, 4, T_USER);
+    break;
+  case 1:
+    feedbackTone(tone_simonsays_gameover, 4, T_USER);
+    feedbackVibrate(v_notif, 2, true);
+    break;
+  case 2:
+  {
+    Note note[] = {pitch, 200};
+    feedbackTone(note, 1, T_USER);
+  }
+  break;
+  }
+}
+
 void connectionCallback(bool state)
 {
   Timber.d(state ? "Connected" : "Disconnected");
@@ -875,25 +890,28 @@ void connectionCallback(bool state)
 void ringerCallback(String caller, bool state)
 {
   lv_disp_t *display = lv_disp_get_default();
-  lv_obj_t *actScr = lv_disp_get_scr_act(display);
+  lv_obj_t *actScr = lv_disp_get_screen_active(display);
 
   if (state)
   {
+    feedbackTone(tone_call, 8, T_CALLS, 3);
+    feedbackVibrate(pattern, 4, true);
     screenTimer.time = millis() + 50;
 
     lastActScr = actScr;
     Serial.print("Ringer: Incoming call from ");
     Serial.println(caller);
     lv_label_set_text(ui_callName, caller.c_str());
-    lv_scr_load_anim(ui_callScreen, LV_SCR_LOAD_ANIM_FADE_IN, 500, 0, false);
+    lv_screen_load_anim(ui_callScreen, LV_SCR_LOAD_ANIM_FADE_IN, 500, 0, false);
   }
   else
   {
+    feedbackTone(tone_off, 1, T_USER, true);
     Serial.println("Ringer dismissed");
     // load last active screen
     if (actScr == ui_callScreen && lastActScr != nullptr)
     {
-      lv_scr_load_anim(lastActScr, LV_SCR_LOAD_ANIM_FADE_OUT, 500, 0, false);
+      lv_screen_load_anim(lastActScr, LV_SCR_LOAD_ANIM_FADE_OUT, 500, 0, false);
     }
   }
   screenTimer.active = true;
@@ -905,6 +923,8 @@ void notificationCallback(Notification notification)
   Timber.d(notification.message);
   notificationsUpdate = true;
   // onNotificationsOpen(click);
+  feedbackTone(tone_notification, 3, T_NOTIFICATION, 2);
+  feedbackVibrate(v_notif, 2, true);
   showAlert();
 }
 
@@ -925,6 +945,11 @@ void configCallback(Config config, uint32_t a, uint32_t b)
       hasUpdatedSec = true;
       updateSeconds = true;
     }
+
+    break;
+  case CF_FIND:
+    feedbackTone(tone_alarm, 7, T_TIMER);
+    feedbackVibrate(pattern, 4, true);
 
     break;
   case CF_RST:
@@ -1201,6 +1226,7 @@ void onBrightnessChange(lv_event_t *e)
 
 void onFaceSelected(lv_event_t *e)
 {
+  feedbackVibrate(v_notif, 2, true);
   int index = (int)lv_event_get_user_data(e);
   prefs.putInt("watchface", index);
 }
@@ -1208,6 +1234,7 @@ void onFaceSelected(lv_event_t *e)
 void onCustomFaceSelected(int pathIndex)
 {
 #ifdef ENABLE_CUSTOM_FACE
+  feedbackVibrate(v_notif, 2, true);
 
   if (pathIndex < 0)
   {
@@ -1366,22 +1393,25 @@ void onGameOpened()
 {
   gameActive = true;
 
+#ifdef ENABLE_GAME_TASK
   if (gameHandle == NULL)
   {
     // create task to run the game loop
     xTaskCreate(gameLoop, "Game Task", 8192, NULL, 1, &gameHandle);
   }
+#endif
 }
 
 void onGameClosed()
 {
   gameActive = false;
-
+#ifdef ENABLE_GAME_TASK
   if (gameHandle != NULL)
   {
     vTaskDelete(gameHandle);
     gameHandle = NULL;
   }
+#endif
   screenTimer.active = true;
 }
 
@@ -1556,6 +1586,28 @@ void imu_close()
 #endif
 }
 
+void contacts_app_launched()
+{
+  clearContactList();
+  int n = watch.getContactCount();
+  int s = watch.getSOSContactIndex();
+  int i;
+  for (i = 0;i < n; i++)
+  {
+    Contact cn = watch.getContact(i);
+    addContact(cn.name.c_str(), cn.number.c_str(), s == i);
+  }
+  if (i == 0)
+  {
+    setNoContacts();
+  }
+}
+
+void calendar_app_launched(void)
+{
+  calendar_set_today(watch.getYear(), watch.getMonth() + 1, watch.getDay());
+}
+
 void logCallback(Level level, unsigned long time, String message)
 {
   Serial.print(message);
@@ -1620,6 +1672,7 @@ void hal_setup()
   Wire.begin(4, 5);
   init_IO_extender();
   delay(100);
+  set_pin_io(0, false);
   set_pin_io(2, true);
   set_pin_io(3, true);
   set_pin_io(4, true);
@@ -1637,11 +1690,12 @@ void hal_setup()
   tft.setRotation(rt);
   loadSplash();
 
-  toneOut(TONE_EN * 2, 170);
-  toneOut(TONE_FS * 2, 170);
-  toneOut(TONE_GN * 2, 170);
+  startToneSystem();
+  startVibrationSystem();
 
-  Serial.println(heapUsage());
+  feedbackTone(tone_startup, 3, T_SYSTEM);
+
+  feedbackVibrate(pattern, 4);
 
   lv_init();
 
@@ -1663,8 +1717,6 @@ void hal_setup()
 
   ui_init();
 
-  Serial.println(heapUsage());
-
   bool fsState = setupFS();
   if (fsState)
   {
@@ -1678,7 +1730,6 @@ void hal_setup()
     Serial.println("Setup FS failed");
     // showError(F_NAME, "Failed to mount the partition");
   }
-  Serial.println(heapUsage());
 
   int wf = prefs.getInt("watchface", 0);
 #ifdef ENABLE_CUSTOM_FACE
@@ -1808,10 +1859,11 @@ void hal_setup()
 
   setTimeout(tm);
 
-  // if (!fsState){
-  //   showError(F_NAME, "Failed to mount the partition");
-  // }
-
+#ifdef ENABLE_CUSTOM_FACE
+  if (!fsState){
+    showError(F_NAME, "Failed to mount the partition");
+  }
+#endif
   if (lv_fs_is_ready('S'))
   {
     Serial.println("Drive S is ready");
@@ -1863,6 +1915,8 @@ void hal_setup()
   lv_label_set_text(info, "No notifications available. Connect Chronos app to receive phone notifications");
 
   ui_setup();
+
+  Serial.println(heapUsage());
 
   Timber.i("Setup done");
   Timber.i(about);
@@ -1924,7 +1978,7 @@ void hal_loop()
         nav.distance = "";
         navIcCRC = 0xFFFFFFFF;
       }
-      navIconState(nav.active && nav.hasIcon);
+      
 
       if (!nav.isNavigation)
       {
@@ -1933,22 +1987,27 @@ void hal_loop()
       }
 
       String navText = nav.eta + "\n" + nav.duration + " " + nav.distance;
-      navigateInfo(navText.c_str(), nav.title.c_str(), nav.directions.c_str());
-
+      
 #ifdef ENABLE_APP_NAVIGATION
-      if (actScr != ui_navScreen && nav.active && navSwitch)
+      if (actScr != get_nav_screen() && nav.active && navSwitch)
       {
         lastActScr = actScr;
-        lv_scr_load_anim(ui_navScreen, LV_SCR_LOAD_ANIM_FADE_IN, 500, 0, false);
+        if (!get_nav_screen()){
+          ui_navScreen_screen_init();
+        }
+        lv_screen_load_anim(get_nav_screen(), LV_SCR_LOAD_ANIM_FADE_IN, 500, 0, false);
         gameActive = true;
         screenTimer.active = true;
       }
-      if (actScr == ui_navScreen && !nav.active && navSwitch && lastActScr != nullptr)
+      if (actScr == get_nav_screen() && !nav.active && navSwitch && lastActScr != nullptr)
       {
         screenTimer.active = true;
-        lv_scr_load_anim(lastActScr, LV_SCR_LOAD_ANIM_FADE_OUT, 500, 0, false);
+        lv_screen_load_anim(lastActScr, LV_SCR_LOAD_ANIM_FADE_OUT, 500, 0, false);
       }
 #endif
+      navIconState(nav.active && nav.hasIcon);
+      navigateInfo(navText.c_str(), nav.title.c_str(), nav.directions.c_str());
+
     }
     if (navIcChanged)
     {
