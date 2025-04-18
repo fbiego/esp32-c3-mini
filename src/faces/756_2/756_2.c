@@ -128,7 +128,7 @@ const lv_img_dsc_t *face_756_2_dial_img_20_105728_group[] = {
 void init_face_756_2(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_t **, lv_obj_t **)){
 #ifdef ENABLE_FACE_756_2
     face_756_2 = lv_obj_create(NULL);
-    lv_obj_clear_flag(face_756_2, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_remove_flag(face_756_2, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_style_bg_color(face_756_2, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(face_756_2, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(face_756_2, 0, LV_PART_MAIN| LV_STATE_DEFAULT);
@@ -140,167 +140,167 @@ void init_face_756_2(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_
     lv_obj_add_event_cb(face_756_2, onFaceEvent, LV_EVENT_ALL, NULL);
 
     
-    face_756_2_0_424 = lv_img_create(face_756_2);
-    lv_img_set_src(face_756_2_0_424, &face_756_2_dial_img_0_424_0);
+    face_756_2_0_424 = lv_image_create(face_756_2);
+    lv_image_set_src(face_756_2_0_424, &face_756_2_dial_img_0_424_0);
     lv_obj_set_width(face_756_2_0_424, LV_SIZE_CONTENT);
     lv_obj_set_height(face_756_2_0_424, LV_SIZE_CONTENT);
     lv_obj_set_x(face_756_2_0_424, 14);
     lv_obj_set_y(face_756_2_0_424, 160);
     lv_obj_add_flag(face_756_2_0_424, LV_OBJ_FLAG_ADV_HITTEST );
-    lv_obj_clear_flag(face_756_2_0_424, LV_OBJ_FLAG_SCROLLABLE );
+    lv_obj_remove_flag(face_756_2_0_424, LV_OBJ_FLAG_SCROLLABLE );
 
-    face_756_2_2_15014 = lv_img_create(face_756_2);
-    lv_img_set_src(face_756_2_2_15014, &face_756_2_dial_img_2_15014_0);
+    face_756_2_2_15014 = lv_image_create(face_756_2);
+    lv_image_set_src(face_756_2_2_15014, &face_756_2_dial_img_2_15014_0);
     lv_obj_set_width(face_756_2_2_15014, LV_SIZE_CONTENT);
     lv_obj_set_height(face_756_2_2_15014, LV_SIZE_CONTENT);
     lv_obj_set_x(face_756_2_2_15014, 115);
     lv_obj_set_y(face_756_2_2_15014, 17);
     lv_obj_add_flag(face_756_2_2_15014, LV_OBJ_FLAG_ADV_HITTEST );
-    lv_obj_clear_flag(face_756_2_2_15014, LV_OBJ_FLAG_SCROLLABLE );
+    lv_obj_remove_flag(face_756_2_2_15014, LV_OBJ_FLAG_SCROLLABLE );
 
-    face_756_2_3_18734 = lv_img_create(face_756_2);
-    lv_img_set_src(face_756_2_3_18734, &face_756_2_dial_img_3_18734_0);
+    face_756_2_3_18734 = lv_image_create(face_756_2);
+    lv_image_set_src(face_756_2_3_18734, &face_756_2_dial_img_3_18734_0);
     lv_obj_set_width(face_756_2_3_18734, LV_SIZE_CONTENT);
     lv_obj_set_height(face_756_2_3_18734, LV_SIZE_CONTENT);
     lv_obj_set_x(face_756_2_3_18734, 65);
     lv_obj_set_y(face_756_2_3_18734, 18);
     lv_obj_add_flag(face_756_2_3_18734, LV_OBJ_FLAG_ADV_HITTEST );
-    lv_obj_clear_flag(face_756_2_3_18734, LV_OBJ_FLAG_SCROLLABLE );
+    lv_obj_remove_flag(face_756_2_3_18734, LV_OBJ_FLAG_SCROLLABLE );
 
-    face_756_2_5_22382 = lv_img_create(face_756_2);
-    lv_img_set_src(face_756_2_5_22382, &face_756_2_dial_img_5_22382_0);
+    face_756_2_5_22382 = lv_image_create(face_756_2);
+    lv_image_set_src(face_756_2_5_22382, &face_756_2_dial_img_5_22382_0);
     lv_obj_set_width(face_756_2_5_22382, LV_SIZE_CONTENT);
     lv_obj_set_height(face_756_2_5_22382, LV_SIZE_CONTENT);
     lv_obj_set_x(face_756_2_5_22382, 185);
     lv_obj_set_y(face_756_2_5_22382, 55);
     lv_obj_add_flag(face_756_2_5_22382, LV_OBJ_FLAG_ADV_HITTEST );
-    lv_obj_clear_flag(face_756_2_5_22382, LV_OBJ_FLAG_SCROLLABLE );
+    lv_obj_remove_flag(face_756_2_5_22382, LV_OBJ_FLAG_SCROLLABLE );
 
-    face_756_2_6_25488 = lv_img_create(face_756_2);
-    lv_img_set_src(face_756_2_6_25488, &face_756_2_dial_img_6_25488_0);
+    face_756_2_6_25488 = lv_image_create(face_756_2);
+    lv_image_set_src(face_756_2_6_25488, &face_756_2_dial_img_6_25488_0);
     lv_obj_set_width(face_756_2_6_25488, LV_SIZE_CONTENT);
     lv_obj_set_height(face_756_2_6_25488, LV_SIZE_CONTENT);
     lv_obj_set_x(face_756_2_6_25488, 76);
     lv_obj_set_y(face_756_2_6_25488, 60);
     lv_obj_add_flag(face_756_2_6_25488, LV_OBJ_FLAG_ADV_HITTEST );
-    lv_obj_clear_flag(face_756_2_6_25488, LV_OBJ_FLAG_SCROLLABLE );
+    lv_obj_remove_flag(face_756_2_6_25488, LV_OBJ_FLAG_SCROLLABLE );
 
-    face_756_2_7_25488 = lv_img_create(face_756_2);
-    lv_img_set_src(face_756_2_7_25488, &face_756_2_dial_img_6_25488_0);
+    face_756_2_7_25488 = lv_image_create(face_756_2);
+    lv_image_set_src(face_756_2_7_25488, &face_756_2_dial_img_6_25488_0);
     lv_obj_set_width(face_756_2_7_25488, LV_SIZE_CONTENT);
     lv_obj_set_height(face_756_2_7_25488, LV_SIZE_CONTENT);
     lv_obj_set_x(face_756_2_7_25488, 7);
     lv_obj_set_y(face_756_2_7_25488, 60);
     lv_obj_add_flag(face_756_2_7_25488, LV_OBJ_FLAG_ADV_HITTEST );
-    lv_obj_clear_flag(face_756_2_7_25488, LV_OBJ_FLAG_SCROLLABLE );
+    lv_obj_remove_flag(face_756_2_7_25488, LV_OBJ_FLAG_SCROLLABLE );
 
-    face_756_2_8_81874 = lv_img_create(face_756_2);
-    lv_img_set_src(face_756_2_8_81874, &face_756_2_dial_img_8_81874_0);
+    face_756_2_8_81874 = lv_image_create(face_756_2);
+    lv_image_set_src(face_756_2_8_81874, &face_756_2_dial_img_8_81874_0);
     lv_obj_set_width(face_756_2_8_81874, LV_SIZE_CONTENT);
     lv_obj_set_height(face_756_2_8_81874, LV_SIZE_CONTENT);
     lv_obj_set_x(face_756_2_8_81874, 182);
     lv_obj_set_y(face_756_2_8_81874, 100);
     lv_obj_add_flag(face_756_2_8_81874, LV_OBJ_FLAG_ADV_HITTEST );
-    lv_obj_clear_flag(face_756_2_8_81874, LV_OBJ_FLAG_SCROLLABLE );
+    lv_obj_remove_flag(face_756_2_8_81874, LV_OBJ_FLAG_SCROLLABLE );
 
-    face_756_2_9_81874 = lv_img_create(face_756_2);
-    lv_img_set_src(face_756_2_9_81874, &face_756_2_dial_img_8_81874_0);
+    face_756_2_9_81874 = lv_image_create(face_756_2);
+    lv_image_set_src(face_756_2_9_81874, &face_756_2_dial_img_8_81874_0);
     lv_obj_set_width(face_756_2_9_81874, LV_SIZE_CONTENT);
     lv_obj_set_height(face_756_2_9_81874, LV_SIZE_CONTENT);
     lv_obj_set_x(face_756_2_9_81874, 141);
     lv_obj_set_y(face_756_2_9_81874, 100);
     lv_obj_add_flag(face_756_2_9_81874, LV_OBJ_FLAG_ADV_HITTEST );
-    lv_obj_clear_flag(face_756_2_9_81874, LV_OBJ_FLAG_SCROLLABLE );
+    lv_obj_remove_flag(face_756_2_9_81874, LV_OBJ_FLAG_SCROLLABLE );
 
-    face_756_2_10_22752 = lv_img_create(face_756_2);
-    lv_img_set_src(face_756_2_10_22752, &face_756_2_dial_img_10_22752_0);
+    face_756_2_10_22752 = lv_image_create(face_756_2);
+    lv_image_set_src(face_756_2_10_22752, &face_756_2_dial_img_10_22752_0);
     lv_obj_set_width(face_756_2_10_22752, LV_SIZE_CONTENT);
     lv_obj_set_height(face_756_2_10_22752, LV_SIZE_CONTENT);
     lv_obj_set_x(face_756_2_10_22752, 188);
     lv_obj_set_y(face_756_2_10_22752, 165);
     lv_obj_add_flag(face_756_2_10_22752, LV_OBJ_FLAG_ADV_HITTEST );
-    lv_obj_clear_flag(face_756_2_10_22752, LV_OBJ_FLAG_SCROLLABLE );
+    lv_obj_remove_flag(face_756_2_10_22752, LV_OBJ_FLAG_SCROLLABLE );
 
-    face_756_2_11_22752 = lv_img_create(face_756_2);
-    lv_img_set_src(face_756_2_11_22752, &face_756_2_dial_img_10_22752_0);
+    face_756_2_11_22752 = lv_image_create(face_756_2);
+    lv_image_set_src(face_756_2_11_22752, &face_756_2_dial_img_10_22752_0);
     lv_obj_set_width(face_756_2_11_22752, LV_SIZE_CONTENT);
     lv_obj_set_height(face_756_2_11_22752, LV_SIZE_CONTENT);
     lv_obj_set_x(face_756_2_11_22752, 174);
     lv_obj_set_y(face_756_2_11_22752, 165);
     lv_obj_add_flag(face_756_2_11_22752, LV_OBJ_FLAG_ADV_HITTEST );
-    lv_obj_clear_flag(face_756_2_11_22752, LV_OBJ_FLAG_SCROLLABLE );
+    lv_obj_remove_flag(face_756_2_11_22752, LV_OBJ_FLAG_SCROLLABLE );
 
-    face_756_2_12_22752 = lv_img_create(face_756_2);
-    lv_img_set_src(face_756_2_12_22752, &face_756_2_dial_img_10_22752_0);
+    face_756_2_12_22752 = lv_image_create(face_756_2);
+    lv_image_set_src(face_756_2_12_22752, &face_756_2_dial_img_10_22752_0);
     lv_obj_set_width(face_756_2_12_22752, LV_SIZE_CONTENT);
     lv_obj_set_height(face_756_2_12_22752, LV_SIZE_CONTENT);
     lv_obj_set_x(face_756_2_12_22752, 160);
     lv_obj_set_y(face_756_2_12_22752, 165);
     lv_obj_add_flag(face_756_2_12_22752, LV_OBJ_FLAG_ADV_HITTEST );
-    lv_obj_clear_flag(face_756_2_12_22752, LV_OBJ_FLAG_SCROLLABLE );
+    lv_obj_remove_flag(face_756_2_12_22752, LV_OBJ_FLAG_SCROLLABLE );
 
-    face_756_2_13_22752 = lv_img_create(face_756_2);
-    lv_img_set_src(face_756_2_13_22752, &face_756_2_dial_img_10_22752_0);
+    face_756_2_13_22752 = lv_image_create(face_756_2);
+    lv_image_set_src(face_756_2_13_22752, &face_756_2_dial_img_10_22752_0);
     lv_obj_set_width(face_756_2_13_22752, LV_SIZE_CONTENT);
     lv_obj_set_height(face_756_2_13_22752, LV_SIZE_CONTENT);
     lv_obj_set_x(face_756_2_13_22752, 112);
     lv_obj_set_y(face_756_2_13_22752, 196);
     lv_obj_add_flag(face_756_2_13_22752, LV_OBJ_FLAG_ADV_HITTEST );
-    lv_obj_clear_flag(face_756_2_13_22752, LV_OBJ_FLAG_SCROLLABLE );
+    lv_obj_remove_flag(face_756_2_13_22752, LV_OBJ_FLAG_SCROLLABLE );
 
-    face_756_2_14_22752 = lv_img_create(face_756_2);
-    lv_img_set_src(face_756_2_14_22752, &face_756_2_dial_img_10_22752_0);
+    face_756_2_14_22752 = lv_image_create(face_756_2);
+    lv_image_set_src(face_756_2_14_22752, &face_756_2_dial_img_10_22752_0);
     lv_obj_set_width(face_756_2_14_22752, LV_SIZE_CONTENT);
     lv_obj_set_height(face_756_2_14_22752, LV_SIZE_CONTENT);
     lv_obj_set_x(face_756_2_14_22752, 98);
     lv_obj_set_y(face_756_2_14_22752, 196);
     lv_obj_add_flag(face_756_2_14_22752, LV_OBJ_FLAG_ADV_HITTEST );
-    lv_obj_clear_flag(face_756_2_14_22752, LV_OBJ_FLAG_SCROLLABLE );
+    lv_obj_remove_flag(face_756_2_14_22752, LV_OBJ_FLAG_SCROLLABLE );
 
-    face_756_2_15_22752 = lv_img_create(face_756_2);
-    lv_img_set_src(face_756_2_15_22752, &face_756_2_dial_img_10_22752_0);
+    face_756_2_15_22752 = lv_image_create(face_756_2);
+    lv_image_set_src(face_756_2_15_22752, &face_756_2_dial_img_10_22752_0);
     lv_obj_set_width(face_756_2_15_22752, LV_SIZE_CONTENT);
     lv_obj_set_height(face_756_2_15_22752, LV_SIZE_CONTENT);
     lv_obj_set_x(face_756_2_15_22752, 84);
     lv_obj_set_y(face_756_2_15_22752, 196);
     lv_obj_add_flag(face_756_2_15_22752, LV_OBJ_FLAG_ADV_HITTEST );
-    lv_obj_clear_flag(face_756_2_15_22752, LV_OBJ_FLAG_SCROLLABLE );
+    lv_obj_remove_flag(face_756_2_15_22752, LV_OBJ_FLAG_SCROLLABLE );
 
-    face_756_2_16_22752 = lv_img_create(face_756_2);
-    lv_img_set_src(face_756_2_16_22752, &face_756_2_dial_img_10_22752_0);
+    face_756_2_16_22752 = lv_image_create(face_756_2);
+    lv_image_set_src(face_756_2_16_22752, &face_756_2_dial_img_10_22752_0);
     lv_obj_set_width(face_756_2_16_22752, LV_SIZE_CONTENT);
     lv_obj_set_height(face_756_2_16_22752, LV_SIZE_CONTENT);
     lv_obj_set_x(face_756_2_16_22752, 70);
     lv_obj_set_y(face_756_2_16_22752, 196);
     lv_obj_add_flag(face_756_2_16_22752, LV_OBJ_FLAG_ADV_HITTEST );
-    lv_obj_clear_flag(face_756_2_16_22752, LV_OBJ_FLAG_SCROLLABLE );
+    lv_obj_remove_flag(face_756_2_16_22752, LV_OBJ_FLAG_SCROLLABLE );
 
-    face_756_2_17_17160 = lv_img_create(face_756_2);
-    lv_img_set_src(face_756_2_17_17160, &face_756_2_dial_img_17_17160_0);
+    face_756_2_17_17160 = lv_image_create(face_756_2);
+    lv_image_set_src(face_756_2_17_17160, &face_756_2_dial_img_17_17160_0);
     lv_obj_set_width(face_756_2_17_17160, LV_SIZE_CONTENT);
     lv_obj_set_height(face_756_2_17_17160, LV_SIZE_CONTENT);
     lv_obj_set_x(face_756_2_17_17160, 98);
     lv_obj_set_y(face_756_2_17_17160, 160);
     lv_obj_add_flag(face_756_2_17_17160, LV_OBJ_FLAG_ADV_HITTEST );
-    lv_obj_clear_flag(face_756_2_17_17160, LV_OBJ_FLAG_SCROLLABLE );
+    lv_obj_remove_flag(face_756_2_17_17160, LV_OBJ_FLAG_SCROLLABLE );
 
-    face_756_2_18_17160 = lv_img_create(face_756_2);
-    lv_img_set_src(face_756_2_18_17160, &face_756_2_dial_img_17_17160_0);
+    face_756_2_18_17160 = lv_image_create(face_756_2);
+    lv_image_set_src(face_756_2_18_17160, &face_756_2_dial_img_17_17160_0);
     lv_obj_set_width(face_756_2_18_17160, LV_SIZE_CONTENT);
     lv_obj_set_height(face_756_2_18_17160, LV_SIZE_CONTENT);
     lv_obj_set_x(face_756_2_18_17160, 87);
     lv_obj_set_y(face_756_2_18_17160, 160);
     lv_obj_add_flag(face_756_2_18_17160, LV_OBJ_FLAG_ADV_HITTEST );
-    lv_obj_clear_flag(face_756_2_18_17160, LV_OBJ_FLAG_SCROLLABLE );
+    lv_obj_remove_flag(face_756_2_18_17160, LV_OBJ_FLAG_SCROLLABLE );
 
-    face_756_2_20_105728 = lv_img_create(face_756_2);
-    lv_img_set_src(face_756_2_20_105728, &face_756_2_dial_img_20_105728_0);
+    face_756_2_20_105728 = lv_image_create(face_756_2);
+    lv_image_set_src(face_756_2_20_105728, &face_756_2_dial_img_20_105728_0);
     lv_obj_set_width(face_756_2_20_105728, LV_SIZE_CONTENT);
     lv_obj_set_height(face_756_2_20_105728, LV_SIZE_CONTENT);
     lv_obj_set_x(face_756_2_20_105728, 41);
     lv_obj_set_y(face_756_2_20_105728, 160);
     lv_obj_add_flag(face_756_2_20_105728, LV_OBJ_FLAG_ADV_HITTEST );
-    lv_obj_clear_flag(face_756_2_20_105728, LV_OBJ_FLAG_SCROLLABLE );
+    lv_obj_remove_flag(face_756_2_20_105728, LV_OBJ_FLAG_SCROLLABLE );
 
 
     callback("Red", &face_756_2_dial_img_preview_0, &face_756_2, NULL);
@@ -319,16 +319,16 @@ void update_time_756_2(int second, int minute, int hour, bool mode, bool am, int
 	{
 		lv_obj_add_flag(face_756_2_2_15014, LV_OBJ_FLAG_HIDDEN);
 	} else {
-		lv_obj_clear_flag(face_756_2_2_15014, LV_OBJ_FLAG_HIDDEN);
+		lv_obj_remove_flag(face_756_2_2_15014, LV_OBJ_FLAG_HIDDEN);
 	}
-	lv_img_set_src(face_756_2_2_15014, face_756_2_dial_img_2_15014_group[(am ? 0 : 1) % 2]);
-	lv_img_set_src(face_756_2_6_25488, face_756_2_dial_img_6_25488_group[(hour / 1) % 10]);
-	lv_img_set_src(face_756_2_7_25488, face_756_2_dial_img_6_25488_group[(hour / 10) % 10]);
-	lv_img_set_src(face_756_2_8_81874, face_756_2_dial_img_8_81874_group[(minute / 1) % 10]);
-	lv_img_set_src(face_756_2_9_81874, face_756_2_dial_img_8_81874_group[(minute / 10) % 10]);
-	lv_img_set_src(face_756_2_17_17160, face_756_2_dial_img_17_17160_group[(day / 1) % 10]);
-	lv_img_set_src(face_756_2_18_17160, face_756_2_dial_img_17_17160_group[(day / 10) % 10]);
-	lv_img_set_src(face_756_2_20_105728, face_756_2_dial_img_20_105728_group[((weekday + 6) / 1) % 7]);
+	lv_image_set_src(face_756_2_2_15014, face_756_2_dial_img_2_15014_group[(am ? 0 : 1) % 2]);
+	lv_image_set_src(face_756_2_6_25488, face_756_2_dial_img_6_25488_group[(hour / 1) % 10]);
+	lv_image_set_src(face_756_2_7_25488, face_756_2_dial_img_6_25488_group[(hour / 10) % 10]);
+	lv_image_set_src(face_756_2_8_81874, face_756_2_dial_img_8_81874_group[(minute / 1) % 10]);
+	lv_image_set_src(face_756_2_9_81874, face_756_2_dial_img_8_81874_group[(minute / 10) % 10]);
+	lv_image_set_src(face_756_2_17_17160, face_756_2_dial_img_17_17160_group[(day / 1) % 10]);
+	lv_image_set_src(face_756_2_18_17160, face_756_2_dial_img_17_17160_group[(day / 10) % 10]);
+	lv_image_set_src(face_756_2_20_105728, face_756_2_dial_img_20_105728_group[((weekday + 6) / 1) % 7]);
 
 #endif
 }
@@ -350,8 +350,8 @@ void update_status_756_2(int battery, bool connection){
     {
         return;
     }
-	lv_img_set_src(face_756_2_3_18734, face_756_2_dial_img_3_18734_group[(battery / (100 / 6)) % 6]);
-	lv_img_set_src(face_756_2_5_22382, face_756_2_dial_img_connection[(connection ? 0 : 1) % 2]);
+	lv_image_set_src(face_756_2_3_18734, face_756_2_dial_img_3_18734_group[(battery / (100 / 6)) % 6]);
+	lv_image_set_src(face_756_2_5_22382, face_756_2_dial_img_connection[(connection ? 0 : 1) % 2]);
 
 #endif
 }
@@ -363,10 +363,10 @@ void update_activity_756_2(int steps, int distance, int kcal)
     {
         return;
     }
-	lv_img_set_src(face_756_2_13_22752, face_756_2_dial_img_10_22752_group[(steps / 1) % 10]);
-	lv_img_set_src(face_756_2_14_22752, face_756_2_dial_img_10_22752_group[(steps / 10) % 10]);
-	lv_img_set_src(face_756_2_15_22752, face_756_2_dial_img_10_22752_group[(steps / 100) % 10]);
-	lv_img_set_src(face_756_2_16_22752, face_756_2_dial_img_10_22752_group[(steps / 1000) % 10]);
+	lv_image_set_src(face_756_2_13_22752, face_756_2_dial_img_10_22752_group[(steps / 1) % 10]);
+	lv_image_set_src(face_756_2_14_22752, face_756_2_dial_img_10_22752_group[(steps / 10) % 10]);
+	lv_image_set_src(face_756_2_15_22752, face_756_2_dial_img_10_22752_group[(steps / 100) % 10]);
+	lv_image_set_src(face_756_2_16_22752, face_756_2_dial_img_10_22752_group[(steps / 1000) % 10]);
 
 #endif
 }
@@ -378,9 +378,9 @@ void update_health_756_2(int bpm, int oxygen)
     {
         return;
     }
-	lv_img_set_src(face_756_2_10_22752, face_756_2_dial_img_10_22752_group[(bpm / 1) % 10]);
-	lv_img_set_src(face_756_2_11_22752, face_756_2_dial_img_10_22752_group[(bpm / 10) % 10]);
-	lv_img_set_src(face_756_2_12_22752, face_756_2_dial_img_10_22752_group[(bpm / 100) % 10]);
+	lv_image_set_src(face_756_2_10_22752, face_756_2_dial_img_10_22752_group[(bpm / 1) % 10]);
+	lv_image_set_src(face_756_2_11_22752, face_756_2_dial_img_10_22752_group[(bpm / 10) % 10]);
+	lv_image_set_src(face_756_2_12_22752, face_756_2_dial_img_10_22752_group[(bpm / 100) % 10]);
 
 #endif
 }

@@ -28,7 +28,7 @@ lv_obj_t *face_radar_33_212563;
 void init_face_radar(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_t **, lv_obj_t **)){
 #ifdef ENABLE_FACE_RADAR
     face_radar = lv_obj_create(NULL);
-    lv_obj_clear_flag(face_radar, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_remove_flag(face_radar, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_style_bg_color(face_radar, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(face_radar, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(face_radar, 0, LV_PART_MAIN| LV_STATE_DEFAULT);
@@ -40,44 +40,44 @@ void init_face_radar(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_
     lv_obj_add_event_cb(face_radar, onFaceEvent, LV_EVENT_ALL, NULL);
 
     
-    face_radar_0_984 = lv_img_create(face_radar);
-    lv_img_set_src(face_radar_0_984, &face_radar_dial_img_0_984_0);
+    face_radar_0_984 = lv_image_create(face_radar);
+    lv_image_set_src(face_radar_0_984, &face_radar_dial_img_0_984_0);
     lv_obj_set_width(face_radar_0_984, LV_SIZE_CONTENT);
     lv_obj_set_height(face_radar_0_984, LV_SIZE_CONTENT);
     lv_obj_set_x(face_radar_0_984, 0);
     lv_obj_set_y(face_radar_0_984, 0);
     lv_obj_add_flag(face_radar_0_984, LV_OBJ_FLAG_ADV_HITTEST );
-    lv_obj_clear_flag(face_radar_0_984, LV_OBJ_FLAG_SCROLLABLE );
+    lv_obj_remove_flag(face_radar_0_984, LV_OBJ_FLAG_SCROLLABLE );
 
-    face_radar_1_58768 = lv_img_create(face_radar);
-    lv_img_set_src(face_radar_1_58768, &face_radar_dial_img_1_58768_0);
+    face_radar_1_58768 = lv_image_create(face_radar);
+    lv_image_set_src(face_radar_1_58768, &face_radar_dial_img_1_58768_0);
     lv_obj_set_width(face_radar_1_58768, LV_SIZE_CONTENT);
     lv_obj_set_height(face_radar_1_58768, LV_SIZE_CONTENT);
     lv_obj_set_x(face_radar_1_58768, 107);
     lv_obj_set_y(face_radar_1_58768, 45);
     lv_obj_add_flag(face_radar_1_58768, LV_OBJ_FLAG_ADV_HITTEST );
-    lv_obj_clear_flag(face_radar_1_58768, LV_OBJ_FLAG_SCROLLABLE );
-	lv_img_set_pivot(face_radar_1_58768, 13, 75);
+    lv_obj_remove_flag(face_radar_1_58768, LV_OBJ_FLAG_SCROLLABLE );
+	lv_image_set_pivot(face_radar_1_58768, 13, 75);
 
-    face_radar_17_119773 = lv_img_create(face_radar);
-    lv_img_set_src(face_radar_17_119773, &face_radar_dial_img_17_119773_0);
+    face_radar_17_119773 = lv_image_create(face_radar);
+    lv_image_set_src(face_radar_17_119773, &face_radar_dial_img_17_119773_0);
     lv_obj_set_width(face_radar_17_119773, LV_SIZE_CONTENT);
     lv_obj_set_height(face_radar_17_119773, LV_SIZE_CONTENT);
     lv_obj_set_x(face_radar_17_119773, 110);
     lv_obj_set_y(face_radar_17_119773, 10);
     lv_obj_add_flag(face_radar_17_119773, LV_OBJ_FLAG_ADV_HITTEST );
-    lv_obj_clear_flag(face_radar_17_119773, LV_OBJ_FLAG_SCROLLABLE );
-	lv_img_set_pivot(face_radar_17_119773, 10, 110);
+    lv_obj_remove_flag(face_radar_17_119773, LV_OBJ_FLAG_SCROLLABLE );
+	lv_image_set_pivot(face_radar_17_119773, 10, 110);
 
-    face_radar_33_212563 = lv_img_create(face_radar);
-    lv_img_set_src(face_radar_33_212563, &face_radar_dial_img_33_212563_0);
+    face_radar_33_212563 = lv_image_create(face_radar);
+    lv_image_set_src(face_radar_33_212563, &face_radar_dial_img_33_212563_0);
     lv_obj_set_width(face_radar_33_212563, LV_SIZE_CONTENT);
     lv_obj_set_height(face_radar_33_212563, LV_SIZE_CONTENT);
     lv_obj_set_x(face_radar_33_212563, 119);
     lv_obj_set_y(face_radar_33_212563, -1);
     lv_obj_add_flag(face_radar_33_212563, LV_OBJ_FLAG_ADV_HITTEST );
-    lv_obj_clear_flag(face_radar_33_212563, LV_OBJ_FLAG_SCROLLABLE );
-	lv_img_set_pivot(face_radar_33_212563, 1, 121);
+    lv_obj_remove_flag(face_radar_33_212563, LV_OBJ_FLAG_SCROLLABLE );
+	lv_image_set_pivot(face_radar_33_212563, 1, 121);
 
 
     callback("Radar", &face_radar_dial_img_preview_0, &face_radar, &face_radar_33_212563);
@@ -92,9 +92,9 @@ void update_time_radar(int second, int minute, int hour, bool mode, bool am, int
     {
         return;
     }
-	lv_img_set_angle(face_radar_1_58768, hour * 300 + (minute * 5) + (second * (5 / 60)));
-	lv_img_set_angle(face_radar_17_119773, (minute * 60) + second);
-	// lv_img_set_angle(face_radar_33_212563, second * 60);
+	lv_image_set_rotation(face_radar_1_58768, hour * 300 + (minute * 5) + (second * (5 / 60)));
+	lv_image_set_rotation(face_radar_17_119773, (minute * 60) + second);
+	// lv_image_set_rotation(face_radar_33_212563, second * 60);
 
 #endif
 }

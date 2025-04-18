@@ -115,14 +115,14 @@ void ui_event_pioScreen(lv_event_t *e)
         ui_pioScreen = NULL;
     }
 
-    if (event_code == LV_EVENT_GESTURE && lv_indev_get_gesture_dir(lv_indev_get_act()) == LV_DIR_RIGHT)
+    if (event_code == LV_EVENT_GESTURE && lv_indev_get_gesture_dir(lv_indev_active()) == LV_DIR_RIGHT)
     {
         ui_app_exit();
     }
 
 
-    lv_disp_t *display = lv_disp_get_default();
-    lv_obj_t *actScr = lv_disp_get_scr_act(display);
+    lv_disp_t *display = lv_display_get_default();
+    lv_obj_t *actScr = lv_display_get_screen_active(display);
 
     if (actScr != ui_pioScreen){
         return;

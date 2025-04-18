@@ -90,7 +90,7 @@ void ui_event_simonScreen(lv_event_t *e)
         lv_label_set_text(ui_simonInfo, "");
         lv_label_set_text(ui_simonScoreText, "0");
         lv_label_set_text_fmt(ui_simonScore, "%d", highScoreSimon);
-        lv_obj_clear_flag(ui_simonPanel, LV_OBJ_FLAG_HIDDEN); /// Flags
+        lv_obj_remove_flag(ui_simonPanel, LV_OBJ_FLAG_HIDDEN); /// Flags
 
         simonTone(0, 0);
     }
@@ -105,7 +105,7 @@ void ui_event_simonScreen(lv_event_t *e)
         ui_simonScreen = NULL;
     }
 
-    if (event_code == LV_EVENT_GESTURE && lv_indev_get_gesture_dir(lv_indev_get_act()) == LV_DIR_RIGHT)
+    if (event_code == LV_EVENT_GESTURE && lv_indev_get_gesture_dir(lv_indev_active()) == LV_DIR_RIGHT)
     {
         if (lv_obj_has_flag(ui_simonPanel, LV_OBJ_FLAG_HIDDEN))
         {
@@ -133,7 +133,7 @@ void ui_event_simonStart(lv_event_t *e)
 void remove_state_cb(lv_timer_t *timer)
 {
     lv_obj_t *panel = (lv_obj_t *)timer->user_data;
-    lv_obj_clear_state(panel, LV_STATE_PRESSED);
+    lv_obj_remove_state(panel, LV_STATE_PRESSED);
 
     play_sequence(NULL);
 }
@@ -174,7 +174,7 @@ void panel_event_handler(lv_event_t *e)
         lv_label_set_text(ui_simonLabel, levels[(int)((current_sequence_length - 1) / div)].title);
         lv_label_set_text(ui_simonInfo, levels[(int)((current_sequence_length - 1) / div)].message);
 
-        lv_obj_clear_flag(ui_simonPanel, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_remove_flag(ui_simonPanel, LV_OBJ_FLAG_HIDDEN);
         if (current_sequence_length - 1 > highScoreSimon)
         {
             highScoreSimon = current_sequence_length - 1;
@@ -203,7 +203,7 @@ void panel_event_handler(lv_event_t *e)
             lv_label_set_text(ui_simonLabel, levels[10].title);
             lv_label_set_text(ui_simonInfo, levels[10].message);
 
-            lv_obj_clear_flag(ui_simonPanel, LV_OBJ_FLAG_HIDDEN);
+            lv_obj_remove_flag(ui_simonPanel, LV_OBJ_FLAG_HIDDEN);
 
             savePrefInt("simon_high", highScoreSimon);
         }
@@ -212,7 +212,7 @@ void panel_event_handler(lv_event_t *e)
             // Proceed to the next round
             current_sequence_length++;
 
-            lv_obj_clear_flag(ui_simonOverPanel, LV_OBJ_FLAG_HIDDEN);
+            lv_obj_remove_flag(ui_simonOverPanel, LV_OBJ_FLAG_HIDDEN);
             lv_arc_set_value(ui_simonArc, 360);
             lv_obj_set_style_arc_color(ui_simonArc, lv_color_hex(0x50FF00), LV_PART_INDICATOR | LV_STATE_DEFAULT);
             lv_timer_t *next_round_timer = lv_timer_create(play_sequence, 1000, NULL); // Wait 1 second before the next round
@@ -245,7 +245,7 @@ void flash_panel(int panel_idx)
 /* Function to play the sequence */
 void play_sequence(lv_timer_t *timer)
 {
-    lv_obj_clear_flag(ui_simonOverPanel, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_remove_flag(ui_simonOverPanel, LV_OBJ_FLAG_HIDDEN);
     lv_arc_set_value(ui_simonArc, 360);
     lv_obj_set_style_arc_color(ui_simonArc, lv_color_hex(0xCCFFF9), LV_PART_INDICATOR | LV_STATE_DEFAULT);
 
@@ -292,7 +292,7 @@ void ui_simonScreen_screen_init()
 {
 
     ui_simonScreen = lv_obj_create(NULL);
-    lv_obj_clear_flag(ui_simonScreen, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+    lv_obj_remove_flag(ui_simonScreen, LV_OBJ_FLAG_SCROLLABLE); /// Flags
     lv_obj_set_style_bg_color(ui_simonScreen, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(ui_simonScreen, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
@@ -302,7 +302,7 @@ void ui_simonScreen_screen_init()
     lv_obj_set_align(ui_simonMainPanel, LV_ALIGN_CENTER);
     lv_obj_set_flex_flow(ui_simonMainPanel, LV_FLEX_FLOW_ROW_WRAP);
     lv_obj_set_flex_align(ui_simonMainPanel, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
-    lv_obj_clear_flag(ui_simonMainPanel, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+    lv_obj_remove_flag(ui_simonMainPanel, LV_OBJ_FLAG_SCROLLABLE); /// Flags
     lv_obj_set_style_radius(ui_simonMainPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(ui_simonMainPanel, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(ui_simonMainPanel, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -320,7 +320,7 @@ void ui_simonScreen_screen_init()
         lv_obj_set_width(panels[i], 120);
         lv_obj_set_height(panels[i], 120);
         lv_obj_set_align(panels[i], LV_ALIGN_CENTER);
-        lv_obj_clear_flag(panels[i], LV_OBJ_FLAG_SCROLLABLE); /// Flags
+        lv_obj_remove_flag(panels[i], LV_OBJ_FLAG_SCROLLABLE); /// Flags
         lv_obj_set_style_radius(panels[i], 10, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_bg_color(panels[i], lv_color_hex(panel_colors[i]), LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_bg_opa(panels[i], 150, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -342,7 +342,7 @@ void ui_simonScreen_screen_init()
     lv_obj_set_width(ui_simonScorePanel, 60);
     lv_obj_set_height(ui_simonScorePanel, 60);
     lv_obj_set_align(ui_simonScorePanel, LV_ALIGN_CENTER);
-    lv_obj_clear_flag(ui_simonScorePanel, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+    lv_obj_remove_flag(ui_simonScorePanel, LV_OBJ_FLAG_SCROLLABLE); /// Flags
     lv_obj_set_style_radius(ui_simonScorePanel, 30, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(ui_simonScorePanel, lv_color_hex(0x171717), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(ui_simonScorePanel, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -364,7 +364,7 @@ void ui_simonScreen_screen_init()
     lv_obj_set_width(ui_simonArc, 60);
     lv_obj_set_height(ui_simonArc, 60);
     lv_obj_set_align(ui_simonArc, LV_ALIGN_CENTER);
-    lv_obj_clear_flag(ui_simonArc, LV_OBJ_FLAG_CLICKABLE); /// Flags
+    lv_obj_remove_flag(ui_simonArc, LV_OBJ_FLAG_CLICKABLE); /// Flags
     lv_arc_set_range(ui_simonArc, 0, 360);
     lv_arc_set_value(ui_simonArc, 360);
     lv_arc_set_bg_angles(ui_simonArc, 0, 360);
@@ -384,7 +384,7 @@ void ui_simonScreen_screen_init()
     lv_obj_set_height(ui_simonOverPanel, 240);
     lv_obj_set_align(ui_simonOverPanel, LV_ALIGN_CENTER);
     lv_obj_add_flag(ui_simonOverPanel, LV_OBJ_FLAG_HIDDEN);       /// Flags
-    lv_obj_clear_flag(ui_simonOverPanel, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+    lv_obj_remove_flag(ui_simonOverPanel, LV_OBJ_FLAG_SCROLLABLE); /// Flags
     lv_obj_set_style_radius(ui_simonOverPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(ui_simonOverPanel, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(ui_simonOverPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -397,7 +397,7 @@ void ui_simonScreen_screen_init()
     lv_obj_set_flex_flow(ui_simonPanel, LV_FLEX_FLOW_COLUMN);
     lv_obj_set_flex_align(ui_simonPanel, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
     lv_obj_add_flag(ui_simonPanel, LV_OBJ_FLAG_HIDDEN);       /// Flags
-    lv_obj_clear_flag(ui_simonPanel, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+    lv_obj_remove_flag(ui_simonPanel, LV_OBJ_FLAG_SCROLLABLE); /// Flags
     lv_obj_set_style_radius(ui_simonPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(ui_simonPanel, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(ui_simonPanel, 230, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -446,12 +446,12 @@ void ui_simonScreen_screen_init()
     lv_obj_set_style_text_align(ui_simonInfo, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_font(ui_simonInfo, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    ui_simonStart = lv_btn_create(ui_simonPanel);
+    ui_simonStart = lv_button_create(ui_simonPanel);
     lv_obj_set_width(ui_simonStart, 100);
     lv_obj_set_height(ui_simonStart, 40);
     lv_obj_set_align(ui_simonStart, LV_ALIGN_CENTER);
     lv_obj_add_flag(ui_simonStart, LV_OBJ_FLAG_SCROLL_ON_FOCUS); /// Flags
-    lv_obj_clear_flag(ui_simonStart, LV_OBJ_FLAG_SCROLLABLE);    /// Flags
+    lv_obj_remove_flag(ui_simonStart, LV_OBJ_FLAG_SCROLLABLE);    /// Flags
     lv_obj_set_style_radius(ui_simonStart, 20, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_simonButtonText = lv_label_create(ui_simonStart);
@@ -460,12 +460,12 @@ void ui_simonScreen_screen_init()
     lv_obj_set_align(ui_simonButtonText, LV_ALIGN_CENTER);
     lv_label_set_text(ui_simonButtonText, "Start");
 
-    ui_exitSimon = lv_btn_create(ui_simonPanel);
+    ui_exitSimon = lv_button_create(ui_simonPanel);
     lv_obj_set_width(ui_exitSimon, 100);
     lv_obj_set_height(ui_exitSimon, 40);
     lv_obj_set_align(ui_exitSimon, LV_ALIGN_CENTER);
     lv_obj_add_flag(ui_exitSimon, LV_OBJ_FLAG_SCROLL_ON_FOCUS); /// Flags
-    lv_obj_clear_flag(ui_exitSimon, LV_OBJ_FLAG_SCROLLABLE);    /// Flags
+    lv_obj_remove_flag(ui_exitSimon, LV_OBJ_FLAG_SCROLLABLE);    /// Flags
     lv_obj_set_style_radius(ui_exitSimon, 20, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(ui_exitSimon, lv_color_hex(0xF30000), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(ui_exitSimon, 255, LV_PART_MAIN | LV_STATE_DEFAULT);

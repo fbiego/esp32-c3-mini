@@ -6,3 +6,4 @@
 .DS_Store
 prefs.txt
 **/convert.py
+scripts/api_migrate.py

@@ -17,41 +17,41 @@ void onClick(lv_event_t *e)
 {
     #ifdef ENABLE_FACE_ELECROW
 
-    lv_disp_t *display = lv_disp_get_default();
-    lv_obj_t *actScr = lv_disp_get_scr_act(display);
+    lv_disp_t *display = lv_display_get_default();
+    lv_obj_t *actScr = lv_display_get_screen_active(display);
     if (actScr != face_elecrow){
         return;
     }
 
     if (type){
-        lv_img_set_src(face_elecrow_bg, &ui_img_204151226);
+        lv_image_set_src(face_elecrow_bg, &ui_img_204151226);
 
-        lv_img_set_src(face_elecrow_second, &ui_img_1726273370);
+        lv_image_set_src(face_elecrow_second, &ui_img_1726273370);
         lv_obj_set_y(face_elecrow_second, -50);
-        lv_img_set_pivot(face_elecrow_second, 5, 120);
+        lv_image_set_pivot(face_elecrow_second, 5, 120);
 
-        lv_img_set_src(face_elecrow_minute, &ui_img_1304719198);
+        lv_image_set_src(face_elecrow_minute, &ui_img_1304719198);
         lv_obj_set_y(face_elecrow_minute, -48);
-        lv_img_set_pivot(face_elecrow_minute, 8, 101);
+        lv_image_set_pivot(face_elecrow_minute, 8, 101);
 
-        lv_img_set_src(face_elecrow_hour, &ui_img_1608590414);
+        lv_image_set_src(face_elecrow_hour, &ui_img_1608590414);
         lv_obj_set_y(face_elecrow_hour, -30);
-        lv_img_set_pivot(face_elecrow_hour, 7, 65);
+        lv_image_set_pivot(face_elecrow_hour, 7, 65);
     } else {
 
-        lv_img_set_src(face_elecrow_bg, &ui_img_1530809127);
+        lv_image_set_src(face_elecrow_bg, &ui_img_1530809127);
 
-        lv_img_set_src(face_elecrow_second, &ui_img_39728541);
+        lv_image_set_src(face_elecrow_second, &ui_img_39728541);
         lv_obj_set_y(face_elecrow_second, -33);
-        lv_img_set_pivot(face_elecrow_second, 4, 119);
+        lv_image_set_pivot(face_elecrow_second, 4, 119);
 
-        lv_img_set_src(face_elecrow_minute, &ui_img_327242551);
+        lv_image_set_src(face_elecrow_minute, &ui_img_327242551);
         lv_obj_set_y(face_elecrow_minute, -33);
-        lv_img_set_pivot(face_elecrow_minute, 3, 95);
+        lv_image_set_pivot(face_elecrow_minute, 3, 95);
 
-        lv_img_set_src(face_elecrow_hour, &ui_img_146052295);
+        lv_image_set_src(face_elecrow_hour, &ui_img_146052295);
         lv_obj_set_y(face_elecrow_hour, -36);
-        lv_img_set_pivot(face_elecrow_hour, 7, 76);
+        lv_image_set_pivot(face_elecrow_hour, 7, 76);
     }
 
     type = !type;
@@ -64,7 +64,7 @@ void init_face_elecrow(void (*callback)(const char *, const lv_img_dsc_t *, lv_o
 #ifdef ENABLE_FACE_ELECROW
 
     face_elecrow = lv_obj_create(NULL);
-    lv_obj_clear_flag(face_elecrow, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_remove_flag(face_elecrow, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_style_bg_color(face_elecrow, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(face_elecrow, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(face_elecrow, 0, LV_PART_MAIN| LV_STATE_DEFAULT);
@@ -76,16 +76,16 @@ void init_face_elecrow(void (*callback)(const char *, const lv_img_dsc_t *, lv_o
     lv_obj_add_event_cb(face_elecrow, onFaceEvent, LV_EVENT_ALL, NULL);
     
 
-    face_elecrow_bg = lv_img_create(face_elecrow);
-    lv_img_set_src(face_elecrow_bg, &ui_img_204151226);
+    face_elecrow_bg = lv_image_create(face_elecrow);
+    lv_image_set_src(face_elecrow_bg, &ui_img_204151226);
     lv_obj_set_width(face_elecrow_bg, lv_pct(100));
     lv_obj_set_height(face_elecrow_bg, lv_pct(100));
     lv_obj_set_align(face_elecrow_bg, LV_ALIGN_CENTER);
     lv_obj_add_flag(face_elecrow_bg, LV_OBJ_FLAG_ADV_HITTEST);     /// Flags
-    lv_obj_clear_flag(face_elecrow_bg, LV_OBJ_FLAG_SCROLLABLE);      /// Flags
+    lv_obj_remove_flag(face_elecrow_bg, LV_OBJ_FLAG_SCROLLABLE);      /// Flags
 
-    face_elecrow_logo = lv_img_create(face_elecrow);
-    lv_img_set_src(face_elecrow_logo, &ui_img_81598846);
+    face_elecrow_logo = lv_image_create(face_elecrow);
+    lv_image_set_src(face_elecrow_logo, &ui_img_81598846);
     lv_obj_set_width( face_elecrow_logo, 100);
     lv_obj_set_height( face_elecrow_logo, 20);
     lv_obj_set_x( face_elecrow_logo, 0 );
@@ -93,7 +93,7 @@ void init_face_elecrow(void (*callback)(const char *, const lv_img_dsc_t *, lv_o
     lv_obj_set_align( face_elecrow_logo, LV_ALIGN_CENTER );
     lv_obj_add_flag( face_elecrow_logo, LV_OBJ_FLAG_ADV_HITTEST );   /// Flags
     lv_obj_add_flag( face_elecrow_logo, LV_OBJ_FLAG_CLICKABLE );   /// Flags
-    lv_obj_clear_flag( face_elecrow_logo, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
+    lv_obj_remove_flag( face_elecrow_logo, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
     lv_obj_add_event_cb(face_elecrow_logo, onClick, LV_EVENT_CLICKED, NULL);
 
 
@@ -108,39 +108,39 @@ void init_face_elecrow(void (*callback)(const char *, const lv_img_dsc_t *, lv_o
     lv_obj_set_style_text_color(face_elecrow_am_pm, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT );
     lv_obj_set_style_text_opa(face_elecrow_am_pm, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
 
-    face_elecrow_hour = lv_img_create(face_elecrow);
-    lv_img_set_src(face_elecrow_hour, &ui_img_1608590414);
+    face_elecrow_hour = lv_image_create(face_elecrow);
+    lv_image_set_src(face_elecrow_hour, &ui_img_1608590414);
     lv_obj_set_width(face_elecrow_hour, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(face_elecrow_hour, LV_SIZE_CONTENT);    /// 1
     lv_obj_set_x(face_elecrow_hour, 0);
     lv_obj_set_y(face_elecrow_hour, -30);
     lv_obj_set_align(face_elecrow_hour, LV_ALIGN_CENTER);
     lv_obj_add_flag(face_elecrow_hour, LV_OBJ_FLAG_ADV_HITTEST);     /// Flags
-    lv_obj_clear_flag(face_elecrow_hour, LV_OBJ_FLAG_SCROLLABLE);      /// Flags
-    lv_img_set_pivot(face_elecrow_hour,7,65);//8, 64
+    lv_obj_remove_flag(face_elecrow_hour, LV_OBJ_FLAG_SCROLLABLE);      /// Flags
+    lv_image_set_pivot(face_elecrow_hour,7,65);//8, 64
 
-    face_elecrow_minute = lv_img_create(face_elecrow);
-    lv_img_set_src(face_elecrow_minute, &ui_img_1304719198);
+    face_elecrow_minute = lv_image_create(face_elecrow);
+    lv_image_set_src(face_elecrow_minute, &ui_img_1304719198);
     lv_obj_set_width(face_elecrow_minute, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(face_elecrow_minute, LV_SIZE_CONTENT);    /// 1
     lv_obj_set_x(face_elecrow_minute, 0);
     lv_obj_set_y(face_elecrow_minute, -48);//
     lv_obj_set_align(face_elecrow_minute, LV_ALIGN_CENTER);
     lv_obj_add_flag(face_elecrow_minute, LV_OBJ_FLAG_ADV_HITTEST);     /// Flags
-    lv_obj_clear_flag(face_elecrow_minute, LV_OBJ_FLAG_SCROLLABLE);      /// Flags
-    lv_img_set_pivot(face_elecrow_minute,8,101);//8, 100
+    lv_obj_remove_flag(face_elecrow_minute, LV_OBJ_FLAG_SCROLLABLE);      /// Flags
+    lv_image_set_pivot(face_elecrow_minute,8,101);//8, 100
 
 
-    face_elecrow_second = lv_img_create(face_elecrow);
-    lv_img_set_src(face_elecrow_second, &ui_img_1726273370);
+    face_elecrow_second = lv_image_create(face_elecrow);
+    lv_image_set_src(face_elecrow_second, &ui_img_1726273370);
     lv_obj_set_width(face_elecrow_second, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(face_elecrow_second, LV_SIZE_CONTENT);    /// 1
     lv_obj_set_x(face_elecrow_second, 0);
     lv_obj_set_y(face_elecrow_second, -50);
     lv_obj_set_align(face_elecrow_second, LV_ALIGN_CENTER);
     lv_obj_add_flag(face_elecrow_second, LV_OBJ_FLAG_ADV_HITTEST);     /// Flags
-    lv_obj_clear_flag(face_elecrow_second, LV_OBJ_FLAG_SCROLLABLE);      /// Flags
-    lv_img_set_pivot(face_elecrow_second, 5,120 );//119
+    lv_obj_remove_flag(face_elecrow_second, LV_OBJ_FLAG_SCROLLABLE);      /// Flags
+    lv_image_set_pivot(face_elecrow_second, 5,120 );//119
 
     callback("Elecrow", &ui_img_elecrow_png, &face_elecrow, &face_elecrow_second);
 
@@ -155,8 +155,8 @@ void update_time_elecrow(int second, int minute, int hour, bool mode, bool am, i
         return;
     }
 
-    lv_img_set_angle(face_elecrow_hour, hour * 300 + (minute * 5) + (second * (5 / 60)));
-	lv_img_set_angle(face_elecrow_minute, (minute * 60) + second);
+    lv_image_set_rotation(face_elecrow_hour, hour * 300 + (minute * 5) + (second * (5 / 60)));
+	lv_image_set_rotation(face_elecrow_minute, (minute * 60) + second);
     lv_label_set_text(face_elecrow_am_pm, am ? "AM" : "PM");
 
 #endif

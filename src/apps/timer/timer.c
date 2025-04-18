@@ -63,7 +63,7 @@ void ui_event_timerScreen(lv_event_t *e)
         onGameClosed();
     }
 
-    if (event_code == LV_EVENT_GESTURE && lv_indev_get_gesture_dir(lv_indev_get_act()) == LV_DIR_RIGHT)
+    if (event_code == LV_EVENT_GESTURE && lv_indev_get_gesture_dir(lv_indev_active()) == LV_DIR_RIGHT)
     {
         ui_app_exit();
     }
@@ -111,7 +111,7 @@ void start_timer_event(lv_event_t *e)
         lv_label_set_text(ui_customLabel1, "Stop");
         lv_obj_add_flag(ui_timerText, LV_OBJ_FLAG_HIDDEN);
         lv_obj_add_flag(ui_customTimer, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_clear_flag(ui_runningTimer, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_remove_flag(ui_runningTimer, LV_OBJ_FLAG_HIDDEN);
 
         lv_label_set_text_fmt(ui_timerinfo, "%02d:%02d", minutes, seconds);
 
@@ -123,7 +123,7 @@ void start_timer_event(lv_event_t *e)
 void stop_timer_event(lv_event_t *e)
 {
     lv_obj_add_flag(ui_runningTimer, LV_OBJ_FLAG_HIDDEN);
-    lv_obj_clear_flag(ui_customTimer, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_remove_flag(ui_customTimer, LV_OBJ_FLAG_HIDDEN);
 
     if (time_timer != NULL)
     {

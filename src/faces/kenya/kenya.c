@@ -77,7 +77,7 @@ const lv_img_dsc_t *face_kenya_dial_img_12_85153_group[] = {
 void init_face_kenya(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_t **, lv_obj_t **)){
 #ifdef ENABLE_FACE_KENYA
     face_kenya = lv_obj_create(NULL);
-    lv_obj_clear_flag(face_kenya, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_remove_flag(face_kenya, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_style_bg_color(face_kenya, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(face_kenya, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(face_kenya, 0, LV_PART_MAIN| LV_STATE_DEFAULT);
@@ -91,104 +91,104 @@ void init_face_kenya(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_
     lv_obj_add_event_cb(face_kenya, onFaceEvent, LV_EVENT_ALL, NULL);
 
     
-    face_kenya_0_264 = lv_img_create(face_kenya);
-    lv_img_set_src(face_kenya_0_264, &face_kenya_dial_img_0_264_0);
+    face_kenya_0_264 = lv_image_create(face_kenya);
+    lv_image_set_src(face_kenya_0_264, &face_kenya_dial_img_0_264_0);
     lv_obj_set_width(face_kenya_0_264, LV_SIZE_CONTENT);
     lv_obj_set_height(face_kenya_0_264, LV_SIZE_CONTENT);
     lv_obj_set_x(face_kenya_0_264, 0);
     lv_obj_set_y(face_kenya_0_264, 0);
     lv_obj_add_flag(face_kenya_0_264, LV_OBJ_FLAG_ADV_HITTEST );
-    lv_obj_clear_flag(face_kenya_0_264, LV_OBJ_FLAG_SCROLLABLE );
+    lv_obj_remove_flag(face_kenya_0_264, LV_OBJ_FLAG_SCROLLABLE );
 
-    face_kenya_1_58372 = lv_img_create(face_kenya);
-    lv_img_set_src(face_kenya_1_58372, &face_kenya_dial_img_1_58372_0);
+    face_kenya_1_58372 = lv_image_create(face_kenya);
+    lv_image_set_src(face_kenya_1_58372, &face_kenya_dial_img_1_58372_0);
     lv_obj_set_width(face_kenya_1_58372, LV_SIZE_CONTENT);
     lv_obj_set_height(face_kenya_1_58372, LV_SIZE_CONTENT);
     lv_obj_set_x(face_kenya_1_58372, 118);
     lv_obj_set_y(face_kenya_1_58372, 118);
     lv_obj_add_flag(face_kenya_1_58372, LV_OBJ_FLAG_ADV_HITTEST );
-    lv_obj_clear_flag(face_kenya_1_58372, LV_OBJ_FLAG_SCROLLABLE );
+    lv_obj_remove_flag(face_kenya_1_58372, LV_OBJ_FLAG_SCROLLABLE );
 
-    face_kenya_2_58391 = lv_img_create(face_kenya);
-    lv_img_set_src(face_kenya_2_58391, &face_kenya_dial_img_2_58391_0);
+    face_kenya_2_58391 = lv_image_create(face_kenya);
+    lv_image_set_src(face_kenya_2_58391, &face_kenya_dial_img_2_58391_0);
     lv_obj_set_width(face_kenya_2_58391, LV_SIZE_CONTENT);
     lv_obj_set_height(face_kenya_2_58391, LV_SIZE_CONTENT);
     lv_obj_set_x(face_kenya_2_58391, 143);
     lv_obj_set_y(face_kenya_2_58391, 200);
     lv_obj_add_flag(face_kenya_2_58391, LV_OBJ_FLAG_ADV_HITTEST );
-    lv_obj_clear_flag(face_kenya_2_58391, LV_OBJ_FLAG_SCROLLABLE );
+    lv_obj_remove_flag(face_kenya_2_58391, LV_OBJ_FLAG_SCROLLABLE );
 
-    face_kenya_3_58391 = lv_img_create(face_kenya);
-    lv_img_set_src(face_kenya_3_58391, &face_kenya_dial_img_2_58391_0);
+    face_kenya_3_58391 = lv_image_create(face_kenya);
+    lv_image_set_src(face_kenya_3_58391, &face_kenya_dial_img_2_58391_0);
     lv_obj_set_width(face_kenya_3_58391, LV_SIZE_CONTENT);
     lv_obj_set_height(face_kenya_3_58391, LV_SIZE_CONTENT);
     lv_obj_set_x(face_kenya_3_58391, 131);
     lv_obj_set_y(face_kenya_3_58391, 200);
     lv_obj_add_flag(face_kenya_3_58391, LV_OBJ_FLAG_ADV_HITTEST );
-    lv_obj_clear_flag(face_kenya_3_58391, LV_OBJ_FLAG_SCROLLABLE );
+    lv_obj_remove_flag(face_kenya_3_58391, LV_OBJ_FLAG_SCROLLABLE );
 
-    face_kenya_4_58391 = lv_img_create(face_kenya);
-    lv_img_set_src(face_kenya_4_58391, &face_kenya_dial_img_2_58391_0);
+    face_kenya_4_58391 = lv_image_create(face_kenya);
+    lv_image_set_src(face_kenya_4_58391, &face_kenya_dial_img_2_58391_0);
     lv_obj_set_width(face_kenya_4_58391, LV_SIZE_CONTENT);
     lv_obj_set_height(face_kenya_4_58391, LV_SIZE_CONTENT);
     lv_obj_set_x(face_kenya_4_58391, 98);
     lv_obj_set_y(face_kenya_4_58391, 200);
     lv_obj_add_flag(face_kenya_4_58391, LV_OBJ_FLAG_ADV_HITTEST );
-    lv_obj_clear_flag(face_kenya_4_58391, LV_OBJ_FLAG_SCROLLABLE );
+    lv_obj_remove_flag(face_kenya_4_58391, LV_OBJ_FLAG_SCROLLABLE );
 
-    face_kenya_5_58391 = lv_img_create(face_kenya);
-    lv_img_set_src(face_kenya_5_58391, &face_kenya_dial_img_2_58391_0);
+    face_kenya_5_58391 = lv_image_create(face_kenya);
+    lv_image_set_src(face_kenya_5_58391, &face_kenya_dial_img_2_58391_0);
     lv_obj_set_width(face_kenya_5_58391, LV_SIZE_CONTENT);
     lv_obj_set_height(face_kenya_5_58391, LV_SIZE_CONTENT);
     lv_obj_set_x(face_kenya_5_58391, 86);
     lv_obj_set_y(face_kenya_5_58391, 200);
     lv_obj_add_flag(face_kenya_5_58391, LV_OBJ_FLAG_ADV_HITTEST );
-    lv_obj_clear_flag(face_kenya_5_58391, LV_OBJ_FLAG_SCROLLABLE );
+    lv_obj_remove_flag(face_kenya_5_58391, LV_OBJ_FLAG_SCROLLABLE );
 
-    face_kenya_7_60782 = lv_img_create(face_kenya);
-    lv_img_set_src(face_kenya_7_60782, &face_kenya_dial_img_7_60782_0);
+    face_kenya_7_60782 = lv_image_create(face_kenya);
+    lv_image_set_src(face_kenya_7_60782, &face_kenya_dial_img_7_60782_0);
     lv_obj_set_width(face_kenya_7_60782, LV_SIZE_CONTENT);
     lv_obj_set_height(face_kenya_7_60782, LV_SIZE_CONTENT);
     lv_obj_set_x(face_kenya_7_60782, 47);
     lv_obj_set_y(face_kenya_7_60782, 92);
     lv_obj_add_flag(face_kenya_7_60782, LV_OBJ_FLAG_ADV_HITTEST );
-    lv_obj_clear_flag(face_kenya_7_60782, LV_OBJ_FLAG_SCROLLABLE );
+    lv_obj_remove_flag(face_kenya_7_60782, LV_OBJ_FLAG_SCROLLABLE );
 
-    face_kenya_8_60782 = lv_img_create(face_kenya);
-    lv_img_set_src(face_kenya_8_60782, &face_kenya_dial_img_7_60782_0);
+    face_kenya_8_60782 = lv_image_create(face_kenya);
+    lv_image_set_src(face_kenya_8_60782, &face_kenya_dial_img_7_60782_0);
     lv_obj_set_width(face_kenya_8_60782, LV_SIZE_CONTENT);
     lv_obj_set_height(face_kenya_8_60782, LV_SIZE_CONTENT);
     lv_obj_set_x(face_kenya_8_60782, 2);
     lv_obj_set_y(face_kenya_8_60782, 92);
     lv_obj_add_flag(face_kenya_8_60782, LV_OBJ_FLAG_ADV_HITTEST );
-    lv_obj_clear_flag(face_kenya_8_60782, LV_OBJ_FLAG_SCROLLABLE );
+    lv_obj_remove_flag(face_kenya_8_60782, LV_OBJ_FLAG_SCROLLABLE );
 
-    face_kenya_9_60782 = lv_img_create(face_kenya);
-    lv_img_set_src(face_kenya_9_60782, &face_kenya_dial_img_7_60782_0);
+    face_kenya_9_60782 = lv_image_create(face_kenya);
+    lv_image_set_src(face_kenya_9_60782, &face_kenya_dial_img_7_60782_0);
     lv_obj_set_width(face_kenya_9_60782, LV_SIZE_CONTENT);
     lv_obj_set_height(face_kenya_9_60782, LV_SIZE_CONTENT);
     lv_obj_set_x(face_kenya_9_60782, 199);
     lv_obj_set_y(face_kenya_9_60782, 92);
     lv_obj_add_flag(face_kenya_9_60782, LV_OBJ_FLAG_ADV_HITTEST );
-    lv_obj_clear_flag(face_kenya_9_60782, LV_OBJ_FLAG_SCROLLABLE );
+    lv_obj_remove_flag(face_kenya_9_60782, LV_OBJ_FLAG_SCROLLABLE );
 
-    face_kenya_10_60782 = lv_img_create(face_kenya);
-    lv_img_set_src(face_kenya_10_60782, &face_kenya_dial_img_7_60782_0);
+    face_kenya_10_60782 = lv_image_create(face_kenya);
+    lv_image_set_src(face_kenya_10_60782, &face_kenya_dial_img_7_60782_0);
     lv_obj_set_width(face_kenya_10_60782, LV_SIZE_CONTENT);
     lv_obj_set_height(face_kenya_10_60782, LV_SIZE_CONTENT);
     lv_obj_set_x(face_kenya_10_60782, 154);
     lv_obj_set_y(face_kenya_10_60782, 92);
     lv_obj_add_flag(face_kenya_10_60782, LV_OBJ_FLAG_ADV_HITTEST );
-    lv_obj_clear_flag(face_kenya_10_60782, LV_OBJ_FLAG_SCROLLABLE );
+    lv_obj_remove_flag(face_kenya_10_60782, LV_OBJ_FLAG_SCROLLABLE );
 
-    face_kenya_12_85153 = lv_img_create(face_kenya);
-    lv_img_set_src(face_kenya_12_85153, &face_kenya_dial_img_12_85153_0);
+    face_kenya_12_85153 = lv_image_create(face_kenya);
+    lv_image_set_src(face_kenya_12_85153, &face_kenya_dial_img_12_85153_0);
     lv_obj_set_width(face_kenya_12_85153, LV_SIZE_CONTENT);
     lv_obj_set_height(face_kenya_12_85153, LV_SIZE_CONTENT);
     lv_obj_set_x(face_kenya_12_85153, 98);
     lv_obj_set_y(face_kenya_12_85153, 25);
     lv_obj_add_flag(face_kenya_12_85153, LV_OBJ_FLAG_ADV_HITTEST );
-    lv_obj_clear_flag(face_kenya_12_85153, LV_OBJ_FLAG_SCROLLABLE );
+    lv_obj_remove_flag(face_kenya_12_85153, LV_OBJ_FLAG_SCROLLABLE );
 
 
     callback("Kenya", &face_kenya_dial_img_preview_0, &face_kenya, NULL);
@@ -203,15 +203,15 @@ void update_time_kenya(int second, int minute, int hour, bool mode, bool am, int
     {
         return;
     }
-	lv_img_set_src(face_kenya_2_58391, face_kenya_dial_img_2_58391_group[(month / 1) % 10]);
-	lv_img_set_src(face_kenya_3_58391, face_kenya_dial_img_2_58391_group[(month / 10) % 10]);
-	lv_img_set_src(face_kenya_4_58391, face_kenya_dial_img_2_58391_group[(day / 1) % 10]);
-	lv_img_set_src(face_kenya_5_58391, face_kenya_dial_img_2_58391_group[(day / 10) % 10]);
-	lv_img_set_src(face_kenya_7_60782, face_kenya_dial_img_7_60782_group[(hour / 1) % 10]);
-	lv_img_set_src(face_kenya_8_60782, face_kenya_dial_img_7_60782_group[(hour / 10) % 10]);
-	lv_img_set_src(face_kenya_9_60782, face_kenya_dial_img_7_60782_group[(minute / 1) % 10]);
-	lv_img_set_src(face_kenya_10_60782, face_kenya_dial_img_7_60782_group[(minute / 10) % 10]);
-	lv_img_set_src(face_kenya_12_85153, face_kenya_dial_img_12_85153_group[((weekday + 6) / 1) % 7]);
+	lv_image_set_src(face_kenya_2_58391, face_kenya_dial_img_2_58391_group[(month / 1) % 10]);
+	lv_image_set_src(face_kenya_3_58391, face_kenya_dial_img_2_58391_group[(month / 10) % 10]);
+	lv_image_set_src(face_kenya_4_58391, face_kenya_dial_img_2_58391_group[(day / 1) % 10]);
+	lv_image_set_src(face_kenya_5_58391, face_kenya_dial_img_2_58391_group[(day / 10) % 10]);
+	lv_image_set_src(face_kenya_7_60782, face_kenya_dial_img_7_60782_group[(hour / 1) % 10]);
+	lv_image_set_src(face_kenya_8_60782, face_kenya_dial_img_7_60782_group[(hour / 10) % 10]);
+	lv_image_set_src(face_kenya_9_60782, face_kenya_dial_img_7_60782_group[(minute / 1) % 10]);
+	lv_image_set_src(face_kenya_10_60782, face_kenya_dial_img_7_60782_group[(minute / 10) % 10]);
+	lv_image_set_src(face_kenya_12_85153, face_kenya_dial_img_12_85153_group[((weekday + 6) / 1) % 7]);
 
 #endif
 }

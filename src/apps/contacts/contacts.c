@@ -33,7 +33,7 @@ void ui_event_contactScreen(lv_event_t *e)
         
     }
 
-    if (event_code == LV_EVENT_GESTURE && lv_indev_get_gesture_dir(lv_indev_get_act()) == LV_DIR_RIGHT)
+    if (event_code == LV_EVENT_GESTURE && lv_indev_get_gesture_dir(lv_indev_active()) == LV_DIR_RIGHT)
     {
         ui_app_exit();
     }
@@ -62,7 +62,7 @@ void addContact(const char *name, const char *number, bool sos)
     lv_obj_set_width(ui_contactPanel, 200);
     lv_obj_set_height(ui_contactPanel, 47);
     lv_obj_set_align(ui_contactPanel, LV_ALIGN_CENTER);
-    lv_obj_clear_flag(ui_contactPanel, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+    lv_obj_remove_flag(ui_contactPanel, LV_OBJ_FLAG_SCROLLABLE); /// Flags
     lv_obj_set_style_radius(ui_contactPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(ui_contactPanel, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(ui_contactPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -75,15 +75,15 @@ void addContact(const char *name, const char *number, bool sos)
     lv_obj_set_style_pad_top(ui_contactPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(ui_contactPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    lv_obj_t *ui_contactIcon = lv_img_create(ui_contactPanel);
-    lv_img_set_src(ui_contactIcon, sos ? &ui_img_sos_contact_png : &ui_img_contact_png);
+    lv_obj_t *ui_contactIcon = lv_image_create(ui_contactPanel);
+    lv_image_set_src(ui_contactIcon, sos ? &ui_img_sos_contact_png : &ui_img_contact_png);
     lv_obj_set_width(ui_contactIcon, LV_SIZE_CONTENT);  /// 1
     lv_obj_set_height(ui_contactIcon, LV_SIZE_CONTENT); /// 1
     lv_obj_set_x(ui_contactIcon, 10);
     lv_obj_set_y(ui_contactIcon, 0);
     lv_obj_set_align(ui_contactIcon, LV_ALIGN_LEFT_MID);
     lv_obj_add_flag(ui_contactIcon, LV_OBJ_FLAG_ADV_HITTEST);  /// Flags
-    lv_obj_clear_flag(ui_contactIcon, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+    lv_obj_remove_flag(ui_contactIcon, LV_OBJ_FLAG_SCROLLABLE); /// Flags
 
     lv_obj_t *ui_contactNumber = lv_label_create(ui_contactPanel);
     lv_obj_set_width(ui_contactNumber, 140);
@@ -128,7 +128,7 @@ void ui_contactScreen_screen_init()
 
 #ifdef ENABLE_APP_CONTACTS
     ui_contactScreen = lv_obj_create(NULL);
-    lv_obj_clear_flag(ui_contactScreen, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+    lv_obj_remove_flag(ui_contactScreen, LV_OBJ_FLAG_SCROLLABLE); /// Flags
     lv_obj_set_style_bg_color(ui_contactScreen, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(ui_contactScreen, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 

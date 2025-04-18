@@ -890,7 +890,7 @@ void connectionCallback(bool state)
 void ringerCallback(String caller, bool state)
 {
   lv_disp_t *display = lv_disp_get_default();
-  lv_obj_t *actScr = lv_disp_get_screen_active(display);
+  lv_obj_t *actScr = lv_disp_get_scr_act(display);
 
   if (state)
   {

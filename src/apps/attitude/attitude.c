@@ -78,7 +78,7 @@ void ui_event_attiudeScreen(lv_event_t *e)
         onGameClosed();
     }
 
-    if (event_code == LV_EVENT_GESTURE && lv_indev_get_gesture_dir(lv_indev_get_act()) == LV_DIR_RIGHT)
+    if (event_code == LV_EVENT_GESTURE && lv_indev_get_gesture_dir(lv_indev_active()) == LV_DIR_RIGHT)
     {
         ui_app_exit();
     }
@@ -89,51 +89,51 @@ void ui_attiudeScreen_screen_init()
 {
 
     ui_attiudeScreen = lv_obj_create(NULL);
-    lv_obj_clear_flag(ui_attiudeScreen, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+    lv_obj_remove_flag(ui_attiudeScreen, LV_OBJ_FLAG_SCROLLABLE); /// Flags
 
-    ui_img_dial_bg = lv_img_create(ui_attiudeScreen);
-    lv_img_set_src(ui_img_dial_bg, &ui_img_dial_bg_png);
+    ui_img_dial_bg = lv_image_create(ui_attiudeScreen);
+    lv_image_set_src(ui_img_dial_bg, &ui_img_dial_bg_png);
     lv_obj_set_width(ui_img_dial_bg, LV_SIZE_CONTENT);  /// 1
     lv_obj_set_height(ui_img_dial_bg, LV_SIZE_CONTENT); /// 1
     lv_obj_set_align(ui_img_dial_bg, LV_ALIGN_CENTER);
     lv_obj_add_flag(ui_img_dial_bg, LV_OBJ_FLAG_ADV_HITTEST);  /// Flags
-    lv_obj_clear_flag(ui_img_dial_bg, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+    lv_obj_remove_flag(ui_img_dial_bg, LV_OBJ_FLAG_SCROLLABLE); /// Flags
 
-    ui_img_pitch_scale = lv_img_create(ui_attiudeScreen);
-    lv_img_set_src(ui_img_pitch_scale, &ui_img_pitch_scale_png);
+    ui_img_pitch_scale = lv_image_create(ui_attiudeScreen);
+    lv_image_set_src(ui_img_pitch_scale, &ui_img_pitch_scale_png);
     lv_obj_set_width(ui_img_pitch_scale, LV_SIZE_CONTENT);  /// 1
     lv_obj_set_height(ui_img_pitch_scale, LV_SIZE_CONTENT); /// 1
     lv_obj_set_align(ui_img_pitch_scale, LV_ALIGN_CENTER);
     lv_obj_add_flag(ui_img_pitch_scale, LV_OBJ_FLAG_ADV_HITTEST);  /// Flags
-    lv_obj_clear_flag(ui_img_pitch_scale, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+    lv_obj_remove_flag(ui_img_pitch_scale, LV_OBJ_FLAG_SCROLLABLE); /// Flags
 
-    ui_img_dum_scale = lv_img_create(ui_attiudeScreen);
-    lv_img_set_src(ui_img_dum_scale, &ui_img_roll_scale2_png);
+    ui_img_dum_scale = lv_image_create(ui_attiudeScreen);
+    lv_image_set_src(ui_img_dum_scale, &ui_img_roll_scale2_png);
     lv_obj_set_width(ui_img_dum_scale, LV_SIZE_CONTENT);  /// 300
     lv_obj_set_height(ui_img_dum_scale, LV_SIZE_CONTENT); /// 300
     lv_obj_set_align(ui_img_dum_scale, LV_ALIGN_CENTER);
     lv_obj_add_flag(ui_img_dum_scale, LV_OBJ_FLAG_ADV_HITTEST);  /// Flags
-    lv_obj_clear_flag(ui_img_dum_scale, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+    lv_obj_remove_flag(ui_img_dum_scale, LV_OBJ_FLAG_SCROLLABLE); /// Flags
 
-    ui_img_roll_scale = lv_img_create(ui_attiudeScreen);
-    lv_img_set_src(ui_img_roll_scale, &ui_img_roll_scale_png);
+    ui_img_roll_scale = lv_image_create(ui_attiudeScreen);
+    lv_image_set_src(ui_img_roll_scale, &ui_img_roll_scale_png);
     lv_obj_set_width(ui_img_roll_scale, LV_SIZE_CONTENT);  /// 1
     lv_obj_set_height(ui_img_roll_scale, LV_SIZE_CONTENT); /// 1
     lv_obj_set_x(ui_img_roll_scale, 0);
     lv_obj_set_y(ui_img_roll_scale, 1);
     lv_obj_set_align(ui_img_roll_scale, LV_ALIGN_CENTER);
     lv_obj_add_flag(ui_img_roll_scale, LV_OBJ_FLAG_ADV_HITTEST);  /// Flags
-    lv_obj_clear_flag(ui_img_roll_scale, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+    lv_obj_remove_flag(ui_img_roll_scale, LV_OBJ_FLAG_SCROLLABLE); /// Flags
 
-    ui_img_pointer = lv_img_create(ui_attiudeScreen);
-    lv_img_set_src(ui_img_pointer, &ui_img_pointer_png);
+    ui_img_pointer = lv_image_create(ui_attiudeScreen);
+    lv_image_set_src(ui_img_pointer, &ui_img_pointer_png);
     lv_obj_set_width(ui_img_pointer, LV_SIZE_CONTENT);  /// 8
     lv_obj_set_height(ui_img_pointer, LV_SIZE_CONTENT); /// 7
     lv_obj_set_x(ui_img_pointer, 1);
     lv_obj_set_y(ui_img_pointer, -27);
     lv_obj_set_align(ui_img_pointer, LV_ALIGN_CENTER);
     lv_obj_add_flag(ui_img_pointer, LV_OBJ_FLAG_ADV_HITTEST);  /// Flags
-    lv_obj_clear_flag(ui_img_pointer, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+    lv_obj_remove_flag(ui_img_pointer, LV_OBJ_FLAG_SCROLLABLE); /// Flags
 
     ui_Label_roll = lv_label_create(ui_attiudeScreen);
     lv_obj_set_width(ui_Label_roll, LV_SIZE_CONTENT);  /// 1
@@ -187,7 +187,7 @@ void update_pitch(int pitch_value, int pitch_rotation)
     }
     // Calculate the rotation angle in degrees for pitch
     int rotation_angle = pitch_rotation * -1; // Each 100 units corresponds to 10 degrees
-    lv_img_set_angle(ui_img_pitch_scale, rotation_angle * 10); // LVGL uses 0.1 degree units
+    lv_image_set_rotation(ui_img_pitch_scale, rotation_angle * 10); // LVGL uses 0.1 degree units
 
     // Calculate the Y position
     int y_position = pitch_value * 2 * -1; // Each 10 pixels corresponds to 5 units
@@ -207,7 +207,7 @@ void update_roll(int roll_value)
     }
     // Calculate the rotation angle in degrees
     int rotation_angle = roll_value; // Each unit corresponds to 1 degree
-    lv_img_set_angle(ui_img_roll_scale, rotation_angle * 10); // LVGL uses 0.1 degree units
+    lv_image_set_rotation(ui_img_roll_scale, rotation_angle * 10); // LVGL uses 0.1 degree units
 
     // Display positive degree on the right and negative degree on the left
     int display_angle = roll_value * -1; // Invert the roll value for display

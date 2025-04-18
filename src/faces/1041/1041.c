@@ -28,7 +28,7 @@ lv_obj_t *face_1041_33_205280;
 void init_face_1041(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_t **, lv_obj_t **)){
 #ifdef ENABLE_FACE_1041
     face_1041 = lv_obj_create(NULL);
-    lv_obj_clear_flag(face_1041, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_remove_flag(face_1041, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_style_bg_color(face_1041, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(face_1041, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(face_1041, 0, LV_PART_MAIN| LV_STATE_DEFAULT);
@@ -40,44 +40,44 @@ void init_face_1041(void (*callback)(const char*, const lv_img_dsc_t *, lv_obj_t
     lv_obj_add_event_cb(face_1041, onFaceEvent, LV_EVENT_ALL, NULL);
 
     
-    face_1041_0_984 = lv_img_create(face_1041);
-    lv_img_set_src(face_1041_0_984, &face_1041_dial_img_0_984_0);
+    face_1041_0_984 = lv_image_create(face_1041);
+    lv_image_set_src(face_1041_0_984, &face_1041_dial_img_0_984_0);
     lv_obj_set_width(face_1041_0_984, LV_SIZE_CONTENT);
     lv_obj_set_height(face_1041_0_984, LV_SIZE_CONTENT);
     lv_obj_set_x(face_1041_0_984, 0);
     lv_obj_set_y(face_1041_0_984, 0);
     lv_obj_add_flag(face_1041_0_984, LV_OBJ_FLAG_ADV_HITTEST );
-    lv_obj_clear_flag(face_1041_0_984, LV_OBJ_FLAG_SCROLLABLE );
+    lv_obj_remove_flag(face_1041_0_984, LV_OBJ_FLAG_SCROLLABLE );
 
-    face_1041_1_70612 = lv_img_create(face_1041);
-    lv_img_set_src(face_1041_1_70612, &face_1041_dial_img_1_70612_0);
+    face_1041_1_70612 = lv_image_create(face_1041);
+    lv_image_set_src(face_1041_1_70612, &face_1041_dial_img_1_70612_0);
     lv_obj_set_width(face_1041_1_70612, LV_SIZE_CONTENT);
     lv_obj_set_height(face_1041_1_70612, LV_SIZE_CONTENT);
     lv_obj_set_x(face_1041_1_70612, 112);
     lv_obj_set_y(face_1041_1_70612, 71);
     lv_obj_add_flag(face_1041_1_70612, LV_OBJ_FLAG_ADV_HITTEST );
-    lv_obj_clear_flag(face_1041_1_70612, LV_OBJ_FLAG_SCROLLABLE );
-	lv_img_set_pivot(face_1041_1_70612, 8, 73);
+    lv_obj_remove_flag(face_1041_1_70612, LV_OBJ_FLAG_SCROLLABLE );
+	lv_image_set_pivot(face_1041_1_70612, 8, 73);
 
-    face_1041_17_117033 = lv_img_create(face_1041);
-    lv_img_set_src(face_1041_17_117033, &face_1041_dial_img_17_117033_0);
+    face_1041_17_117033 = lv_image_create(face_1041);
+    lv_image_set_src(face_1041_17_117033, &face_1041_dial_img_17_117033_0);
     lv_obj_set_width(face_1041_17_117033, LV_SIZE_CONTENT);
     lv_obj_set_height(face_1041_17_117033, LV_SIZE_CONTENT);
     lv_obj_set_x(face_1041_17_117033, 112);
     lv_obj_set_y(face_1041_17_117033, 33);
     lv_obj_add_flag(face_1041_17_117033, LV_OBJ_FLAG_ADV_HITTEST );
-    lv_obj_clear_flag(face_1041_17_117033, LV_OBJ_FLAG_SCROLLABLE );
-	lv_img_set_pivot(face_1041_17_117033, 8, 111);
+    lv_obj_remove_flag(face_1041_17_117033, LV_OBJ_FLAG_SCROLLABLE );
+	lv_image_set_pivot(face_1041_17_117033, 8, 111);
 
-    face_1041_33_205280 = lv_img_create(face_1041);
-    lv_img_set_src(face_1041_33_205280, &face_1041_dial_img_33_205280_0);
+    face_1041_33_205280 = lv_image_create(face_1041);
+    lv_image_set_src(face_1041_33_205280, &face_1041_dial_img_33_205280_0);
     lv_obj_set_width(face_1041_33_205280, LV_SIZE_CONTENT);
     lv_obj_set_height(face_1041_33_205280, LV_SIZE_CONTENT);
     lv_obj_set_x(face_1041_33_205280, 106);
     lv_obj_set_y(face_1041_33_205280, 29);
     lv_obj_add_flag(face_1041_33_205280, LV_OBJ_FLAG_ADV_HITTEST );
-    lv_obj_clear_flag(face_1041_33_205280, LV_OBJ_FLAG_SCROLLABLE );
-	lv_img_set_pivot(face_1041_33_205280, 14, 115);
+    lv_obj_remove_flag(face_1041_33_205280, LV_OBJ_FLAG_SCROLLABLE );
+	lv_image_set_pivot(face_1041_33_205280, 14, 115);
 
 
     callback("1041", &face_1041_dial_img_preview_0, &face_1041, &face_1041_33_205280);
@@ -92,8 +92,8 @@ void update_time_1041(int second, int minute, int hour, bool mode, bool am, int 
     {
         return;
     }
-	lv_img_set_angle(face_1041_1_70612, hour * 300 + (minute * 5) + (second * (5 / 60)));
-	lv_img_set_angle(face_1041_17_117033, (minute * 60) + second);
+	lv_image_set_rotation(face_1041_1_70612, hour * 300 + (minute * 5) + (second * (5 / 60)));
+	lv_image_set_rotation(face_1041_17_117033, (minute * 60) + second);
 
 #endif
 }

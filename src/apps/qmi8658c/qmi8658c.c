@@ -104,7 +104,7 @@ void ui_event_imuScreen(lv_event_t *e)
         onGameClosed();
     }
 
-    if (event_code == LV_EVENT_GESTURE && lv_indev_get_gesture_dir(lv_indev_get_act()) == LV_DIR_RIGHT)
+    if (event_code == LV_EVENT_GESTURE && lv_indev_get_gesture_dir(lv_indev_active()) == LV_DIR_RIGHT)
     {
         ui_app_exit();
     }
@@ -123,7 +123,7 @@ void ui_event_imuScreen(lv_event_t *e)
 void ui_imuScreen_screen_init()
 {
     ui_imuScreen = lv_obj_create(NULL);
-    lv_obj_clear_flag(ui_imuScreen, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+    lv_obj_remove_flag(ui_imuScreen, LV_OBJ_FLAG_SCROLLABLE); /// Flags
     lv_obj_set_style_bg_color(ui_imuScreen, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(ui_imuScreen, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
@@ -257,7 +257,7 @@ void ui_imuScreen_screen_init()
     // lv_obj_set_align(ui_rtwPanel, LV_ALIGN_CENTER);
     // lv_obj_set_flex_flow(ui_rtwPanel, LV_FLEX_FLOW_ROW);
     // lv_obj_set_flex_align(ui_rtwPanel, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-    // lv_obj_clear_flag(ui_rtwPanel, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+    // lv_obj_remove_flag(ui_rtwPanel, LV_OBJ_FLAG_SCROLLABLE); /// Flags
     // lv_obj_set_style_radius(ui_rtwPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     // lv_obj_set_style_bg_color(ui_rtwPanel, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
     // lv_obj_set_style_bg_opa(ui_rtwPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);

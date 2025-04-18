@@ -135,7 +135,7 @@ void ui_event_raceScreen(lv_event_t *e)
         lv_label_set_text(ui_raceButtonText, "Start");
         lv_label_set_text(ui_raceLabel, "High Score");
         lv_label_set_text_fmt(ui_raceScore, "%dm", highScore);
-        lv_obj_clear_flag(ui_racePanel, LV_OBJ_FLAG_HIDDEN); /// Flags
+        lv_obj_remove_flag(ui_racePanel, LV_OBJ_FLAG_HIDDEN); /// Flags
         lv_obj_add_flag(ui_raceInfo, LV_OBJ_FLAG_HIDDEN);    /// Flags
 
         currentScore = 0;
@@ -159,7 +159,7 @@ void ui_event_raceScreen(lv_event_t *e)
     {
         onGameClosed();
     }
-    if (event_code == LV_EVENT_GESTURE && lv_indev_get_gesture_dir(lv_indev_get_act()) == LV_DIR_RIGHT)
+    if (event_code == LV_EVENT_GESTURE && lv_indev_get_gesture_dir(lv_indev_active()) == LV_DIR_RIGHT)
     {
         if (isRacing)
         {
@@ -193,9 +193,9 @@ void ui_event_roadPanel(lv_event_t *e)
                 lv_label_set_text(ui_raceButtonText, "Start");
                 lv_label_set_text(ui_raceLabel, "Your Score");
                 lv_label_set_text_fmt(ui_raceScore, "%dm", currentScore);
-                lv_obj_clear_flag(ui_raceInfo, LV_OBJ_FLAG_HIDDEN); /// Flags
+                lv_obj_remove_flag(ui_raceInfo, LV_OBJ_FLAG_HIDDEN); /// Flags
             }
-            lv_obj_clear_flag(ui_racePanel, LV_OBJ_FLAG_HIDDEN); /// Flags
+            lv_obj_remove_flag(ui_racePanel, LV_OBJ_FLAG_HIDDEN); /// Flags
         }
     }
 }
@@ -266,7 +266,7 @@ void ui_raceScreen_screen_init()
 {
 
     ui_raceScreen = lv_obj_create(NULL);
-    lv_obj_clear_flag(ui_raceScreen, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+    lv_obj_remove_flag(ui_raceScreen, LV_OBJ_FLAG_SCROLLABLE); /// Flags
     lv_obj_set_style_bg_color(ui_raceScreen, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(ui_raceScreen, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
@@ -274,20 +274,20 @@ void ui_raceScreen_screen_init()
     lv_obj_set_width(ui_roadPanel, 150);
     lv_obj_set_height(ui_roadPanel, 240);
     lv_obj_set_align(ui_roadPanel, LV_ALIGN_CENTER);
-    lv_obj_clear_flag(ui_roadPanel, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+    lv_obj_remove_flag(ui_roadPanel, LV_OBJ_FLAG_SCROLLABLE); /// Flags
     lv_obj_set_style_border_width(ui_roadPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_left(ui_roadPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_right(ui_roadPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_top(ui_roadPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_bottom(ui_roadPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    ui_roadImage = lv_img_create(ui_roadPanel);
-    lv_img_set_src(ui_roadImage, &ui_img_road_png);
+    ui_roadImage = lv_image_create(ui_roadPanel);
+    lv_image_set_src(ui_roadImage, &ui_img_road_png);
     lv_obj_set_width(ui_roadImage, 150);
     lv_obj_set_height(ui_roadImage, 540);
     lv_obj_set_align(ui_roadImage, LV_ALIGN_BOTTOM_MID);
     lv_obj_add_flag(ui_roadImage, LV_OBJ_FLAG_ADV_HITTEST);  /// Flags
-    lv_obj_clear_flag(ui_roadImage, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+    lv_obj_remove_flag(ui_roadImage, LV_OBJ_FLAG_SCROLLABLE); /// Flags
     lv_image_set_inner_align(ui_roadImage, LV_IMAGE_ALIGN_TILE );
 
     ui_distanceLabel = lv_label_create(ui_raceScreen);
@@ -320,24 +320,24 @@ void ui_raceScreen_screen_init()
     lv_obj_set_style_outline_width(ui_speedLabel, 5, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_outline_pad(ui_speedLabel, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    ui_carPlayer = lv_img_create(ui_raceScreen);
-    lv_img_set_src(ui_carPlayer, &ui_img_car_png);
+    ui_carPlayer = lv_image_create(ui_raceScreen);
+    lv_image_set_src(ui_carPlayer, &ui_img_car_png);
     lv_obj_set_width(ui_carPlayer, LV_SIZE_CONTENT);  /// 1
     lv_obj_set_height(ui_carPlayer, LV_SIZE_CONTENT); /// 1
     lv_obj_set_x(ui_carPlayer, 0);
     lv_obj_set_y(ui_carPlayer, 160);
     lv_obj_set_align(ui_carPlayer, LV_ALIGN_TOP_MID);
     lv_obj_add_flag(ui_carPlayer, LV_OBJ_FLAG_ADV_HITTEST);  /// Flags
-    lv_obj_clear_flag(ui_carPlayer, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+    lv_obj_remove_flag(ui_carPlayer, LV_OBJ_FLAG_SCROLLABLE); /// Flags
 
-    ui_leftButton = lv_btn_create(ui_raceScreen);
+    ui_leftButton = lv_button_create(ui_raceScreen);
     lv_obj_set_width(ui_leftButton, 50);
     lv_obj_set_height(ui_leftButton, 100);
     lv_obj_set_x(ui_leftButton, -100);
     lv_obj_set_y(ui_leftButton, 1);
     lv_obj_set_align(ui_leftButton, LV_ALIGN_CENTER);
     lv_obj_add_flag(ui_leftButton, LV_OBJ_FLAG_SCROLL_ON_FOCUS); /// Flags
-    lv_obj_clear_flag(ui_leftButton, LV_OBJ_FLAG_SCROLLABLE);    /// Flags
+    lv_obj_remove_flag(ui_leftButton, LV_OBJ_FLAG_SCROLLABLE);    /// Flags
     lv_obj_set_style_radius(ui_leftButton, 30, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(ui_leftButton, lv_color_hex(0x665104), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(ui_leftButton, 150, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -353,14 +353,14 @@ void ui_raceScreen_screen_init()
     lv_label_set_text(ui_leftButtonText, "<");
     lv_obj_set_style_text_font(ui_leftButtonText, &lv_font_montserrat_30, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    ui_rightButton = lv_btn_create(ui_raceScreen);
+    ui_rightButton = lv_button_create(ui_raceScreen);
     lv_obj_set_width(ui_rightButton, 50);
     lv_obj_set_height(ui_rightButton, 100);
     lv_obj_set_x(ui_rightButton, 100);
     lv_obj_set_y(ui_rightButton, 1);
     lv_obj_set_align(ui_rightButton, LV_ALIGN_CENTER);
     lv_obj_add_flag(ui_rightButton, LV_OBJ_FLAG_SCROLL_ON_FOCUS); /// Flags
-    lv_obj_clear_flag(ui_rightButton, LV_OBJ_FLAG_SCROLLABLE);    /// Flags
+    lv_obj_remove_flag(ui_rightButton, LV_OBJ_FLAG_SCROLLABLE);    /// Flags
     lv_obj_set_style_radius(ui_rightButton, 30, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(ui_rightButton, lv_color_hex(0x665104), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(ui_rightButton, 150, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -374,35 +374,35 @@ void ui_raceScreen_screen_init()
     lv_label_set_text(ui_rightButtonText, ">");
     lv_obj_set_style_text_font(ui_rightButtonText, &lv_font_montserrat_30, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    ui_carNPC1 = lv_img_create(ui_raceScreen);
-    lv_img_set_src(ui_carNPC1, &ui_img_car_green_png);
+    ui_carNPC1 = lv_image_create(ui_raceScreen);
+    lv_image_set_src(ui_carNPC1, &ui_img_car_green_png);
     lv_obj_set_width(ui_carNPC1, LV_SIZE_CONTENT);  /// 1
     lv_obj_set_height(ui_carNPC1, LV_SIZE_CONTENT); /// 1
     lv_obj_set_x(ui_carNPC1, 20);
     lv_obj_set_y(ui_carNPC1, -1);
     lv_obj_set_align(ui_carNPC1, LV_ALIGN_TOP_MID);
     lv_obj_add_flag(ui_carNPC1, LV_OBJ_FLAG_ADV_HITTEST);  /// Flags
-    lv_obj_clear_flag(ui_carNPC1, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+    lv_obj_remove_flag(ui_carNPC1, LV_OBJ_FLAG_SCROLLABLE); /// Flags
 
-    ui_carNPC2 = lv_img_create(ui_raceScreen);
-    lv_img_set_src(ui_carNPC2, &ui_img_car_red_png);
+    ui_carNPC2 = lv_image_create(ui_raceScreen);
+    lv_image_set_src(ui_carNPC2, &ui_img_car_red_png);
     lv_obj_set_width(ui_carNPC2, LV_SIZE_CONTENT);  /// 1
     lv_obj_set_height(ui_carNPC2, LV_SIZE_CONTENT); /// 1
     lv_obj_set_x(ui_carNPC2, -21);
     lv_obj_set_y(ui_carNPC2, -60);
     lv_obj_set_align(ui_carNPC2, LV_ALIGN_TOP_MID);
     lv_obj_add_flag(ui_carNPC2, LV_OBJ_FLAG_ADV_HITTEST);  /// Flags
-    lv_obj_clear_flag(ui_carNPC2, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+    lv_obj_remove_flag(ui_carNPC2, LV_OBJ_FLAG_SCROLLABLE); /// Flags
 
-    ui_carNPC3 = lv_img_create(ui_raceScreen);
-    lv_img_set_src(ui_carNPC3, &ui_img_car_yellow_png);
+    ui_carNPC3 = lv_image_create(ui_raceScreen);
+    lv_image_set_src(ui_carNPC3, &ui_img_car_yellow_png);
     lv_obj_set_width(ui_carNPC3, LV_SIZE_CONTENT);  /// 1
     lv_obj_set_height(ui_carNPC3, LV_SIZE_CONTENT); /// 1
     lv_obj_set_x(ui_carNPC3, -21);
     lv_obj_set_y(ui_carNPC3, -60);
     lv_obj_set_align(ui_carNPC3, LV_ALIGN_TOP_MID);
     lv_obj_add_flag(ui_carNPC3, LV_OBJ_FLAG_ADV_HITTEST);  /// Flags
-    lv_obj_clear_flag(ui_carNPC3, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+    lv_obj_remove_flag(ui_carNPC3, LV_OBJ_FLAG_SCROLLABLE); /// Flags
 
     ui_racePanel = lv_obj_create(ui_raceScreen);
     lv_obj_set_width(ui_racePanel, 240);
@@ -411,7 +411,7 @@ void ui_raceScreen_screen_init()
     lv_obj_set_flex_flow(ui_racePanel, LV_FLEX_FLOW_COLUMN);
     lv_obj_set_flex_align(ui_racePanel, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
     lv_obj_add_flag(ui_racePanel, LV_OBJ_FLAG_HIDDEN);       /// Flags
-    lv_obj_clear_flag(ui_racePanel, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+    lv_obj_remove_flag(ui_racePanel, LV_OBJ_FLAG_SCROLLABLE); /// Flags
     lv_obj_set_style_radius(ui_racePanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(ui_racePanel, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(ui_racePanel, 230, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -461,12 +461,12 @@ void ui_raceScreen_screen_init()
     lv_obj_set_style_text_opa(ui_raceScore, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_font(ui_raceScore, &lv_font_montserrat_20, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    ui_raceStart = lv_btn_create(ui_racePanel);
+    ui_raceStart = lv_button_create(ui_racePanel);
     lv_obj_set_width(ui_raceStart, 100);
     lv_obj_set_height(ui_raceStart, 40);
     lv_obj_set_align(ui_raceStart, LV_ALIGN_CENTER);
     lv_obj_add_flag(ui_raceStart, LV_OBJ_FLAG_SCROLL_ON_FOCUS); /// Flags
-    lv_obj_clear_flag(ui_raceStart, LV_OBJ_FLAG_SCROLLABLE);    /// Flags
+    lv_obj_remove_flag(ui_raceStart, LV_OBJ_FLAG_SCROLLABLE);    /// Flags
     lv_obj_set_style_radius(ui_raceStart, 20, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_raceButtonText = lv_label_create(ui_raceStart);
@@ -475,12 +475,12 @@ void ui_raceScreen_screen_init()
     lv_obj_set_align(ui_raceButtonText, LV_ALIGN_CENTER);
     lv_label_set_text(ui_raceButtonText, "Start");
 
-    ui_exitRace = lv_btn_create(ui_racePanel);
+    ui_exitRace = lv_button_create(ui_racePanel);
     lv_obj_set_width(ui_exitRace, 100);
     lv_obj_set_height(ui_exitRace, 40);
     lv_obj_set_align(ui_exitRace, LV_ALIGN_CENTER);
     lv_obj_add_flag(ui_exitRace, LV_OBJ_FLAG_SCROLL_ON_FOCUS); /// Flags
-    lv_obj_clear_flag(ui_exitRace, LV_OBJ_FLAG_SCROLLABLE);    /// Flags
+    lv_obj_remove_flag(ui_exitRace, LV_OBJ_FLAG_SCROLLABLE);    /// Flags
     lv_obj_set_style_radius(ui_exitRace, 20, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(ui_exitRace, lv_color_hex(0xF30000), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(ui_exitRace, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -567,7 +567,7 @@ void ui_raceScreen_screen_loop()
         {
             npc1.x = (lv_rand(0, 99) % 100) + NPC_CAR_X_OFFSET;
             lv_obj_set_x(ui_carNPC1, npc1.x);
-            lv_img_set_src(ui_carNPC1, carIcons[lv_rand(0, 2) % 3]);
+            lv_image_set_src(ui_carNPC1, carIcons[lv_rand(0, 2) % 3]);
             gen = false;
         }
 
@@ -596,11 +596,11 @@ void ui_raceScreen_screen_loop()
             lv_label_set_text(ui_distanceLabel, "0");
             lv_label_set_text(ui_speedLabel, "0");
 
-            lv_obj_clear_flag(ui_racePanel, LV_OBJ_FLAG_HIDDEN); /// Flags
+            lv_obj_remove_flag(ui_racePanel, LV_OBJ_FLAG_HIDDEN); /// Flags
             lv_label_set_text(ui_raceButtonText, "Start");
             lv_label_set_text(ui_raceLabel, "Your Score");
             lv_label_set_text_fmt(ui_raceScore, "%dm", currentScore);
-            lv_obj_clear_flag(ui_raceInfo, LV_OBJ_FLAG_HIDDEN); /// Flags
+            lv_obj_remove_flag(ui_raceInfo, LV_OBJ_FLAG_HIDDEN); /// Flags
 
             if (currentScore > highScore)
             {
