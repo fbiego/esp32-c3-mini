@@ -66,6 +66,7 @@ void hal_loop(void);
 
 void vibratePin(bool state);
 
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

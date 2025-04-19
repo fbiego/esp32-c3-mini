@@ -69,7 +69,6 @@ extern "C"
     extern lv_obj_t *ui_gameListScreen;
     extern lv_obj_t *ui_gameList;
 
-    void ui_event_alertStateSwitch(lv_event_t *e);
     extern lv_obj_t *ui_alertStateLabel;
     extern lv_obj_t *ui_alertStateSwitch;
     extern lv_obj_t *ui_alertStateIcon;
@@ -140,6 +139,17 @@ extern "C"
     extern lv_obj_t *ui_qrCodeButton;
     void ui_event_closeControlButton(lv_event_t *e);
     extern lv_obj_t *ui_closeControlButton;
+
+
+    void ui_alertScreen_screen_init(void);
+    extern lv_obj_t *ui_alertScreen;
+    extern lv_obj_t *ui_alertTypesPanel;
+    extern lv_obj_t *ui_alertBehaviour;
+    extern lv_obj_t *ui_popupalerts;
+    extern lv_obj_t *ui_alertTypeLabel;
+    extern lv_obj_t *ui_alertScreenOn;
+    extern lv_obj_t *ui_soundsAlert;
+    extern lv_obj_t *ui_vibrateAlert;
 
     void ui_event_appInfoScreen(lv_event_t *e);
     extern lv_obj_t *ui_appInfoScreen;
@@ -239,6 +249,7 @@ extern "C"
     extern int numGames;
     extern int currentIndex;
     extern bool screenOn;
+    extern int32_t alert_states;
 
     void ui_event____initial_actions0(lv_event_t *e);
     extern lv_obj_t *ui____initial_actions0;
@@ -261,8 +272,14 @@ extern "C"
         int y;
     } Drag;
 
+    
+
     extern Face faces[MAX_FACES];
     extern Face games[MAX_GAMES];
+
+    const char* get_alert_state_text(int32_t states);
+
+    bool check_bit(int32_t value, int32_t bits);
 
     void registerGame_cb(const char *name, const lv_image_dsc_t *icon, lv_obj_t **game);
 

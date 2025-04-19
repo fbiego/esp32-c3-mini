@@ -284,11 +284,11 @@ void my_touchpad_read(lv_indev_t *indev_driver, lv_indev_data_t *data)
 
   if (!touched)
   {
-    data->state = LV_INDEV_STATE_REL;
+    data->state = LV_INDEV_STATE_RELEASED;
   }
   else
   {
-    data->state = LV_INDEV_STATE_PR;
+    data->state = LV_INDEV_STATE_PRESSED;
 
     /*Set the coordinates*/
     data->point.x = touchX;
@@ -369,13 +369,13 @@ void onMusicPlay(lv_event_t *e)
 void onMusicPrevious(lv_event_t *e)
 {
   lv_label_set_text(ui_callName, "World");
-  lv_scr_load_anim(ui_callScreen, LV_SCR_LOAD_ANIM_FADE_IN, 500, 0, false);
+  lv_screen_load_anim(ui_callScreen, LV_SCR_LOAD_ANIM_FADE_IN, 500, 0, false);
 }
 
 void onMusicNext(lv_event_t *e)
 {
   lv_label_set_text(ui_cameraLabel, "Click capture to close to close");
-  lv_scr_load_anim(ui_cameraScreen, LV_SCR_LOAD_ANIM_FADE_IN, 500, 0, false);
+  lv_screen_load_anim(ui_cameraScreen, LV_SCR_LOAD_ANIM_FADE_IN, 500, 0, false);
 }
 
 void onStartSearch(lv_event_t *e) {}
@@ -397,6 +397,8 @@ void onAutoNavigation(lv_event_t *e) {}
 
 void onAlertState(lv_event_t *e) {}
 
+void on_alert_state_change(int32_t states) {}
+
 void onNavState(lv_event_t *e) {}
 
 void onLanguageChange(lv_event_t *e)
@@ -406,6 +408,8 @@ void onLanguageChange(lv_event_t *e)
 void onWatchfaceChange(lv_event_t *e) {}
 
 void onFaceSelected(lv_event_t *e) {}
+
+void on_watchface_list_open() {}
 
 void onCustomFaceSelected(int pathIndex) {}
 
@@ -445,12 +449,12 @@ void onMessageClick(lv_event_t *e)
 
   lv_obj_scroll_to_y(ui_messagePanel, 0, LV_ANIM_ON);
   lv_obj_add_flag(ui_messageList, LV_OBJ_FLAG_HIDDEN);
-  lv_obj_clear_flag(ui_messagePanel, LV_OBJ_FLAG_HIDDEN);
+  lv_obj_remove_flag(ui_messagePanel, LV_OBJ_FLAG_HIDDEN);
 }
 
 void onCaptureClick(lv_event_t *e)
 {
-  lv_scr_load_anim(ui_home, LV_SCR_LOAD_ANIM_FADE_IN, 500, 0, false);
+  lv_screen_load_anim(ui_home, LV_SCR_LOAD_ANIM_FADE_IN, 500, 0, false);
 }
 
 void addFaceList(lv_obj_t *parent, Face face) {}
@@ -461,9 +465,9 @@ void simonTone(int type, int pitch){}
 
 void setupWeather()
 {
-  // lv_obj_set_style_bg_img_src(ui_weatherScreen, &ui_img_753022056, LV_PART_MAIN | LV_STATE_DEFAULT);
+  // lv_obj_set_style_bg_image_src(ui_weatherScreen, &ui_img_753022056, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-  lv_obj_clear_flag(ui_weatherPanel, LV_OBJ_FLAG_HIDDEN);
+  lv_obj_remove_flag(ui_weatherPanel, LV_OBJ_FLAG_HIDDEN);
   lv_obj_add_flag(ui_forecastList, LV_OBJ_FLAG_HIDDEN);
 
   const char *updateTime = "Updated at\n10:47";
@@ -501,7 +505,7 @@ void setupNotifications()
   }
 
   lv_obj_scroll_to_y(ui_messageList, 1, LV_ANIM_ON);
-  lv_obj_clear_flag(ui_messageList, LV_OBJ_FLAG_HIDDEN);
+  lv_obj_remove_flag(ui_messageList, LV_OBJ_FLAG_HIDDEN);
   lv_obj_add_flag(ui_messagePanel, LV_OBJ_FLAG_HIDDEN);
 }
 
@@ -751,7 +755,7 @@ void hal_loop()
       screenTimer.active = false;
 
       screenBrightness(0);
-      lv_disp_load_scr(ui_home);
+      lv_screen_load(ui_home);
     }
   }
 }

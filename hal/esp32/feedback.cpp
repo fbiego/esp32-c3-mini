@@ -121,7 +121,7 @@ Vibration pattern[] = {
 
 void toneTask(void *param)
 {
-#if defined(BUZZER) && (BUZZER != -1)
+#if defined(BUZZER_PIN) && (BUZZER_PIN != -1)
 
     NoteSequence sequence;
 
@@ -131,7 +131,7 @@ void toneTask(void *param)
         {
             playing = true;
 
-            ledcAttach(BUZZER, 500, 8);
+            ledcAttach(BUZZER_PIN, 500, 8);
 
             if (sequence.repeat == 0)
             {
@@ -153,63 +153,21 @@ void toneTask(void *param)
 
                     if (pitch > 0)
                     {
-                        ledcWriteTone(BUZZER, pitch);
+                        ledcWriteTone(BUZZER_PIN, pitch);
                     }
                     else
                     {
-                        ledcWriteTone(BUZZER, 0); // Rest
+                        ledcWriteTone(BUZZER_PIN, 0); // Rest
                     }
                     vTaskDelay(pdMS_TO_TICKS(duration));
                 }
             }
 
-            ledcDetach(BUZZER);
+            ledcDetach(BUZZER_PIN);
 
             playing = false;
         }
     }
-#endif
-}
-
-void startToneSystem()
-{
-#if defined(BUZZER) && (BUZZER != -1)
-
-    if (!noteQueue)
-    {
-        noteQueue = xQueueCreate(MAX_QUEUE_SIZE, sizeof(NoteSequence));
-    }
-    if (!toneTaskHandle)
-    {
-        xTaskCreatePinnedToCore(toneTask, "toneTask", 2048, nullptr, 1, &toneTaskHandle, 0);
-    }
-#endif
-}
-
-void feedbackTone(Note *notes, int count, ToneType type, int repeat)
-{
-#if defined(BUZZER) && (BUZZER != -1)
-    if (!noteQueue)
-        startToneSystem();
-
-    if (count > MAX_NOTES_PER_SEQUENCE)
-        count = MAX_NOTES_PER_SEQUENCE;
-
-    if (playing && currentToneType >= type)
-    {
-        // If the current tone is of the same or higher priority, reset the queue
-        forceInterrupt = true;
-        xQueueReset(noteQueue);
-    }
-
-    NoteSequence sequence;
-    sequence.count = count;
-    sequence.repeat = repeat;
-    memcpy(sequence.notes, notes, count * sizeof(Note));
-
-    xQueueSend(noteQueue, &sequence, 0);
-    currentToneType = type;
-
 #endif
 }
 
@@ -248,6 +206,21 @@ void vibrationTask(void *param)
 #endif
 }
 
+void startToneSystem()
+{
+#if defined(BUZZER_PIN) && (BUZZER_PIN != -1)
+
+    if (!noteQueue)
+    {
+        noteQueue = xQueueCreate(MAX_QUEUE_SIZE, sizeof(NoteSequence));
+    }
+    if (!toneTaskHandle)
+    {
+        xTaskCreatePinnedToCore(toneTask, "toneTask", 2048, nullptr, 1, &toneTaskHandle, 0);
+    }
+#endif
+}
+
 void startVibrationSystem()
 {
 #if defined(VIBRATION_PIN) && (VIBRATION_PIN != -1)
@@ -262,25 +235,99 @@ void startVibrationSystem()
 #endif
 }
 
+void feedbackTone(Note *notes, int count, ToneType type, int repeat)
+{
+#if defined(BUZZER_PIN) && (BUZZER_PIN != -1)
+    if (check_alert_state(ALERT_SOUND))
+    {
+        if (!noteQueue)
+            startToneSystem();
+
+        if (count > MAX_NOTES_PER_SEQUENCE)
+            count = MAX_NOTES_PER_SEQUENCE;
+
+        if (playing && currentToneType >= type)
+        {
+            // If the current tone is of the same or higher priority, reset the queue
+            forceInterrupt = true;
+            xQueueReset(noteQueue);
+        }
+
+        NoteSequence sequence;
+        sequence.count = count;
+        sequence.repeat = repeat;
+        memcpy(sequence.notes, notes, count * sizeof(Note));
+
+        xQueueSend(noteQueue, &sequence, 0);
+        currentToneType = type;
+    }
+#endif
+}
+
 void feedbackVibrate(Vibration *steps, int count, bool force)
 {
 #if defined(VIBRATION_PIN) && (VIBRATION_PIN != -1)
-    if (!vibQueue)
-        startVibrationSystem();
-
-    if (count > MAX_VIB_PATTERN_LENGTH)
-        count = MAX_VIB_PATTERN_LENGTH;
-
-    if (force && vibrating)
+    if (check_alert_state(ALERT_VIBRATE))
     {
-        xQueueReset(vibQueue);
+        if (!vibQueue)
+            startVibrationSystem();
+
+        if (count > MAX_VIB_PATTERN_LENGTH)
+            count = MAX_VIB_PATTERN_LENGTH;
+
+        if (force && vibrating)
+        {
+            xQueueReset(vibQueue);
+        }
+
+        VibPattern pattern;
+        pattern.count = count;
+        memcpy(pattern.steps, steps, count * sizeof(Vibration));
+
+        xQueueSend(vibQueue, &pattern, 0);
+    }
+#endif
+}
+
+void feedbackRun(ToneType type)
+{
+    switch (type)
+    {
+    case T_CALLS:
+        feedbackTone(tone_call, 8, T_CALLS, 3);
+        feedbackVibrate(pattern, 4, true);
+        break;
+    case T_NOTIFICATION:
+        feedbackTone(tone_notification, 3, T_NOTIFICATION, 2);
+        feedbackVibrate(v_notif, 2, true);
+        break;
+    case T_TIMER:
+        feedbackTone(tone_alarm, 7, T_TIMER);
+        feedbackVibrate(pattern, 4, true);
+        break;
+    case T_ALARM:
+        feedbackTone(tone_timer, 6, T_TIMER, 3);
+        feedbackVibrate(pattern, 4, true);
+        break;
+    case T_SYSTEM:
+        feedbackTone(tone_button, 1, T_SYSTEM);
+        feedbackVibrate(pattern, 2, true);
+        break;
+    default:
+        break;
     }
 
-    VibPattern pattern;
-    pattern.count = count;
-    memcpy(pattern.steps, steps, count * sizeof(Vibration));
 
-    xQueueSend(vibQueue, &pattern, 0);
-
-#endif
+    if (check_alert_state(ALERT_SCREEN))
+    {
+        switch (type)
+        {
+        case T_CALLS:
+            screen_on(50);
+            break;
+        default:
+            screen_on();
+            break;
+        }
+    }
 }

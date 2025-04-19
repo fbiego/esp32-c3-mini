@@ -38,6 +38,11 @@ void onCaptureClick(lv_event_t *e);
 
 void onWatchfaceChange(lv_event_t * e);
 
+void on_watchface_list_open();
+void on_alert_state_change(int32_t states);
+void set_alert_states(int32_t states);
+
+
 void savePrefInt(const char* key, int value);
 int getPrefInt(const char* key, int def_value);
 

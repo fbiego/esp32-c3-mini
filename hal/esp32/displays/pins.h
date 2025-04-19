@@ -60,7 +60,7 @@
 #define BL -1 // unused (connected on IO extender)
 #define VIBRATION_PIN 0 // dummy (connected on IO extender)
 
-#define BUZZER 3
+#define BUZZER_PIN 3
 
 #define MAX_FILE_OPEN 10
 
@@ -91,7 +91,7 @@
 
 #define BL 3
 
-#define BUZZER -1
+#define BUZZER_PIN -1
 
 #define MAX_FILE_OPEN 10
 
@@ -122,7 +122,7 @@
 
 #define BL 2
 
-#define BUZZER -1
+#define BUZZER_PIN -1
 
 #define MAX_FILE_OPEN 50
 
@@ -153,7 +153,7 @@
 
 #define BL 15
 
-#define BUZZER -1 //33
+#define BUZZER_PIN -1 //33
 
 #define MAX_FILE_OPEN 20
 
@@ -162,7 +162,7 @@
 #define WIDTH 240
 #define HEIGHT 240
 
-#define BUZZER 3
+#define BUZZER_PIN 3
 
 #define MAX_FILE_OPEN 10
 
@@ -193,7 +193,7 @@
 
 #define BL 2
 
-#define BUZZER -1
+#define BUZZER_PIN -1
 
 #define MAX_FILE_OPEN 10
 

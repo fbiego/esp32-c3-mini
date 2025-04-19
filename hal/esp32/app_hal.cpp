@@ -199,18 +199,28 @@ void my_touchpad_read(lv_indev_t *indev_driver, lv_indev_data_t *data)
 
   if (!touched)
   {
-    data->state = LV_INDEV_STATE_REL;
+    data->state = LV_INDEV_STATE_RELEASED;
   }
   else
   {
-    data->state = LV_INDEV_STATE_PR;
+    data->state = LV_INDEV_STATE_PRESSED;
 
     /*Set the coordinates*/
     data->point.x = touchX;
     data->point.y = touchY;
-    screenTimer.time = millis();
-    screenTimer.active = true;
+    screen_on();
   }
+}
+
+void screen_on(long extra)
+{
+  screenTimer.time = millis() + extra;
+  screenTimer.active = true;
+}
+
+bool check_alert_state(AlertType type)
+{
+  return (alert_states & type) == type;
 }
 
 #ifdef ELECROW_C3
@@ -607,8 +617,8 @@ void listDir(const char *dirname, uint8_t levels)
 
 void flashDrive_cb(lv_event_t *e)
 {
-  lv_disp_t *display = lv_disp_get_default();
-  lv_obj_t *actScr = lv_disp_get_scr_act(display);
+  lv_disp_t *display = lv_display_get_default();
+  lv_obj_t *actScr = lv_display_get_screen_active(display);
   if (actScr != ui_filesScreen)
   {
     return;
@@ -619,8 +629,8 @@ void flashDrive_cb(lv_event_t *e)
 
 void sdDrive_cb(lv_event_t *e)
 {
-  lv_disp_t *display = lv_disp_get_default();
-  lv_obj_t *actScr = lv_disp_get_scr_act(display);
+  lv_disp_t *display = lv_display_get_default();
+  lv_obj_t *actScr = lv_display_get_screen_active(display);
   if (actScr != ui_filesScreen)
   {
     return;
@@ -762,7 +772,7 @@ void onCustomDelete(lv_event_t *e)
   showError("Delete", "The watchface will be deleted from storage, ESP32 will restart after deletion");
   if (deleteCustomFace(customFacePaths[index]))
   {
-    lv_scr_load_anim(ui_appListScreen, LV_SCR_LOAD_ANIM_MOVE_RIGHT, 500, 0, false);
+    lv_screen_load_anim(ui_appListScreen, LV_SCR_LOAD_ANIM_MOVE_RIGHT, 500, 0, false);
     ESP.restart();
   }
   else
@@ -778,7 +788,7 @@ void addFaceList(lv_obj_t *parent, Face face)
   lv_obj_set_width(ui_faceItemPanel, 240);
   lv_obj_set_height(ui_faceItemPanel, 50);
   lv_obj_set_align(ui_faceItemPanel, LV_ALIGN_CENTER);
-  lv_obj_clear_flag(ui_faceItemPanel, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+  lv_obj_remove_flag(ui_faceItemPanel, LV_OBJ_FLAG_SCROLLABLE); /// Flags
   lv_obj_set_style_radius(ui_faceItemPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_bg_color(ui_faceItemPanel, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_bg_opa(ui_faceItemPanel, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -789,15 +799,15 @@ void addFaceList(lv_obj_t *parent, Face face)
   // lv_obj_set_style_bg_color(ui_faceItemPanel, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_PRESSED);
   // lv_obj_set_style_bg_opa(ui_faceItemPanel, 100, LV_PART_MAIN | LV_STATE_PRESSED);
 
-  lv_obj_t *ui_faceItemIcon = lv_img_create(ui_faceItemPanel);
-  lv_img_set_src(ui_faceItemIcon, &ui_img_clock_png);
+  lv_obj_t *ui_faceItemIcon = lv_image_create(ui_faceItemPanel);
+  lv_image_set_src(ui_faceItemIcon, &ui_img_clock_png);
   lv_obj_set_width(ui_faceItemIcon, LV_SIZE_CONTENT);  /// 1
   lv_obj_set_height(ui_faceItemIcon, LV_SIZE_CONTENT); /// 1
   lv_obj_set_x(ui_faceItemIcon, 10);
   lv_obj_set_y(ui_faceItemIcon, 0);
   lv_obj_set_align(ui_faceItemIcon, LV_ALIGN_LEFT_MID);
   lv_obj_add_flag(ui_faceItemIcon, LV_OBJ_FLAG_ADV_HITTEST);  /// Flags
-  lv_obj_clear_flag(ui_faceItemIcon, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+  lv_obj_remove_flag(ui_faceItemIcon, LV_OBJ_FLAG_SCROLLABLE); /// Flags
 
   lv_obj_t *ui_faceItemName = lv_label_create(ui_faceItemPanel);
   lv_obj_set_width(ui_faceItemName, 117);
@@ -817,8 +827,8 @@ void addFaceList(lv_obj_t *parent, Face face)
 
   lv_obj_set_style_text_font(ui_faceItemName, &lv_font_montserrat_16, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-  lv_obj_t *ui_faceItemDelete = lv_img_create(ui_faceItemPanel);
-  lv_img_set_src(ui_faceItemDelete, &ui_img_bin_png);
+  lv_obj_t *ui_faceItemDelete = lv_image_create(ui_faceItemPanel);
+  lv_image_set_src(ui_faceItemDelete, &ui_img_bin_png);
   lv_obj_set_width(ui_faceItemDelete, LV_SIZE_CONTENT);  /// 1
   lv_obj_set_height(ui_faceItemDelete, LV_SIZE_CONTENT); /// 1
   lv_obj_set_x(ui_faceItemDelete, -10);
@@ -826,7 +836,7 @@ void addFaceList(lv_obj_t *parent, Face face)
   lv_obj_set_align(ui_faceItemDelete, LV_ALIGN_RIGHT_MID);
   lv_obj_add_flag(ui_faceItemDelete, LV_OBJ_FLAG_CLICKABLE);    /// Flags
   lv_obj_add_flag(ui_faceItemDelete, LV_OBJ_FLAG_ADV_HITTEST);  /// Flags
-  lv_obj_clear_flag(ui_faceItemDelete, LV_OBJ_FLAG_SCROLLABLE); /// Flags
+  lv_obj_remove_flag(ui_faceItemDelete, LV_OBJ_FLAG_SCROLLABLE); /// Flags
   lv_obj_set_style_radius(ui_faceItemDelete, 20, LV_PART_MAIN | LV_STATE_PRESSED);
   lv_obj_set_style_bg_color(ui_faceItemDelete, lv_color_hex(0xF34235), LV_PART_MAIN | LV_STATE_PRESSED);
   lv_obj_set_style_bg_opa(ui_faceItemDelete, 255, LV_PART_MAIN | LV_STATE_PRESSED);
@@ -846,11 +856,11 @@ void addFaceList(lv_obj_t *parent, Face face)
 
 void timerEnded(int x)
 {
-  feedbackTone(tone_timer, 6, T_TIMER, 3);
-  feedbackVibrate(pattern, 4, true);
+  feedbackRun(T_ALARM);
 
   screenTimer.time = millis() + 50;
   screenTimer.active = true;
+  screen_on();
 }
 
 void simonTone(int type, int pitch)
@@ -878,7 +888,7 @@ void connectionCallback(bool state)
   Timber.d(state ? "Connected" : "Disconnected");
   if (state)
   {
-    lv_obj_clear_state(ui_btStateButton, LV_STATE_CHECKED);
+    lv_obj_remove_state(ui_btStateButton, LV_STATE_CHECKED);
   }
   else
   {
@@ -889,13 +899,12 @@ void connectionCallback(bool state)
 
 void ringerCallback(String caller, bool state)
 {
-  lv_disp_t *display = lv_disp_get_default();
-  lv_obj_t *actScr = lv_disp_get_scr_act(display);
+  lv_disp_t *display = lv_display_get_default();
+  lv_obj_t *actScr = lv_display_get_screen_active(display);
 
   if (state)
   {
-    feedbackTone(tone_call, 8, T_CALLS, 3);
-    feedbackVibrate(pattern, 4, true);
+    feedbackRun(T_CALLS);
     screenTimer.time = millis() + 50;
 
     lastActScr = actScr;
@@ -923,8 +932,7 @@ void notificationCallback(Notification notification)
   Timber.d(notification.message);
   notificationsUpdate = true;
   // onNotificationsOpen(click);
-  feedbackTone(tone_notification, 3, T_NOTIFICATION, 2);
-  feedbackVibrate(v_notif, 2, true);
+  feedbackRun(T_NOTIFICATION);
   showAlert();
 }
 
@@ -948,8 +956,7 @@ void configCallback(Config config, uint32_t a, uint32_t b)
 
     break;
   case CF_FIND:
-    feedbackTone(tone_alarm, 7, T_TIMER);
-    feedbackVibrate(pattern, 4, true);
+    feedbackRun(T_TIMER);
 
     break;
   case CF_RST:
@@ -997,21 +1004,21 @@ void configCallback(Config config, uint32_t a, uint32_t b)
     break;
   case CF_CAMERA:
   {
-    lv_disp_t *display = lv_disp_get_default();
-    lv_obj_t *actScr = lv_disp_get_scr_act(display);
+    lv_disp_t *display = lv_display_get_default();
+    lv_obj_t *actScr = lv_display_get_screen_active(display);
 
     if (b)
     {
       screenTimer.time = millis() + 50;
       lastActScr = actScr;
-      lv_scr_load_anim(ui_cameraScreen, LV_SCR_LOAD_ANIM_FADE_IN, 500, 0, false);
+      lv_screen_load_anim(ui_cameraScreen, LV_SCR_LOAD_ANIM_FADE_IN, 500, 0, false);
       screenTimer.active = true;
     }
     else
     {
       if (actScr == ui_cameraScreen && lastActScr != nullptr)
       {
-        lv_scr_load_anim(lastActScr, LV_SCR_LOAD_ANIM_FADE_OUT, 500, 0, false);
+        lv_screen_load_anim(lastActScr, LV_SCR_LOAD_ANIM_FADE_OUT, 500, 0, false);
       }
       screenTimer.active = true;
     }
@@ -1078,8 +1085,8 @@ void configCallback(Config config, uint32_t a, uint32_t b)
 void onMessageClick(lv_event_t *e)
 {
 
-  lv_disp_t *display = lv_disp_get_default();
-  lv_obj_t *actScr = lv_disp_get_scr_act(display);
+  lv_disp_t *display = lv_display_get_default();
+  lv_obj_t *actScr = lv_display_get_screen_active(display);
   if (actScr != ui_notificationScreen)
   {
     Timber.i("Message screen inactive");
@@ -1097,7 +1104,7 @@ void onMessageClick(lv_event_t *e)
 
   lv_obj_scroll_to_y(ui_messagePanel, 0, LV_ANIM_ON);
   lv_obj_add_flag(ui_messageList, LV_OBJ_FLAG_HIDDEN);
-  lv_obj_clear_flag(ui_messagePanel, LV_OBJ_FLAG_HIDDEN);
+  lv_obj_remove_flag(ui_messagePanel, LV_OBJ_FLAG_HIDDEN);
 }
 
 void onCaptureClick(lv_event_t *e)
@@ -1120,7 +1127,13 @@ void onAlertState(lv_event_t *e)
   lv_obj_t *obj = (lv_obj_t *)lv_event_get_target(e);
   alertSwitch = lv_obj_has_state(obj, LV_STATE_CHECKED);
 
-  prefs.putBool("alerts", alertSwitch);
+  // prefs.putBool("alert_states", alert_states);
+}
+
+void on_alert_state_change(int32_t states) 
+{
+  alert_states = states;
+  prefs.putInt("alert_states", alert_states);
 }
 
 void onNavState(lv_event_t *e)
@@ -1158,13 +1171,13 @@ void onNotificationsOpen(lv_event_t *e)
   // addNotificationList(watch.getNotificationAt(0).icon, watch.getNotificationAt(0).message.c_str(), i);
 
   lv_obj_scroll_to_y(ui_messageList, 1, LV_ANIM_ON);
-  lv_obj_clear_flag(ui_messageList, LV_OBJ_FLAG_HIDDEN);
+  lv_obj_remove_flag(ui_messageList, LV_OBJ_FLAG_HIDDEN);
   lv_obj_add_flag(ui_messagePanel, LV_OBJ_FLAG_HIDDEN);
 }
 
 void onWeatherLoad(lv_event_t *e)
 {
-  lv_obj_clear_flag(ui_weatherPanel, LV_OBJ_FLAG_HIDDEN);
+  lv_obj_remove_flag(ui_weatherPanel, LV_OBJ_FLAG_HIDDEN);
   lv_obj_add_flag(ui_forecastList, LV_OBJ_FLAG_HIDDEN);
   lv_obj_add_flag(ui_hourlyList, LV_OBJ_FLAG_HIDDEN);
 
@@ -1206,11 +1219,11 @@ void onLoadHome(lv_event_t *e)
 {
   // if (isDay())
   // {
-  //   lv_obj_set_style_bg_img_src( ui_clockScreen, &ui_img_857483832, LV_PART_MAIN | LV_STATE_DEFAULT);
+  //   lv_obj_set_style_bg_image_src( ui_clockScreen, &ui_img_857483832, LV_PART_MAIN | LV_STATE_DEFAULT);
   // }
   // else
   // {
-  //   lv_obj_set_style_bg_img_src( ui_clockScreen, &ui_img_753022056, LV_PART_MAIN | LV_STATE_DEFAULT);
+  //   lv_obj_set_style_bg_image_src( ui_clockScreen, &ui_img_753022056, LV_PART_MAIN | LV_STATE_DEFAULT);
   // }
 }
 
@@ -1231,6 +1244,11 @@ void onFaceSelected(lv_event_t *e)
   prefs.putInt("watchface", index);
 }
 
+void on_watchface_list_open()
+{
+  feedbackVibrate(v_notif, 2, true);
+}
+
 void onCustomFaceSelected(int pathIndex)
 {
 #ifdef ENABLE_CUSTOM_FACE
@@ -1241,7 +1259,7 @@ void onCustomFaceSelected(int pathIndex)
     prefs.putString("custom", "");
     return;
   }
-  if (lv_obj_get_child_cnt(face_custom_root) > 0 && lastCustom == pathIndex)
+  if (lv_obj_get_child_count(face_custom_root) > 0 && lastCustom == pathIndex)
   {
     ui_home = face_custom_root;
   }
@@ -1251,7 +1269,7 @@ void onCustomFaceSelected(int pathIndex)
     ui_home = face_custom_root;
   }
 
-  lv_scr_load_anim(ui_home, LV_SCR_LOAD_ANIM_FADE_ON, 500, 0, false);
+  lv_screen_load_anim(ui_home, LV_SCR_LOAD_ANIM_FADE_ON, 500, 0, false);
 
   prefs.putString("custom", customFacePaths[pathIndex]);
 #endif
@@ -1279,7 +1297,7 @@ void onClickAlert(lv_event_t *e)
   // cancel alert timer
   alertTimer.active = false;
   // change screen to notifications
-  lv_disp_load_scr(ui_notificationScreen);
+  lv_screen_load(ui_notificationScreen);
 
   // enable screen for timeout + 5 seconds
   screenTimer.time = millis() + 5000;
@@ -1292,7 +1310,7 @@ void onClickAlert(lv_event_t *e)
 
   lv_obj_scroll_to_y(ui_messagePanel, 0, LV_ANIM_ON);
   lv_obj_add_flag(ui_messageList, LV_OBJ_FLAG_HIDDEN);
-  lv_obj_clear_flag(ui_messagePanel, LV_OBJ_FLAG_HIDDEN);
+  lv_obj_remove_flag(ui_messagePanel, LV_OBJ_FLAG_HIDDEN);
 }
 
 void onTimeoutChange(lv_event_t *e)
@@ -1417,8 +1435,8 @@ void onGameClosed()
 
 void showAlert()
 {
-  lv_disp_t *display = lv_disp_get_default();
-  lv_obj_t *actScr = lv_disp_get_scr_act(display);
+  lv_disp_t *display = lv_display_get_default();
+  lv_obj_t *actScr = lv_display_get_screen_active(display);
   if (actScr == ui_notificationScreen)
   {
     // at notifications screen, switch to message
@@ -1433,11 +1451,11 @@ void showAlert()
 
     lv_obj_scroll_to_y(ui_messagePanel, 0, LV_ANIM_ON);
     lv_obj_add_flag(ui_messageList, LV_OBJ_FLAG_HIDDEN);
-    lv_obj_clear_flag(ui_messagePanel, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_remove_flag(ui_messagePanel, LV_OBJ_FLAG_HIDDEN);
   }
   else
   {
-    if (!alertSwitch)
+    if (!check_alert_state(ALERT_POPUP))
     {
       return;
     }
@@ -1456,7 +1474,7 @@ void showAlert()
     alertTimer.active = true;
 
     // show the alert
-    lv_obj_clear_flag(ui_alertPanel, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_remove_flag(ui_alertPanel, LV_OBJ_FLAG_HIDDEN);
   }
 }
 
@@ -1682,6 +1700,13 @@ void hal_setup()
   auto cfg = M5.config();
   M5Dial.begin(cfg, false, false);
 #endif
+  alert_states = 0x0F; // set default
+#if !defined(BUZZER_PIN) || (BUZZER_PIN == -1)
+  alert_states &= ~0x04;
+#endif
+#if !(VIBRATION_PIN) || (VIBRATION_PIN == -1)
+  alert_states &= ~0x08;
+#endif
 
   tft.init();
   tft.initDMA();
@@ -1690,11 +1715,12 @@ void hal_setup()
   tft.setRotation(rt);
   loadSplash();
 
+  alert_states = prefs.getInt("alert_states", alert_states);
+
   startToneSystem();
   startVibrationSystem();
 
   feedbackTone(tone_startup, 3, T_SYSTEM);
-
   feedbackVibrate(pattern, 4);
 
   lv_init();
@@ -1755,7 +1781,7 @@ void hal_setup()
   currentIndex = wf;
   ui_home = *faces[wf].watchface; // load saved watchface power on
 #endif
-  lv_disp_load_scr(ui_home);
+  lv_screen_load(ui_home);
 
   int ch = lv_obj_get_child_count(ui_faceSelect);
   if (wf < ch)
@@ -1827,22 +1853,19 @@ void hal_setup()
   lv_dropdown_set_selected(ui_timeoutSelect, tm);
   lv_dropdown_set_selected(ui_rotateSelect, rt);
   lv_slider_set_value(ui_brightnessSlider, br, LV_ANIM_OFF);
+
+  set_alert_states(alert_states);
+
+
   if (circular)
   {
     lv_obj_add_state(ui_Switch2, LV_STATE_CHECKED);
   }
   else
   {
-    lv_obj_clear_state(ui_Switch2, LV_STATE_CHECKED);
+    lv_obj_remove_state(ui_Switch2, LV_STATE_CHECKED);
   }
-  if (alertSwitch)
-  {
-    lv_obj_add_state(ui_alertStateSwitch, LV_STATE_CHECKED);
-  }
-  else
-  {
-    lv_obj_clear_state(ui_alertStateSwitch, LV_STATE_CHECKED);
-  }
+
 #ifdef ENABLE_APP_NAVIGATION
   if (navSwitch)
   {
@@ -1850,7 +1873,7 @@ void hal_setup()
   }
   else
   {
-    lv_obj_clear_state(ui_navStateSwitch, LV_STATE_CHECKED);
+    lv_obj_remove_state(ui_navStateSwitch, LV_STATE_CHECKED);
   }
 #endif
 
@@ -1914,6 +1937,14 @@ void hal_setup()
   lv_obj_set_style_text_font(info, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_label_set_text(info, "No notifications available. Connect Chronos app to receive phone notifications");
 
+
+#if !defined(BUZZER_PIN) || (BUZZER_PIN == -1)
+  lv_obj_add_state(ui_soundsAlert, LV_STATE_DISABLED);
+#endif
+#if !(VIBRATION_PIN) || (VIBRATION_PIN == -1)
+  lv_obj_add_state(ui_vibrateAlert, LV_STATE_DISABLED);
+#endif
+
   ui_setup();
 
   Serial.println(heapUsage());
@@ -1951,8 +1982,8 @@ void hal_loop()
       update_faces();
     }
 
-    lv_disp_t *display = lv_disp_get_default();
-    lv_obj_t *actScr = lv_disp_get_scr_act(display);
+    lv_disp_t *display = lv_display_get_default();
+    lv_obj_t *actScr = lv_display_get_screen_active(display);
     if (actScr != ui_home)
     {
     }
@@ -2037,11 +2068,11 @@ void hal_loop()
       lv_bar_set_value(ui_appBatteryLevel, watch.getPhoneBattery(), LV_ANIM_OFF);
       if (watch.isPhoneCharging())
       {
-        lv_img_set_src(ui_appBatteryIcon, &ui_img_battery_plugged_png);
+        lv_image_set_src(ui_appBatteryIcon, &ui_img_battery_plugged_png);
       }
       else
       {
-        lv_img_set_src(ui_appBatteryIcon, &ui_img_battery_state_png);
+        lv_image_set_src(ui_appBatteryIcon, &ui_img_battery_state_png);
       }
     }
 
@@ -2074,7 +2105,7 @@ void hal_loop()
         screenTimer.active = false;
 
         screenBrightness(0);
-        lv_disp_load_scr(ui_home);
+        lv_screen_load(ui_home);
       }
     }
   }

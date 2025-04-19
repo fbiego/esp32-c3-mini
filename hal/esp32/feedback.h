@@ -23,7 +23,8 @@
 
 #define MAX_VIB_PATTERN_LENGTH 16
 
-enum ToneType {
+enum ToneType
+{
     T_ALARM = 0,
     T_TIMER,
     T_CALLS,
@@ -44,6 +45,14 @@ struct Vibration
     int duration;
 };
 
+enum AlertType
+{
+    ALERT_POPUP = 0x01,
+    ALERT_SCREEN = 0x02,
+    ALERT_SOUND = 0x04,
+    ALERT_VIBRATE = 0x08
+};
+
 extern Vibration pattern[];
 extern Vibration v_notif[];
 
@@ -59,9 +68,15 @@ extern Note tone_simonsays_intro[];
 extern Note tone_simonsays_gameover[];
 
 void startToneSystem();
-void feedbackTone(Note *notes, int count, ToneType type, int repeat = 0);
-
 void startVibrationSystem();
+
+void feedbackTone(Note *notes, int count, ToneType type, int repeat = 0);
 void feedbackVibrate(Vibration *steps, int count, bool force = false);
+
+void screen_on(long extra = 0);
+
+void feedbackRun(ToneType type);
+
+bool check_alert_state(AlertType type);
 
 #endif
