@@ -16,6 +16,13 @@
 #define ENABLE_FACE_2151 // (2151)
 // #define ENABLE_FACE_3589 // (3589)
 
+
+#elif VIEWE_SMARTRING
+
+#define ENABLE_FACE_756_2_466 // (Red)
+
+#define ENABLE_FACE_75_2 // (Analog)
+
 #else
 // 240x240 watchfaces
 

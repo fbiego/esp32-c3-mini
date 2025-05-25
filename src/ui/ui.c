@@ -4178,6 +4178,8 @@ void ui_watchfaces_init(void)
       init_face_2051(registerWatchface_cb);
       init_face_2151(registerWatchface_cb);
       init_face_3589(registerWatchface_cb);
+
+      init_face_756_2_466(registerWatchface_cb);
 }
 
 void ui_update_watchfaces(int second, int minute, int hour, bool mode, bool am, int day, int month, int year, int weekday,
@@ -4206,6 +4208,10 @@ void ui_update_watchfaces(int second, int minute, int hour, bool mode, bool am, 
       update_check_2051(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
       update_check_2151(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
       update_check_3589(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
+
+      update_check_756_2_466(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
+      
+
 }
 
 void ui_update_seconds(int second)
