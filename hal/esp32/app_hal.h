@@ -20,7 +20,7 @@
 #elif VIEWE_SMARTRING
 
 #define ENABLE_FACE_756_2_466 // (Red)
-
+#define ENABLE_FACE_RADAR_466 // (Radar)
 #define ENABLE_FACE_75_2 // (Analog)
 
 #else
