@@ -10,6 +10,7 @@
 #include "../apps/navigation/navigation.h"
 #include "../apps/attitude/attitude.h"
 #include "../apps/sample/sample.h"
+#include "../apps/range/range.h"
 #include "../apps/piobot/piobot.h"
 
 // games

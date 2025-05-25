@@ -424,6 +424,11 @@ void calendar_app_launched(void)
     calendar_set_today(year, month, day);
 }
 
+int32_t read_encoder_position()
+{
+  return 0;
+}
+
 void update_faces()
 {
     time_t now = time(0);

@@ -55,11 +55,14 @@
 
 #ifdef M5_STACK_DIAL
 #include "M5Dial.h"
-
 #define tft M5Dial.Display
-
+#define buf_size 10
+#elif VIEWE_SMARTRING
+#include "displays/viewe.hpp"
+#define buf_size 40
 #else
 #include "displays/generic.hpp"
+#define buf_size 10
 #endif
 
 #ifdef ENABLE_APP_QMI8658C
@@ -74,7 +77,7 @@ RtcPCF8563<TwoWire> Rtc(Wire);
 
 #define FLASH FFat
 #define F_NAME "FATFS"
-#define buf_size 10
+
 
 ChronosESP32 watch("Chronos C3");
 Preferences prefs;
@@ -86,8 +89,8 @@ AccelData acc;
 GyroData gyro;
 #endif
 
-static const uint32_t screenWidth = WIDTH;
-static const uint32_t screenHeight = HEIGHT;
+static const uint32_t screenWidth = SCREEN_WIDTH;
+static const uint32_t screenHeight = SCREEN_HEIGHT;
 
 const unsigned int lvBufferSize = screenWidth * buf_size;
 uint8_t lvBuffer[2][lvBufferSize];
@@ -112,6 +115,8 @@ bool readIMU = false;
 bool updateSeconds = false;
 bool hasUpdatedSec = false;
 bool navSwitch = false;
+
+static long oldPosition = 0;
 
 String customFacePaths[15];
 int customFaceIndex;
@@ -172,8 +177,25 @@ void my_disp_flush(lv_display_t *display, const lv_area_t *area, unsigned char *
     tft.endWrite();
   }
 
-  tft.pushImageDMA(area->x1, area->y1, area->x2 - area->x1 + 1, area->y2 - area->y1 + 1, (uint16_t *)data);
+  tft.pushImageDMA(area->x1, area->y1, w, h, (uint16_t *)data);
   lv_display_flush_ready(display); /* tell lvgl that flushing is done */
+}
+
+void rounder_event_cb(lv_event_t *e)
+{
+  lv_area_t *area = lv_event_get_invalidated_area(e);
+  uint16_t x1 = area->x1;
+  uint16_t x2 = area->x2;
+
+  uint16_t y1 = area->y1;
+  uint16_t y2 = area->y2;
+
+  // round the start of coordinate down to the nearest 2M number
+  area->x1 = (x1 >> 1) << 1;
+  area->y1 = (y1 >> 1) << 1;
+  // round the end of coordinate up to the nearest 2N+1 number
+  area->x2 = ((x2 >> 1) << 1) + 1;
+  area->y2 = ((y2 >> 1) << 1) + 1;
 }
 
 /*Read the touchpad*/
@@ -806,7 +828,7 @@ void addFaceList(lv_obj_t *parent, Face face)
   lv_obj_set_x(ui_faceItemIcon, 10);
   lv_obj_set_y(ui_faceItemIcon, 0);
   lv_obj_set_align(ui_faceItemIcon, LV_ALIGN_LEFT_MID);
-  lv_obj_add_flag(ui_faceItemIcon, LV_OBJ_FLAG_ADV_HITTEST);  /// Flags
+  lv_obj_add_flag(ui_faceItemIcon, LV_OBJ_FLAG_ADV_HITTEST);   /// Flags
   lv_obj_remove_flag(ui_faceItemIcon, LV_OBJ_FLAG_SCROLLABLE); /// Flags
 
   lv_obj_t *ui_faceItemName = lv_label_create(ui_faceItemPanel);
@@ -834,8 +856,8 @@ void addFaceList(lv_obj_t *parent, Face face)
   lv_obj_set_x(ui_faceItemDelete, -10);
   lv_obj_set_y(ui_faceItemDelete, 0);
   lv_obj_set_align(ui_faceItemDelete, LV_ALIGN_RIGHT_MID);
-  lv_obj_add_flag(ui_faceItemDelete, LV_OBJ_FLAG_CLICKABLE);    /// Flags
-  lv_obj_add_flag(ui_faceItemDelete, LV_OBJ_FLAG_ADV_HITTEST);  /// Flags
+  lv_obj_add_flag(ui_faceItemDelete, LV_OBJ_FLAG_CLICKABLE);     /// Flags
+  lv_obj_add_flag(ui_faceItemDelete, LV_OBJ_FLAG_ADV_HITTEST);   /// Flags
   lv_obj_remove_flag(ui_faceItemDelete, LV_OBJ_FLAG_SCROLLABLE); /// Flags
   lv_obj_set_style_radius(ui_faceItemDelete, 20, LV_PART_MAIN | LV_STATE_PRESSED);
   lv_obj_set_style_bg_color(ui_faceItemDelete, lv_color_hex(0xF34235), LV_PART_MAIN | LV_STATE_PRESSED);
@@ -1130,10 +1152,13 @@ void onAlertState(lv_event_t *e)
   // prefs.putBool("alert_states", alert_states);
 }
 
-void on_alert_state_change(int32_t states) 
+void on_alert_state_change(int32_t states)
 {
   alert_states = states;
   prefs.putInt("alert_states", alert_states);
+
+  feedbackTone(tone_button, 1, T_SYSTEM);
+  feedbackVibrate(pattern, 2, true);
 }
 
 void onNavState(lv_event_t *e)
@@ -1610,7 +1635,7 @@ void contacts_app_launched()
   int n = watch.getContactCount();
   int s = watch.getSOSContactIndex();
   int i;
-  for (i = 0;i < n; i++)
+  for (i = 0; i < n; i++)
   {
     Contact cn = watch.getContact(i);
     addContact(cn.name.c_str(), cn.number.c_str(), s == i);
@@ -1624,6 +1649,15 @@ void contacts_app_launched()
 void calendar_app_launched(void)
 {
   calendar_set_today(watch.getYear(), watch.getMonth() + 1, watch.getDay());
+}
+
+int32_t read_encoder_position()
+{
+#ifdef M5_STACK_DIAL
+  M5Dial.update();
+  return M5Dial.Encoder.read();
+#endif
+  return 0;
 }
 
 void logCallback(Level level, unsigned long time, String message)
@@ -1652,17 +1686,19 @@ void loadSplash()
 {
   int w = 122;
   int h = 130;
-  int xOffset = 63;
-  int yOffset = 55;
+  int x = (SCREEN_WIDTH - w) / 2;
+  int y = (SCREEN_HEIGHT - h) / 2;
   tft.fillScreen(TFT_BLACK);
   screenBrightness(200);
-  for (int y = 0; y < h; y++)
-  {
-    for (int x = 0; x < w; x++)
-    {
-      tft.writePixel(x + xOffset, y + yOffset, uint16_t(splash[(((y * w) + x) * 2)] << 8 | splash[(((y * w) + x) * 2) + 1]));
-    }
-  }
+
+  tft.pushImageDMA(x, y, w, h, (uint16_t *)splash);
+  // for (int y = 0; y < h; y++)
+  // {
+  //   for (int x = 0; x < w; x++)
+  //   {
+  //     tft.writePixel(x + xOffset, y + yOffset, uint16_t(splash[(((y * w) + x) * 2)] << 8 | splash[(((y * w) + x) * 2) + 1]));
+  //   }
+  // }
 
   delay(2000);
 }
@@ -1698,13 +1734,13 @@ void hal_setup()
 
 #ifdef M5_STACK_DIAL
   auto cfg = M5.config();
-  M5Dial.begin(cfg, false, false);
+  M5Dial.begin(cfg, true, false);
 #endif
   alert_states = 0x0F; // set default
 #if !defined(BUZZER_PIN) || (BUZZER_PIN == -1)
   alert_states &= ~0x04;
 #endif
-#if !(VIBRATION_PIN) || (VIBRATION_PIN == -1)
+#if !defined(VIBRATION_PIN) || (VIBRATION_PIN == -1)
   alert_states &= ~0x08;
 #endif
 
@@ -1713,7 +1749,9 @@ void hal_setup()
   tft.startWrite();
   tft.fillScreen(TFT_BLACK);
   tft.setRotation(rt);
+
   loadSplash();
+
 
   alert_states = prefs.getInt("alert_states", alert_states);
 
@@ -1730,8 +1768,8 @@ void hal_setup()
   static auto *lvDisplay = lv_display_create(screenWidth, screenHeight);
   lv_display_set_color_format(lvDisplay, LV_COLOR_FORMAT_RGB565);
   lv_display_set_flush_cb(lvDisplay, my_disp_flush);
-
   lv_display_set_buffers(lvDisplay, lvBuffer[0], lvBuffer[1], lvBufferSize, LV_DISPLAY_RENDER_MODE_PARTIAL);
+  lv_display_add_event_cb(lvDisplay, rounder_event_cb, LV_EVENT_INVALIDATE_AREA, NULL);
 
   static auto *lvInput = lv_indev_create();
   lv_indev_set_type(lvInput, LV_INDEV_TYPE_POINTER);
@@ -1850,12 +1888,11 @@ void hal_setup()
 
   screenBrightness(br);
 
-  lv_dropdown_set_selected(ui_timeoutSelect, tm);
-  lv_dropdown_set_selected(ui_rotateSelect, rt);
+  lv_dropdown_set_selected(ui_timeoutSelect, tm, LV_ANIM_OFF);
+  lv_dropdown_set_selected(ui_rotateSelect, rt, LV_ANIM_OFF);
   lv_slider_set_value(ui_brightnessSlider, br, LV_ANIM_OFF);
 
   set_alert_states(alert_states);
-
 
   if (circular)
   {
@@ -1883,7 +1920,8 @@ void hal_setup()
   setTimeout(tm);
 
 #ifdef ENABLE_CUSTOM_FACE
-  if (!fsState){
+  if (!fsState)
+  {
     showError(F_NAME, "Failed to mount the partition");
   }
 #endif
@@ -1937,11 +1975,10 @@ void hal_setup()
   lv_obj_set_style_text_font(info, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_label_set_text(info, "No notifications available. Connect Chronos app to receive phone notifications");
 
-
 #if !defined(BUZZER_PIN) || (BUZZER_PIN == -1)
   lv_obj_add_state(ui_soundsAlert, LV_STATE_DISABLED);
 #endif
-#if !(VIBRATION_PIN) || (VIBRATION_PIN == -1)
+#if !defined(VIBRATION_PIN) || (VIBRATION_PIN == -1)
   lv_obj_add_state(ui_vibrateAlert, LV_STATE_DISABLED);
 #endif
 
@@ -1962,6 +1999,22 @@ void hal_loop()
     delay(5);
 
     watch.loop();
+
+#ifdef M5_STACK_DIAL
+    M5Dial.update();
+    long newPosition = M5Dial.Encoder.read();
+    if (newPosition != oldPosition)
+    {
+      input_bus_emit_encoder_event(newPosition, newPosition - oldPosition);
+      oldPosition = newPosition;
+    }
+
+    if (M5Dial.BtnA.wasPressed())
+    {
+      input_bus_emit_button_event(true);
+      M5Dial.Encoder.readAndReset();
+    }
+#endif
 
     if (updateSeconds)
     {
@@ -2009,7 +2062,6 @@ void hal_loop()
         nav.distance = "";
         navIcCRC = 0xFFFFFFFF;
       }
-      
 
       if (!nav.isNavigation)
       {
@@ -2018,12 +2070,13 @@ void hal_loop()
       }
 
       String navText = nav.eta + "\n" + nav.duration + " " + nav.distance;
-      
+
 #ifdef ENABLE_APP_NAVIGATION
       if (actScr != get_nav_screen() && nav.active && navSwitch)
       {
         lastActScr = actScr;
-        if (!get_nav_screen()){
+        if (!get_nav_screen())
+        {
           ui_navScreen_screen_init();
         }
         lv_screen_load_anim(get_nav_screen(), LV_SCR_LOAD_ANIM_FADE_IN, 500, 0, false);
@@ -2038,7 +2091,6 @@ void hal_loop()
 #endif
       navIconState(nav.active && nav.hasIcon);
       navigateInfo(navText.c_str(), nav.title.c_str(), nav.directions.c_str());
-
     }
     if (navIcChanged)
     {

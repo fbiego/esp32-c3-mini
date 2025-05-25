@@ -35,8 +35,8 @@
 #ifdef ELECROW_C3
 
 // screen configs
-#define WIDTH 240
-#define HEIGHT 240
+#define SCREEN_WIDTH 240
+#define SCREEN_HEIGHT 240
 #define OFFSET_X 0
 #define OFFSET_Y 0
 #define RGB_ORDER false
@@ -67,8 +67,8 @@
 #elif ESPC3
 
 // screen configs
-#define WIDTH 240
-#define HEIGHT 240
+#define SCREEN_WIDTH 240
+#define SCREEN_HEIGHT 240
 #define OFFSET_X 0
 #define OFFSET_Y 0
 #define RGB_ORDER false
@@ -98,8 +98,8 @@
 #elif ESPS3_1_28
 
 // screen configs
-#define WIDTH 240
-#define HEIGHT 240
+#define SCREEN_WIDTH 240
+#define SCREEN_HEIGHT 240
 #define OFFSET_X 0
 #define OFFSET_Y 0
 #define RGB_ORDER false
@@ -129,8 +129,8 @@
 #elif ESPS3_1_69
 
 // screen configs
-#define WIDTH 240
-#define HEIGHT 280
+#define SCREEN_WIDTH 240
+#define SCREEN_HEIGHT 280
 #define OFFSET_X 0
 #define OFFSET_Y 20
 #define RGB_ORDER true
@@ -159,18 +159,24 @@
 
 #elif M5_STACK_DIAL
 
-#define WIDTH 240
-#define HEIGHT 240
+#define SCREEN_WIDTH 240
+#define SCREEN_HEIGHT 240
 
 #define BUZZER_PIN 3
+
+#define MAX_FILE_OPEN 10
+
+#elif VIEWE_SMARTRING
+#define SCREEN_WIDTH 466
+#define SCREEN_HEIGHT 466
 
 #define MAX_FILE_OPEN 10
 
 #else
 
 // screen configs
-#define WIDTH 240
-#define HEIGHT 240
+#define SCREEN_WIDTH 240
+#define SCREEN_HEIGHT 240
 #define OFFSET_X 0
 #define OFFSET_Y 0
 #define RGB_ORDER false

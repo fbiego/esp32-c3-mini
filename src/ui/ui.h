@@ -26,6 +26,7 @@ extern "C"
 #include "ui_events.h"
 #include "../common/app_manager.h"
 #include "../common/generated_features.h"
+#include "../common/input_bus/input_bus.h"
 
 
     extern const char *ui_info_text;

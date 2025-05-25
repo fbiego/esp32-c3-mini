@@ -35,13 +35,17 @@
 
 #endif
 
-#if defined(ESPS3_1_69) || defined(ESPS3_1_28)
+#if defined(ESPS3_1_69) || defined(ESPS3_1_28) || defined(VIEWE_SMARTRING)
 #define ENABLE_APP_QMI8658C
 #define ENABLE_APP_ATTITUDE
 #endif
 
 #if defined(ELECROW_C3)
 #define ENABLE_RTC
+#endif
+
+#ifdef M5_STACK_DIAL
+#define ENABLE_APP_RANGE
 #endif
 
 #define ENABLE_APP_CALENDAR
