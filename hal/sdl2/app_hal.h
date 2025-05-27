@@ -32,6 +32,12 @@
 
 #endif
 
+#if SDL_VER_RES == 466
+#define ENABLE_FACE_756_2_466 // (Red)
+#define ENABLE_FACE_RADAR_466 // (Radar)
+
+#endif
+
 #define ENABLE_GAME_RACING
 #define ENABLE_GAME_SIMON
 

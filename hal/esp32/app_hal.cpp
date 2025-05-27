@@ -57,12 +57,17 @@
 #include "M5Dial.h"
 #define tft M5Dial.Display
 #define buf_size 10
-#elif VIEWE_SMARTRING
+#elif defined(VIEWE_SMARTRING) || defined(VIEWE_KNOB_15)
 #include "displays/viewe.hpp"
 #define buf_size 40
 #else
 #include "displays/generic.hpp"
 #define buf_size 10
+#endif
+
+#ifdef VIEWE_KNOB_15
+#include <Encoder.h>
+Encoder myEnc(ENCODER_A, ENCODER_B);
 #endif
 
 #ifdef ENABLE_APP_QMI8658C
@@ -681,7 +686,7 @@ bool loadCustomFace(String file)
   DeserializationError err = deserializeJson(face, read);
   if (!err)
   {
-    if (!face.containsKey("elements"))
+    if (!face["elements"].is<JsonArray>())
     {
       return false;
     }
@@ -738,7 +743,7 @@ bool deleteCustomFace(String file)
   DeserializationError err = deserializeJson(face, read);
   if (!err)
   {
-    if (!face.containsKey("assets"))
+    if (!face["assets"].is<JsonArray>())
     {
       return false;
     }
@@ -1656,6 +1661,8 @@ int32_t read_encoder_position()
 #ifdef M5_STACK_DIAL
   M5Dial.update();
   return M5Dial.Encoder.read();
+#elif defined(VIEWE_KNOB_15)
+  return myEnc.read();
 #endif
   return 0;
 }
@@ -1690,16 +1697,7 @@ void loadSplash()
   int y = (SCREEN_HEIGHT - h) / 2;
   tft.fillScreen(TFT_BLACK);
   screenBrightness(200);
-
   tft.pushImageDMA(x, y, w, h, (uint16_t *)splash);
-  // for (int y = 0; y < h; y++)
-  // {
-  //   for (int x = 0; x < w; x++)
-  //   {
-  //     tft.writePixel(x + xOffset, y + yOffset, uint16_t(splash[(((y * w) + x) * 2)] << 8 | splash[(((y * w) + x) * 2) + 1]));
-  //   }
-  // }
-
   delay(2000);
 }
 
@@ -1829,6 +1827,8 @@ void hal_setup()
 
 #ifdef ESPS3_1_69
   watch.setScreen(CS_240x296_191_RTF);
+#elif defined(VIEWE_SMARTRING) || defined(VIEWE_KNOB_15)
+  watch.setScreen(CS_466x466_143_CTF);
 #endif
   String chip = String(ESP.getChipModel());
   watch.setName(chip);
@@ -2000,15 +2000,16 @@ void hal_loop()
 
     watch.loop();
 
-#ifdef M5_STACK_DIAL
-    M5Dial.update();
-    long newPosition = M5Dial.Encoder.read();
+#if defined(M5_STACK_DIAL) || defined(VIEWE_KNOB_15)
+    long newPosition = read_encoder_position();
     if (newPosition != oldPosition)
     {
       input_bus_emit_encoder_event(newPosition, newPosition - oldPosition);
       oldPosition = newPosition;
     }
-
+#endif
+#ifdef M5_STACK_DIAL
+    M5Dial.update();
     if (M5Dial.BtnA.wasPressed())
     {
       input_bus_emit_button_event(true);

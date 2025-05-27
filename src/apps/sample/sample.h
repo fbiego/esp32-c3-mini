@@ -16,6 +16,7 @@ extern "C"
 #include "../../common/app_manager.h"
 
 // #define ENABLE_APP_SAMPLE // Uncomment or define this to enable the sample app
+// typically this would be defined in app_hal.h
 
 #ifdef ENABLE_APP_SAMPLE
 

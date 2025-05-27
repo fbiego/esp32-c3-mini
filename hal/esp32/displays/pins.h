@@ -170,7 +170,44 @@
 #define SCREEN_WIDTH 466
 #define SCREEN_HEIGHT 466
 
+#define LCD_CS 7
+#define LCD_SCK 13
+#define LCD_SD0 12
+#define LCD_SD1 8
+#define LCD_SD2 14
+#define LCD_SD3 9
+#define LCD_RST 11
+
+#define TOUCH_SDA 41
+#define TOUCH_SCL 45
+#define TOUCH_RST 46
+#define TOUCH_IRQ 42
+
 #define MAX_FILE_OPEN 10
+
+#elif VIEWE_KNOB_15
+#define SCREEN_WIDTH 466
+#define SCREEN_HEIGHT 466
+
+#define LCD_CS 12
+#define LCD_SCK 10
+#define LCD_SD0 13
+#define LCD_SD1 11
+#define LCD_SD2 14
+#define LCD_SD3 9
+#define LCD_RST 8
+#define LCD_EN 17
+
+#define TOUCH_SDA 1
+#define TOUCH_SCL 3
+#define TOUCH_RST 2
+#define TOUCH_IRQ 4
+
+#define ENCODER_A 6
+#define ENCODER_B 5
+
+#define MAX_FILE_OPEN 10
+
 
 #else
 

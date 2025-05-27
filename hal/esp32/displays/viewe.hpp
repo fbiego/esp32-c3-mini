@@ -5,6 +5,8 @@
 #include "Arduino_GFX_Library.h"
 #include "TouchDrvCSTXXX.hpp"
 
+#include "pins.h"
+
 #define TFT_BLACK 0x00000
 
 class DisplayWrapper
@@ -17,16 +19,16 @@ public:
     {
 
         static Arduino_DataBus *bus = new Arduino_ESP32QSPI(
-            7 /* CS */, 13 /* SCK */, 12 /* SDIO0 */, 8 /* SDIO1 */,
-            14 /* SDIO2 */, 9 /* SDIO3 */);
+            LCD_CS /* CS */, LCD_SCK /* SCK */, LCD_SD0 /* SDIO0 */, LCD_SD1 /* SDIO1 */,
+            LCD_SD2 /* SDIO2 */, LCD_SD3 /* SDIO3 */);
 
         gfx = new Arduino_CO5300(
             bus,
-            11 /* RST */,
+            LCD_RST /* RST */,
             0 /* rotation */,
             false /* IPS */,
-            466,
-            466,
+            SCREEN_WIDTH,
+            SCREEN_HEIGHT,
             6 /* col_offset1 */,
             0 /* row_offset1 */,
             0 /* col_offset2 */,
@@ -36,10 +38,13 @@ public:
 
     bool init(void)
     {
+#ifdef LCD_EN
+        pinMode(LCD_EN, OUTPUT);
+        digitalWrite(LCD_EN, HIGH);
+#endif
         bool state = gfx->begin();
-        touch.setPins(46, 42);
-        touch.begin(Wire, 0x15, 41, 45);
-
+        touch.setPins(TOUCH_RST, TOUCH_IRQ);
+        touch.begin(Wire, 0x15, TOUCH_SDA, TOUCH_SCL);
         return state;
     }
 
@@ -52,7 +57,7 @@ public:
 
     void setRotation(uint8_t rotation)
     {
-        // gfx->setRotation(rotation);
+        // gfx->setRotation(rotation); // Not supported in CO5300
     }
 
     void pushImageDMA(int32_t x, int32_t y, int32_t w, int32_t h, uint16_t *data)

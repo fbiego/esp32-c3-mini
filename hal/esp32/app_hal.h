@@ -17,11 +17,12 @@
 // #define ENABLE_FACE_3589 // (3589)
 
 
-#elif VIEWE_SMARTRING
+#elif defined(VIEWE_SMARTRING) || defined(VIEWE_KNOB_15)
 
 #define ENABLE_FACE_756_2_466 // (Red)
 #define ENABLE_FACE_RADAR_466 // (Radar)
 #define ENABLE_FACE_75_2 // (Analog)
+#define ENABLE_FACE_34_2 // (Shadow) 
 
 #else
 // 240x240 watchfaces
@@ -51,7 +52,7 @@
 #define ENABLE_RTC
 #endif
 
-#ifdef M5_STACK_DIAL
+#if defined(M5_STACK_DIAL) || defined(VIEWE_KNOB_15)
 #define ENABLE_APP_RANGE
 #endif
 

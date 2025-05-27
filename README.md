@@ -31,6 +31,7 @@ https://github.com/user-attachments/assets/3cdc30e3-8383-4227-b88c-32bd1d464c70
  - QR Codes, Contacts
  - Games - Simon Says, Racing (Need to enable)
  - Navigation (Get Google Maps Navigation instructions on ESP32)
+ - Create custom apps with LVGL [sample](src/apps/sample/)
 
  ## Building
 
@@ -47,12 +48,15 @@ https://github.com/user-attachments/assets/3cdc30e3-8383-4227-b88c-32bd1d464c70
  
  You can also find binary files for various boards.
 
-## Boards
+## Supported Boards
 
+![Boards 2](boards_2.png?raw=true "boards2")
 ![Boards](boards.png?raw=true "boards")
 
+- [Viewe SmartRing AMOLED 1.75 466x466](https://github.com/VIEWESMART/VIEWE-SMARTRING)
+- [Viewe Touch Knob AMOLED 1.5 466x466](https://viewedisplay.com/product/esp32-1-5-inch-466x466-round-amoled-knob-display-touch-screen-arduino-lvgl/)
 - [CrowPanel ESP32 Display-1.28(R) 240x240](https://www.elecrow.com/crowpanel-esp32-display-1-28-r-inch-240-240-round-ips-display-capacitive-touch-spi-screen.html)
-- [M5 Stack Dial](https://docs.m5stack.com/en/core/M5Dial)
+- [M5 Stack Dial 240x240](https://docs.m5stack.com/en/core/M5Dial)
 - [ESP32 C3 Mini 1.28 240x240](https://www.aliexpress.com/item/1005006451631422.html)
 - [Waveshare S3 1.28 240x240](https://www.waveshare.com/product/esp32-s3-touch-lcd-1.28.htm)
 - [Waveshare S3 1.69 240x280](https://www.waveshare.com/esp32-s3-touch-lcd-1.69.htm)
