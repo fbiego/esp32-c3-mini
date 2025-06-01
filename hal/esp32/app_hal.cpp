@@ -60,6 +60,7 @@
 #elif defined(VIEWE_SMARTRING) || defined(VIEWE_KNOB_15)
 #include "displays/viewe.hpp"
 #define buf_size 40
+#define SW_ROTATION
 #else
 #include "displays/generic.hpp"
 #define buf_size 10
@@ -169,6 +170,13 @@ bool isKnown(uint8_t id);
 void parseDial(const char *path, bool restart = false);
 bool lvImgHeader(uint8_t *byteArray, uint8_t cf, uint16_t w, uint16_t h, uint16_t stride);
 
+
+lv_display_rotation_t getRotation(uint8_t rotation)
+{
+    if (rotation > 3) return LV_DISPLAY_ROTATION_0;
+    return (lv_display_rotation_t)rotation;
+}
+
 /* Display flushing */
 void my_disp_flush(lv_display_t *display, const lv_area_t *area, unsigned char *data)
 {
@@ -177,12 +185,33 @@ void my_disp_flush(lv_display_t *display, const lv_area_t *area, unsigned char *
   uint32_t h = lv_area_get_height(area);
   lv_draw_sw_rgb565_swap(data, w * h);
 
+#ifdef SW_ROTATION
+  lv_display_rotation_t rotation = lv_display_get_rotation(display);
+	lv_area_t rotated_area;
+  if(rotation != LV_DISPLAY_ROTATION_0) {
+    lv_color_format_t cf = lv_display_get_color_format(display);
+    /*Calculate the position of the rotated area*/
+    rotated_area = *area;
+    lv_display_rotate_area(display, &rotated_area);
+    /*Calculate the source stride (bytes in a line) from the width of the area*/
+    uint32_t src_stride = lv_draw_buf_width_to_stride(lv_area_get_width(area), cf);
+    /*Calculate the stride of the destination (rotated) area too*/
+    uint32_t dest_stride = lv_draw_buf_width_to_stride(lv_area_get_width(&rotated_area), cf);
+    /*Have a buffer to store the rotated area and perform the rotation*/
+    static uint8_t rotated_buf[lvBufferSize];
+    lv_draw_sw_rotate(data, rotated_buf, w, h, src_stride, dest_stride, rotation, cf);
+    /*Use the rotated area and rotated buffer from now on*/
+    area = &rotated_area;
+    data = rotated_buf;
+  }
+#endif
+
   if (tft.getStartCount() == 0)
   {
     tft.endWrite();
   }
 
-  tft.pushImageDMA(area->x1, area->y1, w, h, (uint16_t *)data);
+  tft.pushImageDMA(area->x1, area->y1, area->x2 - area->x1 + 1, area->y2 - area->y1 + 1, (uint16_t *)data);
   lv_display_flush_ready(display); /* tell lvgl that flushing is done */
 }
 
@@ -1360,10 +1389,13 @@ void onRotateChange(lv_event_t *e)
   Timber.i("Selected index: %d", sel);
 
   prefs.putInt("rotate", sel);
-
+#ifdef SW_ROTATION
+  lv_display_set_rotation(lv_display_get_default(), getRotation(sel));
+#else
   tft.setRotation(sel);
   // screen rotation has changed, invalidate to redraw
   lv_obj_invalidate(lv_screen_active());
+#endif
 }
 
 void onLanguageChange(lv_event_t *e)
@@ -1768,6 +1800,10 @@ void hal_setup()
   lv_display_set_flush_cb(lvDisplay, my_disp_flush);
   lv_display_set_buffers(lvDisplay, lvBuffer[0], lvBuffer[1], lvBufferSize, LV_DISPLAY_RENDER_MODE_PARTIAL);
   lv_display_add_event_cb(lvDisplay, rounder_event_cb, LV_EVENT_INVALIDATE_AREA, NULL);
+
+#ifdef SW_ROTATION
+  lv_display_set_rotation(lvDisplay, getRotation(rt));
+#endif
 
   static auto *lvInput = lv_indev_create();
   lv_indev_set_type(lvInput, LV_INDEV_TYPE_POINTER);
