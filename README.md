@@ -53,7 +53,7 @@ https://github.com/user-attachments/assets/3cdc30e3-8383-4227-b88c-32bd1d464c70
 ![Boards 2](boards_2.png?raw=true "boards2")
 ![Boards](boards.png?raw=true "boards")
 
-- [Viewe SmartRing AMOLED 1.75 466x466](https://github.com/VIEWESMART/VIEWE-SMARTRING)
+- [Viewe SmartRing AMOLED 1.8 466x466](https://viewedisplay.com/product/esp32-1-8-inch-round-amoled-touch-display-arduino-lvgl-wifi-voice-assistant-ai-smart-displays/)
 - [Viewe Touch Knob AMOLED 1.5 466x466](https://viewedisplay.com/product/esp32-1-5-inch-466x466-round-amoled-knob-display-touch-screen-arduino-lvgl/)
 - [CrowPanel ESP32 Display-1.28(R) 240x240](https://www.elecrow.com/crowpanel-esp32-display-1-28-r-inch-240-240-round-ips-display-capacitive-touch-spi-screen.html)
 - [M5 Stack Dial 240x240](https://docs.m5stack.com/en/core/M5Dial)
