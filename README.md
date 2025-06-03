@@ -2,7 +2,7 @@
 A demo LVGL Watch project for ESP32 C3 mini 240*240 touch display development board. Can also be built natively to test the LVGL UI.
 
 ## Videos
-
+- [`C3 UI on 466×466 AMOLED`](https://youtu.be/l3tHc5EIgos)
 - [`LVGL 9 update, Navigation`](https://youtu.be/qGODX6ALO_U)
 - [`ESP32 C3 mini LVGL`](https://youtu.be/u96OkjxC0Ro)
 - [`ESP32  Watchfaces LVGL`](https://youtu.be/lvRsTp9v6_k)
