@@ -47,10 +47,10 @@ public:
 
       /* The following settings are set to general initial values ​​for each panel, so try commenting out any items you are unsure of. */
 
-      cfg.memory_width = WIDTH;   // Maximum width supported by driver IC
-      cfg.memory_height = HEIGHT; // Maximum height supported by driver IC
-      cfg.panel_width = WIDTH;    // Actual displayable width
-      cfg.panel_height = HEIGHT;  // Actual displayable height
+      cfg.memory_width = SCREEN_WIDTH;   // Maximum width supported by driver IC
+      cfg.memory_height = SCREEN_HEIGHT; // Maximum height supported by driver IC
+      cfg.panel_width = SCREEN_WIDTH;    // Actual displayable width
+      cfg.panel_height = SCREEN_HEIGHT;  // Actual displayable height
       cfg.offset_x = OFFSET_X;    // Panel offset in X direction
       cfg.offset_y = OFFSET_Y;    // Panel offset in Y direction
       cfg.offset_rotation = 0;    // Value 0~7 in rotation direction (4~7 is inverted)
@@ -82,9 +82,9 @@ public:
 
       auto cfg = _touch_instance.config();
       cfg.x_min = 0;        // Minimum X value obtained from touch screen (raw value)
-      cfg.x_max = WIDTH;    // Maximum X value obtained from touch screen (raw value)
+      cfg.x_max = SCREEN_WIDTH;    // Maximum X value obtained from touch screen (raw value)
       cfg.y_min = 0;        // Minimum Y value obtained from touch screen (raw value)
-      cfg.y_max = HEIGHT;   // Maximum Y value obtained from touch screen (raw value)
+      cfg.y_max = SCREEN_HEIGHT;   // Maximum Y value obtained from touch screen (raw value)
       cfg.pin_int = TP_INT; // Pin number to which INT is connected
       cfg.pin_rst = TP_RST;
       cfg.bus_shared = true;   // Set true if using a common bus with the screen

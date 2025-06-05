@@ -1729,7 +1729,7 @@ void loadSplash()
   int y = (SCREEN_HEIGHT - h) / 2;
   tft.fillScreen(TFT_BLACK);
   screenBrightness(200);
-  tft.pushImageDMA(x, y, w, h, (uint16_t *)splash);
+  tft.pushImage(x, y, w, h, (uint16_t *)splash);
   delay(2000);
 }
 
@@ -1924,8 +1924,8 @@ void hal_setup()
 
   screenBrightness(br);
 
-  lv_dropdown_set_selected(ui_timeoutSelect, tm, LV_ANIM_OFF);
-  lv_dropdown_set_selected(ui_rotateSelect, rt, LV_ANIM_OFF);
+  lv_dropdown_set_selected(ui_timeoutSelect, tm);
+  lv_dropdown_set_selected(ui_rotateSelect, rt);
   lv_slider_set_value(ui_brightnessSlider, br, LV_ANIM_OFF);
 
   set_alert_states(alert_states);

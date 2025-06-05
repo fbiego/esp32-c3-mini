@@ -60,6 +60,11 @@ public:
         // gfx->setRotation(rotation); // Not supported in CO5300
     }
 
+    void pushImage(int32_t x, int32_t y, int32_t w, int32_t h, uint16_t *data)
+    {
+        gfx->draw16bitBeRGBBitmap(x, y, data, w, h);
+    }
+
     void pushImageDMA(int32_t x, int32_t y, int32_t w, int32_t h, uint16_t *data)
     {
         gfx->draw16bitBeRGBBitmap(x, y, data, w, h);

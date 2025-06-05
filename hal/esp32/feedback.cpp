@@ -131,7 +131,7 @@ void toneTask(void *param)
         {
             playing = true;
 
-            ledcAttach(BUZZER_PIN, 500, 8);
+            ledcAttachPin(BUZZER_PIN, BUZZER_CHANNEL);
 
             if (sequence.repeat == 0)
             {
@@ -153,17 +153,17 @@ void toneTask(void *param)
 
                     if (pitch > 0)
                     {
-                        ledcWriteTone(BUZZER_PIN, pitch);
+                        ledcWriteTone(BUZZER_CHANNEL, pitch);
                     }
                     else
                     {
-                        ledcWriteTone(BUZZER_PIN, 0); // Rest
+                        ledcWriteTone(BUZZER_CHANNEL, 0); // Rest
                     }
                     vTaskDelay(pdMS_TO_TICKS(duration));
                 }
             }
 
-            ledcDetach(BUZZER_PIN);
+            ledcDetachPin(BUZZER_PIN);
 
             playing = false;
         }
