@@ -63,6 +63,7 @@ https://github.com/user-attachments/assets/3cdc30e3-8383-4227-b88c-32bd1d464c70
 - [Waveshare RP2040 1.28 240x240](https://www.waveshare.com/rp2040-touch-lcd-1.28.htm)
 - [Waveshare RP2040 1.69 240x280](https://www.waveshare.com/product/rp2040-touch-lcd-1.69.htm)
 - [Waveshare S3 1.75 466x466](https://www.waveshare.com/product/esp32-s3-touch-amoled-1.75.htm)
+- [Waveshare S3 2.06 410x502](https://www.waveshare.com/product/esp32-s3-touch-amoled-2.06.htm)
 
  ## Watchfaces
 

@@ -57,7 +57,7 @@
 #include "M5Dial.h"
 #define tft M5Dial.Display
 #define buf_size 10
-#elif defined(VIEWE_SMARTRING) || defined(VIEWE_KNOB_15) || defined(ESPS3_1_75)
+#elif defined(VIEWE_SMARTRING) || defined(VIEWE_KNOB_15) || defined(ESPS3_1_75)|| defined(ESPS3_2_06)
 #include "displays/viewe.hpp"
 #define buf_size 40
 #define SW_ROTATION
@@ -1863,6 +1863,8 @@ void hal_setup()
 
 #ifdef ESPS3_1_69
   watch.setScreen(CS_240x296_191_RTF);
+#elif defined(ESPS3_2_06)
+  watch.setScreen(CS_410x494_200_RTF);
 #elif defined(VIEWE_SMARTRING) || defined(VIEWE_KNOB_15) ||  defined(ESPS3_1_75)
   watch.setScreen(CS_466x466_143_CTF);
 #endif
