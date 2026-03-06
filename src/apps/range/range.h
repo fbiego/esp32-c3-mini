@@ -22,7 +22,7 @@ extern "C"
 
 #ifdef ENABLE_APP_RANGE
 
-    // LV_IMAGE_DECLARE(range_icon);
+    LV_IMAGE_DECLARE(ui_img_sample_png);
 
     void range_screen_init(void);
 

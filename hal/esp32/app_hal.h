@@ -4,7 +4,7 @@
 #ifdef NO_WATCHFACES
 
 
-#elif ESPS3_1_69
+#elif defined(ESPS3_1_69) || defined(ELECROW_S3) || defined(ESP32_CYD) || defined(VIEWE_2_8)
 // 240x280 watchfaces
 
 #define ENABLE_FACE_174 // (174)
@@ -48,16 +48,21 @@
 #define ENABLE_APP_ATTITUDE
 #endif
 
-#if defined(ELECROW_C3)
+#if defined(ELECROW_C3) || defined(ELECROW_S3)
 #define ENABLE_RTC
+
+#ifndef ENABLE_FACE_ELECROW
+#define ENABLE_FACE_ELECROW //  elecrow analog
+#endif
 #endif
 
-#if defined(M5_STACK_DIAL) || defined(VIEWE_KNOB_15)
+#if defined(M5_STACK_DIAL) || defined(VIEWE_KNOB_15) || defined(ELECROW_S3)
 #define ENABLE_APP_RANGE
 #endif
 
 #define ENABLE_APP_CALENDAR
 #define ENABLE_APP_SAMPLE
+#define ENABLE_APP_TOUCH_TEST
 // #define ENABLE_GAME_TASK
 // #define ENABLE_GAME_RACING
 

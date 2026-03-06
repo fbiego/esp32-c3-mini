@@ -10,7 +10,7 @@
 #ifdef ENABLE_APP_RANGE
 
 /* Replace NULL with your app icon eg &range_icon */
-REGISTER_APP("Range", NULL, range_screen_main, range_screen_init);
+REGISTER_APP("Range", &ui_img_sample_png, range_screen_main, range_screen_init);
 
 static lv_obj_t *ui_arcprogress;
 static lv_obj_t *ui_percentlabel;
