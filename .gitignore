@@ -7,3 +7,6 @@
 prefs.txt
 **/convert.py
 scripts/api_migrate.py
+build.py
+/firmware
+support/build_firmware.py

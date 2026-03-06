@@ -32,7 +32,7 @@
 
 #include "Arduino.h"
 #include <ChronosESP32.h>
-#include <Timber.h>
+#include <timber.h>
 #include <Preferences.h>
 #include <ArduinoJson.h>
 #include <Wire.h>
@@ -50,6 +50,9 @@
 #include "displays/pins.h"
 #include "splash.h"
 
+
+#include "driver/rtc_io.h"
+
 #include "FS.h"
 #include "FFat.h"
 
@@ -61,12 +64,18 @@
 #include "displays/viewe.hpp"
 #define buf_size 40
 #define SW_ROTATION
+#elif defined(ELECROW_S3)
+#include "displays/elecrow_s3.hpp"
+#elif defined(ESP32_CYD)
+#include "displays/cyd_2432.hpp"
+#elif defined(VIEWE_2_8)
+#include "displays/viewe_2_8.hpp"
 #else
 #include "displays/generic.hpp"
 #define buf_size 10
 #endif
 
-#ifdef VIEWE_KNOB_15
+#if defined(VIEWE_KNOB_15) || defined(ELECROW_S3)
 #include <Encoder.h>
 Encoder myEnc(ENCODER_A, ENCODER_B);
 #endif
@@ -84,6 +93,10 @@ RtcPCF8563<TwoWire> Rtc(Wire);
 #define FLASH FFat
 #define F_NAME "FATFS"
 
+#if defined(BUTTON_HOME) && (BUTTON_HOME != -1)
+#include "Button2.h"
+Button2 btn_home;
+#endif
 
 ChronosESP32 watch("Chronos C3");
 Preferences prefs;
@@ -98,7 +111,7 @@ GyroData gyro;
 static const uint32_t screenWidth = SCREEN_WIDTH;
 static const uint32_t screenHeight = SCREEN_HEIGHT;
 
-const unsigned int lvBufferSize = screenWidth * buf_size;
+const unsigned int lvBufferSize = screenWidth * 80;
 uint8_t lvBuffer[2][lvBufferSize];
 
 bool weatherUpdate = true, notificationsUpdate = true, weatherUpdateFace = true;
@@ -984,8 +997,8 @@ void ringerCallback(String caller, bool state)
 
 void notificationCallback(Notification notification)
 {
-  Timber.d("Notification Received from " + notification.app + " at " + notification.time);
-  Timber.d(notification.message);
+  Timber.d("Notification Received from %s at %s", notification.app.c_str(), notification.time.c_str());
+  Timber.d(notification.message.c_str());
   notificationsUpdate = true;
   // onNotificationsOpen(click);
   feedbackRun(T_NOTIFICATION);
@@ -1211,6 +1224,12 @@ void savePrefInt(const char *key, int value)
 int getPrefInt(const char *key, int def_value)
 {
   return prefs.getInt(key, def_value);
+}
+
+void clear_touch_calibration(void)
+{
+  prefs.remove("touch_calib");
+  ESP.restart();
 }
 
 void onNotificationsOpen(lv_event_t *e)
@@ -1693,13 +1712,67 @@ int32_t read_encoder_position()
 #ifdef M5_STACK_DIAL
   M5Dial.update();
   return M5Dial.Encoder.read();
-#elif defined(VIEWE_KNOB_15)
+#elif defined(VIEWE_KNOB_15) || defined(ELECROW_S3)
   return myEnc.read();
 #endif
   return 0;
 }
 
-void logCallback(Level level, unsigned long time, String message)
+#if defined(BUTTON_HOME) && (BUTTON_HOME != -1)
+void btn_home_handler(Button2 &btn)
+{
+  lv_obj_t *actScr = lv_screen_active();
+
+  switch (btn.getType())
+  {
+  case single_click:
+    if (actScr != ui_home)
+    {
+      lv_screen_load_anim(ui_home, LV_SCR_LOAD_ANIM_FADE_ON, 200, 0, false);
+    }
+    if (screenTimer.active && screenTimer.duration > 1 && actScr == ui_home)
+    {
+      screenTimer.time = millis() - screenTimer.duration - 1; // trigger timeout immediately
+    }
+    else if (!screenTimer.active)
+    {
+      screen_on();
+    }
+
+    break;
+  case double_click:
+    Serial.print("double ");
+    if (actScr != ui_appListScreen)
+    {
+      lv_screen_load_anim(ui_appListScreen, LV_SCR_LOAD_ANIM_FADE_ON, 200, 0, false);
+    }
+    if (!screenTimer.active)
+    {
+      screen_on();
+    }
+    break;
+  case triple_click:
+    Serial.print("triple ");
+    break;
+  case long_click:
+    Serial.print("long");
+    if (actScr == ui_home)
+    {
+      lv_screen_load_anim(ui_faceSelect, LV_SCR_LOAD_ANIM_FADE_ON, 200, 0, false);
+      on_watchface_list_open();
+      if (!screenTimer.active)
+      {
+        screen_on();
+      }
+    }
+    break;
+  case empty:
+    return;
+  }
+}
+#endif
+
+void logCallback(timber_level_t level, uint32_t ts, const char *message)
 {
   Serial.print(message);
   Serial1.print(message);
@@ -1744,7 +1817,7 @@ void hal_setup()
   Serial.begin(115200); /* prepare for possible serial debug */
   Serial1.begin(115200);
 
-  Timber.setLogCallback(logCallback);
+  Timber.setOutput(logCallback);
 
   Timber.i("Starting up device");
 
@@ -1780,6 +1853,39 @@ void hal_setup()
   tft.fillScreen(TFT_BLACK);
   tft.setRotation(rt);
 
+#ifdef ESP32_CYD
+  uint16_t calib[8];
+  bool calibLoaded = prefs.getBytes("touch_calib", calib, sizeof(calib));
+  if (calibLoaded)
+  {
+    for (int i = 0; i < 8; i++)
+    {
+      Timber.i("Stored calib %d: %d", i, calib[i]);
+    }
+    tft.setTouchCalibrate(calib);
+  }
+  else
+  {
+    tft.setTextColor(0xFFFFFFU, 0);
+    tft.setTextWrap(true, true);
+    tft.println("Touch calibration required!\nPress center to start then \ntouch the corners as instructed.\nUse a pen or stylus.");
+    uint16_t touchX, touchY;
+    while(!tft.getTouch(&touchX, &touchY)) {
+      delay(100);
+    }
+
+    tft.fillScreen(TFT_BLACK);
+
+    Timber.w("No touch calibration found, starting calibration");
+    tft.calibrateTouch(calib, 0xFFFF, 0x0000);
+    for (int i = 0; i < 8; i++)
+    {
+      Timber.d("Configured calib %d: %d", i, calib[i]);
+    }
+    prefs.putBytes("touch_calib", calib, sizeof(calib));
+  }
+#endif
+
   loadSplash();
 
 
@@ -1808,6 +1914,7 @@ void hal_setup()
   static auto *lvInput = lv_indev_create();
   lv_indev_set_type(lvInput, LV_INDEV_TYPE_POINTER);
   lv_indev_set_read_cb(lvInput, my_touchpad_read);
+  lvInput->gesture_limit = LV_CLAMP(50, ((SCREEN_WIDTH * 2) / 3), 255);
 
   // lv_log_register_print_cb(my_log_cb);
 
@@ -1861,7 +1968,7 @@ void hal_setup()
     lv_obj_scroll_to_view(lv_obj_get_child(ui_faceSelect, wf), LV_ANIM_OFF);
   }
 
-#ifdef ESPS3_1_69
+#if defined(ESPS3_1_69) || defined(ELECROW_S3) || defined(ESP32_CYD)
   watch.setScreen(CS_240x296_191_RTF);
 #elif defined(ESPS3_2_06)
   watch.setScreen(CS_410x494_200_RTF);
@@ -2022,10 +2129,21 @@ void hal_setup()
 
   ui_setup();
 
+#if defined(BUTTON_HOME) && (BUTTON_HOME != -1)
+  btn_home.begin(BUTTON_HOME);
+
+  btn_home.setClickHandler(btn_home_handler);
+  //btn_home.setLongClickHandler(btn_home_handler);       // this will only be called upon release
+  btn_home.setLongClickDetectedHandler(btn_home_handler);  // this will only be called upon detection
+  btn_home.setDoubleClickHandler(btn_home_handler);
+  btn_home.setTripleClickHandler(btn_home_handler);
+  btn_home.setLongClickTime(1000); // set long click time to 1000ms
+#endif
+
   Serial.println(heapUsage());
 
   Timber.i("Setup done");
-  Timber.i(about);
+  Timber.i(about.c_str());
 }
 
 void hal_loop()
@@ -2038,7 +2156,11 @@ void hal_loop()
 
     watch.loop();
 
-#if defined(M5_STACK_DIAL) || defined(VIEWE_KNOB_15)
+#if defined(BUTTON_HOME) && (BUTTON_HOME != -1)
+  btn_home.loop();
+#endif
+
+#if defined(M5_STACK_DIAL) || defined(VIEWE_KNOB_15) || defined(ELECROW_S3)
     long newPosition = read_encoder_position();
     if (newPosition != oldPosition)
     {

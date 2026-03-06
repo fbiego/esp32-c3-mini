@@ -64,6 +64,43 @@
 
 #define MAX_FILE_OPEN 10
 
+#elif ELECROW_S3
+
+// screen configs
+#define SCREEN_WIDTH 240
+#define SCREEN_HEIGHT 296
+#define OFFSET_X 0
+#define OFFSET_Y 0
+#define RGB_ORDER false
+
+// touch
+#define I2C_SDA 4
+#define I2C_SCL 3
+#define TP_INT 2
+#define TP_RST 5
+
+// display
+// #define SPI SPI2_HOST
+
+#define SCLK 7
+#define MOSI 8
+#define MISO -1
+#define DC 10
+#define CS 9
+#define RST 6
+#define LCD_EN 40
+
+#define BL 13 
+#define VIBRATION_PIN 45
+
+#define BUZZER_PIN -1
+
+#define ENCODER_A 20
+#define ENCODER_B 19
+#define BUTTON_HOME 0
+
+#define MAX_FILE_OPEN 10
+
 #elif ESPC3
 
 // screen configs
@@ -256,9 +293,76 @@
 
 #define ENCODER_A 6
 #define ENCODER_B 5
+#define BUTTON_HOME 0
 
 #define MAX_FILE_OPEN 10
 
+#elif VIEWE_2_8
+
+#define SCREEN_WIDTH 240
+#define SCREEN_HEIGHT 320
+
+#define DC 41
+#define CS 42
+#define SCK 40
+#define MOSI 45
+#define MISO -1
+#define RST 39
+
+#define BL 13
+
+#define LCD_IM0 47
+#define LCD_IM1 48
+
+#define I2C_SDA 1
+#define I2C_SCL 3
+#define TOUCH_INT 4
+#define TOUCH_RST 2
+
+#define TOUCH_ADDR 0x2E
+
+#define BUZZER_PIN 38
+
+#define MAX_FILE_OPEN 10
+
+#define BUTTON_HOME 0
+
+#elif ESP32_CYD
+
+// screen configs
+#define SCREEN_WIDTH 240
+#define SCREEN_HEIGHT 320
+#define OFFSET_X 0
+#define OFFSET_Y 0
+#define RGB_ORDER false
+
+// touch
+#define I2C_SDA -1
+#define I2C_SCL -1
+#define TP_INT 36
+#define TP_RST -1
+
+#define TP_SCLK 25
+#define TP_MOSI 32
+#define TP_MISO 39
+#define TP_CS 33
+
+// display
+#define SPI HSPI_HOST
+
+#define SCLK 14
+#define MOSI 13
+#define MISO 12
+#define DC 2
+#define CS 15
+#define RST -1
+
+#define BL 21
+
+#define BUZZER_PIN -1
+#define BUTTON_HOME 0
+
+#define MAX_FILE_OPEN 10
 
 #else
 
@@ -288,6 +392,7 @@
 #define BL 2
 
 #define BUZZER_PIN -1
+#define BUTTON_HOME 0
 
 #define MAX_FILE_OPEN 10
 

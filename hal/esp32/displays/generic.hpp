@@ -77,6 +77,7 @@ public:
       _light_instance.config(cfg);
       _panel_instance.setLight(&_light_instance); // Sets the backlight to the panel.
     }
+    
 
     { // Sets touchscreen control. (Delete if not needed)
 
