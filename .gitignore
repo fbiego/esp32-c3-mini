@@ -10,4 +10,3 @@ scripts/api_migrate.py
 build.py
 /firmware
 /test/hardware
-support/build_firmware.py
