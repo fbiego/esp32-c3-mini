@@ -48,6 +48,10 @@ https://github.com/user-attachments/assets/3cdc30e3-8383-4227-b88c-32bd1d464c70
  
  You can also find binary files for various boards.
 
+ ### Web Flasher (ESP32)
+
+ You can also flash ESP32 boards using the web tool available at https://chronos.ke/c3-ui#install
+
 ## Supported Boards
 
 ![Boards 2](boards_2.png?raw=true "boards2")

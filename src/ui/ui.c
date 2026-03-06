@@ -3733,7 +3733,7 @@ void ui_appInfoScreen_screen_init(void)
       lv_obj_set_height(ui_appDetailsText, LV_SIZE_CONTENT); /// 1
       lv_obj_set_x(ui_appDetailsText, 43);
       lv_obj_set_y(ui_appDetailsText, 8);
-      lv_label_set_text(ui_appDetailsText, "Chronos app\nv3.8.0 (52)");
+      lv_label_set_text(ui_appDetailsText, "Chronos app\nv3.9.0 (59)");
       lv_obj_set_style_text_font(ui_appDetailsText, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
 
       ui_appConnectionPanel = lv_obj_create(ui_appInfoPanel);
@@ -3811,7 +3811,7 @@ void ui_appInfoScreen_screen_init(void)
       lv_obj_set_y(ui_appBatteryLevel, 28);
 
       addAppInfo(&ui_img_twitter_x_png, "X (Twitter)\n@chronos_app");
-      addAppInfo(&ui_img_web_png, "Website\nchronos.ke");
+      addAppInfo(&ui_img_web_png, "Web app\nchronos.ke/watch");
 
       lv_obj_add_event_cb(ui_appInfoPanel, onScroll, LV_EVENT_SCROLL, NULL);
       lv_obj_add_event_cb(ui_appInfoScreen, ui_event_appInfoScreen, LV_EVENT_ALL, NULL);
