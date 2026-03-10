@@ -305,6 +305,7 @@ public:
 
     void setRotation(uint8_t rotation)
     {
+        gfx->setRotation(rotation);
     }
 
     void pushImage(int32_t x, int32_t y, int32_t w, int32_t h, uint16_t *data)
@@ -343,10 +344,30 @@ public:
         bool touched = data[1] > 0;
         if (touched)
         {
-            *x = ((uint16_t)(data[2] & 0x0f)) << 8;
-            *x |= data[3];
-            *y = (((uint16_t)(data[4] & 0x0f)) << 8);
-            *y |= data[5];
+            uint16_t tx = ((uint16_t)(data[2] & 0x0F) << 8) | data[3];
+            uint16_t ty = ((uint16_t)(data[4] & 0x0F) << 8) | data[5];
+            switch (gfx->getRotation())
+            {
+            case 0: // 0°
+                *x = tx;
+                *y = ty;
+                break;
+
+            case 1: // 90°
+                *x = SCREEN_WIDTH - 1 - ty;
+                *y = tx;
+                break;
+
+            case 2: // 180°
+                *x = SCREEN_WIDTH - 1 - tx;
+                *y = SCREEN_HEIGHT - 1 - ty;
+                break;
+
+            case 3: // 270°
+                *x = ty;
+                *y = SCREEN_HEIGHT - 1 - tx;
+                break;
+            }
         }
         return touched;
     }

@@ -1407,6 +1407,11 @@ void onRotateChange(lv_event_t *e)
   uint16_t sel = lv_dropdown_get_selected(obj);
   Timber.i("Selected index: %d", sel);
 
+if (SCREEN_WIDTH != SCREEN_HEIGHT && sel % 2 != 0) {
+  showError("Not supported", "90 & 270 rotation is not supported when screen width & height are not equal");
+  return;
+}
+
   prefs.putInt("rotate", sel);
 #ifdef SW_ROTATION
   lv_display_set_rotation(lv_display_get_default(), getRotation(sel));
@@ -1914,7 +1919,7 @@ void hal_setup()
   static auto *lvInput = lv_indev_create();
   lv_indev_set_type(lvInput, LV_INDEV_TYPE_POINTER);
   lv_indev_set_read_cb(lvInput, my_touchpad_read);
-  lvInput->gesture_limit = LV_CLAMP(50, ((SCREEN_WIDTH * 2) / 3), 255);
+  // lvInput->gesture_limit = LV_CLAMP(50, ((SCREEN_WIDTH * 2) / 3), 255);
 
   // lv_log_register_print_cb(my_log_cb);
 

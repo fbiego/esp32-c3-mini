@@ -6,7 +6,6 @@
 #include "Arduino_GFX_Library.h"
 #include "TouchDrvCSTXXX.hpp"
 
-
 #define CLAMP(a, x, b) ((x) < (a) ? (a) : ((x) > (b) ? (b) : (x)))
 
 #define TFT_BLACK 0x00000
@@ -44,7 +43,7 @@ public:
         gfx->fillScreen(color);
     }
 
-     void pushImage(int32_t x, int32_t y, int32_t w, int32_t h, uint16_t *data)
+    void pushImage(int32_t x, int32_t y, int32_t w, int32_t h, uint16_t *data)
     {
         gfx->draw16bitBeRGBBitmap(x, y, data, w, h);
     }
@@ -58,8 +57,34 @@ public:
     {
         int16_t x_arr[5], y_arr[5];
         uint8_t touched = touch.getPoint(x_arr, y_arr, touch.getSupportTouchPoint());
-        *x = CLAMP(0, x_arr[0], SCREEN_WIDTH - 1);
-        *y = CLAMP(0, y_arr[0], SCREEN_HEIGHT - 1);
+
+        uint8_t rotation = gfx->getRotation();
+        uint16_t tx = CLAMP(0, x_arr[0], SCREEN_WIDTH - 1);
+        uint16_t ty = CLAMP(0, y_arr[0], SCREEN_HEIGHT - 1);
+
+        switch (rotation & 3)
+        {
+
+        case 0: // 0°
+            *x = tx;
+            *y = ty;
+            break;
+
+        case 1: // 90°
+            *x = SCREEN_WIDTH - 1 - ty;
+            *y = tx;
+            break;
+
+        case 2: // 180°
+            *x = SCREEN_WIDTH - 1 - tx;
+            *y = SCREEN_HEIGHT - 1 - ty;
+            break;
+
+        case 3: // 270°
+            *x = ty;
+            *y = SCREEN_HEIGHT - 1 - tx;
+            break;
+        }
 
         return touched;
     }
@@ -75,7 +100,7 @@ public:
         digitalWrite(LCD_IM0, LOW);
         pinMode(LCD_IM1, OUTPUT);
         digitalWrite(LCD_IM1, HIGH);
-        
+
         gfx->begin();
         setRotation(0);
 
@@ -89,7 +114,7 @@ public:
 
     void setRotation(uint8_t r)
     {
-        r += 4;
+        r = (r + 4) % 8;
         gfx->setRotation(r);
         switch (r)
         {
@@ -106,13 +131,13 @@ public:
             r = ST7789_MADCTL_MX | ST7789_MADCTL_RGB;
             break;
         case 5:
-        r = ST7789_MADCTL_MX | ST7789_MADCTL_MY | ST7789_MADCTL_MV | ST7789_MADCTL_RGB;
+            r = ST7789_MADCTL_MX | ST7789_MADCTL_MY | ST7789_MADCTL_MV | ST7789_MADCTL_RGB;
             break;
         case 6:
             r = ST7789_MADCTL_MY | ST7789_MADCTL_RGB;
             break;
         case 7:
-        r = ST7789_MADCTL_MV | ST7789_MADCTL_RGB;
+            r = ST7789_MADCTL_MV | ST7789_MADCTL_RGB;
             break;
         default: // case 0:
             r = ST7789_MADCTL_RGB;
@@ -131,7 +156,6 @@ public:
     }
 
     void endWrite(void) {}
-
 };
 
 DisplayWrapper tft;

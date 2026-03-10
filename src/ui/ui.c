@@ -18,7 +18,7 @@
 #include "misc/lv_event_private.h"
 #include <string.h>
 
-#define UI_VERSION "6.1"
+#define UI_VERSION "6.2"
 
 const char *ui_info_text = "v" UI_VERSION " [fbiego]";
 
@@ -4384,11 +4384,6 @@ void ui_init(void)
 
       lv_screen_load(ui____initial_actions0);
       lv_screen_load(ui_home);
-
-      if (dispp->hor_res != dispp->ver_res)
-      {
-            lv_obj_add_flag(ui_rotatePanel, LV_OBJ_FLAG_HIDDEN); /// Flags
-      }
 }
 
 void ui_setup(void)

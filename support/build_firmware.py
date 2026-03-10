@@ -96,6 +96,7 @@ def merge_bins(pairs, out_path, new_pairs, chip, env):
 
     data = {}
     data[env] = {}
+    data[env]["id"] = env
     data[env]["name"] = get_env_name(env)
     data[env]["file"] = f"{out_path.split(sep)[-1]}"
     data[env]["address"] = f"0x{min_off:X}"
