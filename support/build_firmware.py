@@ -125,7 +125,7 @@ def read_version(content):
     }
     
 def version_utils(file_path):
-    content = file_path.read_text()
+    content = file_path.read_text(encoding="utf-8")
     version = read_version(content)
     return version
 
