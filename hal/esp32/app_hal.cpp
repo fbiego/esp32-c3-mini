@@ -59,10 +59,8 @@
 #ifdef M5_STACK_DIAL
 #include "M5Dial.h"
 #define tft M5Dial.Display
-#define buf_size 10
 #elif defined(VIEWE_SMARTRING) || defined(VIEWE_KNOB_15) || defined(ESPS3_1_75)|| defined(ESPS3_2_06)
 #include "displays/viewe.hpp"
-#define buf_size 40
 #define SW_ROTATION
 #elif defined(ELECROW_S3)
 #include "displays/elecrow_s3.hpp"
@@ -72,7 +70,6 @@
 #include "displays/viewe_2_8.hpp"
 #else
 #include "displays/generic.hpp"
-#define buf_size 10
 #endif
 
 #if defined(VIEWE_KNOB_15) || defined(ELECROW_S3)
@@ -88,6 +85,11 @@ Encoder myEnc(ENCODER_A, ENCODER_B);
 #ifdef ENABLE_RTC
 #include <RtcPCF8563.h>
 RtcPCF8563<TwoWire> Rtc(Wire);
+#endif
+
+#if ESPS3_2_06
+#include <SensorPCF85063.hpp>
+SensorPCF85063 rtc;
 #endif
 
 #define FLASH FFat
@@ -1015,6 +1017,10 @@ void configCallback(Config config, uint32_t a, uint32_t b)
     // set the RTC time
     Rtc.SetDateTime(RtcDateTime(watch.getYear(), watch.getMonth() + 1, watch.getDay(), watch.getHour(true), watch.getMinute(), watch.getSecond()));
 
+#endif
+
+#if ESPS3_2_06
+    rtc.setDateTime(watch.getYear(), watch.getMonth() + 1, watch.getDay(), watch.getHour(true), watch.getMinute(), watch.getSecond());
 #endif
     // ui_update_seconds(watch.getSecond());
     if (!hasUpdatedSec)
@@ -1982,6 +1988,9 @@ void hal_setup()
 #endif
   String chip = String(ESP.getChipModel());
   watch.setName(chip);
+#ifdef BOARD_NAME
+  watch.setName(BOARD_NAME);
+#endif
   watch.setConnectionCallback(connectionCallback);
   watch.setNotificationCallback(notificationCallback);
   watch.setConfigurationCallback(configCallback);
@@ -2106,6 +2115,17 @@ void hal_setup()
   Rtc.StopAlarm();
   Rtc.StopTimer();
   Rtc.SetSquareWavePin(PCF8563SquareWavePinMode_None);
+#endif
+
+#if ESPS3_2_06
+  if (!rtc.begin(Wire))
+	{
+		Timber.e("Failed to find PCF85063 - check your wiring!");
+	}
+  RTC_DateTime dt = rtc.getDateTime();
+	watch.setTime(dt.getSecond(), dt.getMinute(), dt.getHour(), dt.getDay(), dt.getMonth(), dt.getYear());
+	rtc.resetAlarm();
+	rtc.disableAlarm();
 #endif
 
   ui_update_seconds(watch.getSecond());

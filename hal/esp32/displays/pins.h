@@ -265,6 +265,7 @@
 #define LCD_SD2 14
 #define LCD_SD3 9
 #define LCD_RST 11
+#define LCD_EN 40
 
 #define TOUCH_SDA 41
 #define TOUCH_SCL 45

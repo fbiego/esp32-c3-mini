@@ -18,7 +18,7 @@
 #include "misc/lv_event_private.h"
 #include <string.h>
 
-#define UI_VERSION "6.2"
+#define UI_VERSION "6.3"
 
 const char *ui_info_text = "v" UI_VERSION " [fbiego]";
 
@@ -1918,12 +1918,12 @@ void addWatchface(const char *name, const lv_image_dsc_t *src, int index)
       lv_obj_set_width(cont, 160);
       lv_obj_set_height(cont, 160);
       lv_obj_set_align(cont, LV_ALIGN_TOP_MID);
-      lv_obj_set_style_radius(cont, LV_RADIUS_CIRCLE, LV_PART_MAIN | LV_STATE_DEFAULT);
-      lv_obj_set_style_clip_corner(cont, true, LV_PART_MAIN | LV_STATE_DEFAULT);
-      lv_obj_set_style_outline_color(cont, lv_color_hex(0x142ABC), LV_PART_MAIN | LV_STATE_DEFAULT);
-      lv_obj_set_style_outline_opa(cont, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-      lv_obj_set_style_outline_width(cont, 3, LV_PART_MAIN | LV_STATE_DEFAULT);
-      lv_obj_set_style_outline_pad(cont, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+      // lv_obj_set_style_radius(cont, LV_RADIUS_CIRCLE, LV_PART_MAIN | LV_STATE_DEFAULT); 
+      // lv_obj_set_style_clip_corner(cont, true, LV_PART_MAIN | LV_STATE_DEFAULT); // this uses more memory
+      // lv_obj_set_style_outline_color(cont, lv_color_hex(0x142ABC), LV_PART_MAIN | LV_STATE_DEFAULT);
+      // lv_obj_set_style_outline_opa(cont, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+      // lv_obj_set_style_outline_width(cont, 3, LV_PART_MAIN | LV_STATE_DEFAULT);
+      // lv_obj_set_style_outline_pad(cont, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
       lv_obj_add_flag(cont, LV_OBJ_FLAG_EVENT_BUBBLE); /// Flags
 
       lv_obj_t *ui_facePreview = lv_image_create(cont);
@@ -4181,6 +4181,17 @@ void ui_watchfaces_init(void)
 
       init_face_756_2_466(registerWatchface_cb);
       init_face_radar_466(registerWatchface_cb);
+      init_face_75_2_466(registerWatchface_cb);
+      init_face_34_2_466(registerWatchface_cb);
+      init_face_79_2_466(registerWatchface_cb);
+      init_face_pixel_resized_466(registerWatchface_cb);
+      init_face_smart_resized_466(registerWatchface_cb);
+
+      init_face_174_410(registerWatchface_cb);
+      init_face_228_410(registerWatchface_cb);
+      init_face_1167_410(registerWatchface_cb);
+      init_face_2051_410(registerWatchface_cb);
+      init_face_2151_410(registerWatchface_cb);
 }
 
 void ui_update_watchfaces(int second, int minute, int hour, bool mode, bool am, int day, int month, int year, int weekday,
@@ -4212,8 +4223,18 @@ void ui_update_watchfaces(int second, int minute, int hour, bool mode, bool am, 
 
       update_check_756_2_466(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
       update_check_radar_466(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
+      update_check_75_2_466(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
+      update_check_34_2_466(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
+      update_check_79_2_466(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
+      update_check_pixel_resized_466(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
+      update_check_smart_resized_466(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
       
-
+      update_check_174_410(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
+      update_check_228_410(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
+      update_check_1167_410(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
+      update_check_2051_410(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
+      update_check_2151_410(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
+      
 }
 
 void ui_update_seconds(int second)
