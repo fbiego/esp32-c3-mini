@@ -18,6 +18,8 @@
 #include "misc/lv_event_private.h"
 #include <string.h>
 
+#include "../../hal/esp32/displays/pins.h"
+
 #define UI_VERSION "6.3"
 
 const char *ui_info_text = "v" UI_VERSION " [fbiego]";
@@ -2151,11 +2153,11 @@ void addQrList(uint8_t id, const char *link)
 {
 #if LV_USE_QRCODE == 1
       ui_qrItem = lv_obj_create(ui_qrPanel);
-      lv_obj_set_width(ui_qrItem, 200);
-      lv_obj_set_height(ui_qrItem, 240);
+      lv_obj_set_width(ui_qrItem, SCREEN_WIDTH * 0.83);
+      lv_obj_set_height(ui_qrItem, SCREEN_HEIGHT);
       lv_obj_set_align(ui_qrItem, LV_ALIGN_CENTER);
       lv_obj_set_flex_flow(ui_qrItem, LV_FLEX_FLOW_COLUMN);
-      lv_obj_set_flex_align(ui_qrItem, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+      lv_obj_set_flex_align(ui_qrItem, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
       lv_obj_remove_flag(ui_qrItem, LV_OBJ_FLAG_SCROLLABLE); /// Flags
       lv_obj_add_flag(ui_qrItem, LV_OBJ_FLAG_SNAPPABLE);
       lv_obj_remove_flag(ui_qrItem, LV_OBJ_FLAG_SCROLL_ONE);
@@ -2172,7 +2174,7 @@ void addQrList(uint8_t id, const char *link)
       lv_obj_remove_flag(ui_qrIcon, LV_OBJ_FLAG_SCROLLABLE); /// Flags
 
       ui_qrImage = lv_qrcode_create(ui_qrItem); // 150, lv_color_hex(0x000000), lv_color_hex(0xFFFFFF));
-      lv_qrcode_set_size(ui_qrImage, 150);
+      lv_qrcode_set_size(ui_qrImage, SCREEN_WIDTH * 0.63);
       lv_qrcode_set_dark_color(ui_qrImage, lv_color_black());
       lv_qrcode_set_light_color(ui_qrImage, lv_color_white());
       lv_qrcode_update(ui_qrImage, link, strlen(link));
@@ -4179,6 +4181,16 @@ void ui_watchfaces_init(void)
       init_face_2151(registerWatchface_cb);
       init_face_3589(registerWatchface_cb);
 
+      init_face_arctic_360(registerWatchface_cb);
+      init_face_digital_360(registerWatchface_cb);
+      init_face_glow_360(registerWatchface_cb);
+      init_face_green_flame_360(registerWatchface_cb);
+      init_face_gta_vi_360(registerWatchface_cb);
+      init_face_neon_360(registerWatchface_cb);
+      init_face_night_360(registerWatchface_cb);
+      init_face_simple_360(registerWatchface_cb);
+      init_face_terminal_360(registerWatchface_cb);
+
       init_face_756_2_466(registerWatchface_cb);
       init_face_radar_466(registerWatchface_cb);
       init_face_75_2_466(registerWatchface_cb);
@@ -4220,6 +4232,16 @@ void ui_update_watchfaces(int second, int minute, int hour, bool mode, bool am, 
       update_check_2051(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
       update_check_2151(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
       update_check_3589(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
+
+      update_check_arctic_360(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
+      update_check_digital_360(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
+      update_check_glow_360(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
+      update_check_green_flame_360(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
+      update_check_gta_vi_360(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
+      update_check_neon_360(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
+      update_check_night_360(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
+      update_check_simple_360(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
+      update_check_terminal_360(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
 
       update_check_756_2_466(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
       update_check_radar_466(ui_home, second, minute, hour, mode, am, day, month, year, weekday, temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);

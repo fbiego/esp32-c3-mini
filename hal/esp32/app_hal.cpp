@@ -59,9 +59,11 @@
 #ifdef M5_STACK_DIAL
 #include "M5Dial.h"
 #define tft M5Dial.Display
-#elif defined(VIEWE_SMARTRING) || defined(VIEWE_KNOB_15) || defined(ESPS3_1_75)|| defined(ESPS3_2_06)
+#elif defined(VIEWE_SMARTRING) || defined(VIEWE_KNOB_15) || defined(VIEWE_S3_1_5) || defined(ESPS3_1_75)|| defined(ESPS3_2_06)
 #include "displays/viewe.hpp"
 #define SW_ROTATION
+#elif defined(VIEWE_ECHO_EAR)
+#include "displays/echo_ear.hpp"
 #elif defined(ELECROW_S3)
 #include "displays/elecrow_s3.hpp"
 #elif defined(ESP32_CYD)

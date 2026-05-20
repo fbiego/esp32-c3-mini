@@ -28,7 +28,7 @@
 #define ENABLE_FACE_1041_410 // (1041)
 #define ENABLE_FACE_2151_410 // (2151)
 
-#elif defined(VIEWE_SMARTRING) || defined(VIEWE_KNOB_15) || defined(ESPS3_1_75) 
+#elif defined(VIEWE_SMARTRING) || defined(VIEWE_KNOB_15) || defined(ESPS3_1_75) || defined(VIEWE_S3_1_5)
 
 #define ENABLE_FACE_756_2_466 // (Red)
 #define ENABLE_FACE_RADAR_466 // (Radar)
@@ -37,6 +37,18 @@
 #define ENABLE_FACE_79_2_466 // (Blue)
 #define ENABLE_FACE_PIXEL_RESIZED_466 // (Pixel)
 // #define ENABLE_FACE_SMART_RESIZED_466 // (Smart)
+
+#elif defined(VIEWE_ECHO_EAR)
+
+#define ENABLE_FACE_ARCTIC_360 // (Arctic) 
+#define ENABLE_FACE_DIGITAL_360 // (Digital)
+#define ENABLE_FACE_GLOW_360 // (Glow)
+#define ENABLE_FACE_GREEN_FLAME_360 // (Green Flame)
+#define ENABLE_FACE_GTA_VI_360 // (GTA VI)
+#define ENABLE_FACE_NEON_360 // (NEON)
+#define ENABLE_FACE_NIGHT_360 // (Night)
+#define ENABLE_FACE_SIMPLE_360 // (Simple)
+#define ENABLE_FACE_TERMINAL_360 // (Terminal)
 
 #else
 // 240x240 watchfaces

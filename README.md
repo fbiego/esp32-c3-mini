@@ -59,6 +59,8 @@ https://github.com/user-attachments/assets/3cdc30e3-8383-4227-b88c-32bd1d464c70
 
 - [Viewe SmartRing AMOLED 1.8 466x466](https://viewedisplay.com/product/esp32-1-8-inch-round-amoled-touch-display-arduino-lvgl-wifi-voice-assistant-ai-smart-displays/)
 - [Viewe Touch Knob AMOLED 1.5 466x466](https://viewedisplay.com/product/esp32-1-5-inch-466x466-round-amoled-knob-display-touch-screen-arduino-lvgl/)
+- [Viewe S3 AMOLED 1.5 466x466](https://viewedisplay.com/product/esp32-s3-1-5-inch-amoled-touch-screen-dev-board-uart-smart-display/)
+- [Viewe Echo Ear 1.85 360x360](https://viewedisplay.com/product/echoear-plus-esp32-s3-ai-development-kit-with-openai-gemini-xiaozhi-ai/)
 - [CrowPanel ESP32 Display-1.28(R) 240x240](https://www.elecrow.com/crowpanel-esp32-display-1-28-r-inch-240-240-round-ips-display-capacitive-touch-spi-screen.html)
 - [M5 Stack Dial 240x240](https://docs.m5stack.com/en/core/M5Dial)
 - [ESP32 C3 Mini 1.28 240x240](https://www.aliexpress.com/item/1005006451631422.html)
@@ -74,6 +76,8 @@ https://github.com/user-attachments/assets/3cdc30e3-8383-4227-b88c-32bd1d464c70
 This project supports two types of watchfaces in addition to the default one:
 
 #### 1. External Precompiled Binary Watchfaces
+
+[Watchfaces List](src/faces/README.md)
 
 These watchfaces are binary files converted into LVGL code and compiled along with the main code. To add or remove these watchfaces, you need to recompile and flash the firmware.
 

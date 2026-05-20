@@ -215,7 +215,7 @@ fun main(args: Array<String>) {
     }
 }
 
-fun extractComponents(data: ByteArray, name: String, faceName: String, binary: Boolean, wd: Int = 240, ht: Int = 240,) {
+fun extractComponents(data: ByteArray, name: String, faceName: String, binary: Boolean, wd: Int = 360, ht: Int = 360,) {
     val no =
             (data[3].toPInt() * 256 * 256 * 256) +
                     (data[2].toPInt() * 256 * 256) +
@@ -342,6 +342,9 @@ fun extractComponents(data: ByteArray, name: String, faceName: String, binary: B
             continue
         }
 
+        val clt_dat = dat //(clt * 256 * 256) + dat
+        println("$clt_dat")
+
         var output = byteArrayOfInts()
 
         try {
@@ -365,7 +368,7 @@ fun extractComponents(data: ByteArray, name: String, faceName: String, binary: B
 
         if (xSz > 0 && ySz > 0) {
 
-            var rs = rsc.singleOrNull { it.id == clt }
+            var rs = rsc.singleOrNull { it.id == clt_dat }
 
             var rscJson = ""
 
@@ -374,7 +377,7 @@ fun extractComponents(data: ByteArray, name: String, faceName: String, binary: B
                     if (rs != null) {
                         rs.pos
                     } else {
-                        println("rs is null at clt $clt, using x $x")
+                        println("rs is null at clt_dat $clt_dat, using x $x")
                         x
                     }
 
@@ -386,20 +389,21 @@ fun extractComponents(data: ByteArray, name: String, faceName: String, binary: B
                     }
 
             if (rs == null && drawable) {
-                rsc.add(Resource(clt, x))
+                println("Resource $clt_dat $x")
+                rsc.add(Resource(clt_dat, x))
 
-                var rscArr = "const lv_img_dsc_t *face_${name}_dial_img_${x}_${clt}_group[] = {\n"
-                var rscPathArr = "const char *face_${name}_dial_img_${x}_${clt}_group[] = {\n"
+                var rscArr = "const lv_img_dsc_t *face_${name}_dial_img_${x}_${clt_dat}_group[] = {\n"
+                var rscPathArr = "const char *face_${name}_dial_img_${x}_${clt_dat}_group[] = {\n"
 
                 rscJson = "["
 
                 // save assets & declare
                 for (aa in 0 until cmp) {
-                    declare += "\tLV_IMG_DECLARE(face_${name}_dial_img_${x}_${clt}_${aa});\n"
-                    rscArr += "\t&face_${name}_dial_img_${x}_${clt}_${aa},\n"
+                    declare += "\tLV_IMG_DECLARE(face_${name}_dial_img_${x}_${clt_dat}_${aa});\n"
+                    rscArr += "\t&face_${name}_dial_img_${x}_${clt_dat}_${aa},\n"
 
-                    rscPathArr += "\t\"${rPrefix}${name}_${x}_${clt}_${aa}.bin\",\n"
-                    rscJson +=  "\"${rPrefix}${name}_${x}_${clt}_${aa}.bin\", "
+                    rscPathArr += "\t\"${rPrefix}${name}_${x}_${clt_dat}_${aa}.bin\",\n"
+                    rscJson +=  "\"${rPrefix}${name}_${x}_${clt_dat}_${aa}.bin\", "
                 }
                 rscArr += "};\n"
                 rscPathArr += "};\n"
@@ -407,13 +411,13 @@ fun extractComponents(data: ByteArray, name: String, faceName: String, binary: B
                 rscJson += "]"
 
                 if (id == 0x17) {
-                    weatherIc += "\t&face_${name}_dial_img_${x}_${clt}_0,\n"
-                    weatherPathIc += "\t\"${rPrefix}${name}_${x}_${clt}_0.bin\",\n"
-                    weatherJson += "\"${rPrefix}${name}_${x}_${clt}_0.bin\","
+                    weatherIc += "\t&face_${name}_dial_img_${x}_${clt_dat}_0,\n"
+                    weatherPathIc += "\t\"${rPrefix}${name}_${x}_${clt_dat}_0.bin\",\n"
+                    weatherJson += "\"${rPrefix}${name}_${x}_${clt_dat}_0.bin\","
                 } else if (id == 0x0A) {
-                    connIC += "\t&face_${name}_dial_img_${x}_${clt}_0,\n"
-                    connPathIC += "\t\"${rPrefix}${name}_${x}_${clt}_0.bin\",\n"
-                    connJson += "\"${rPrefix}${name}_${x}_${clt}_0.bin\","
+                    connIC += "\t&face_${name}_dial_img_${x}_${clt_dat}_0,\n"
+                    connPathIC += "\t\"${rPrefix}${name}_${x}_${clt_dat}_0.bin\",\n"
+                    connJson += "\"${rPrefix}${name}_${x}_${clt_dat}_0.bin\","
 
                     if (connIC.count { it == '\n' } > 2) {
 
@@ -436,11 +440,13 @@ fun extractComponents(data: ByteArray, name: String, faceName: String, binary: B
                         !(x == 0 && (id == 0x09 || id == 0x19)),
                         cmp,
                         name,
-                        "${x}_${clt}",
+                        "${x}_${clt_dat}",
                         use_raw
                 )
 
-                if (id == 0x1E) {} else {
+                if (id == 0x1E) {
+                    // println("")
+                } else {
 
                     // saveImage(output, xSz, ySz, x, name, clt)
                 }
@@ -454,19 +460,19 @@ fun extractComponents(data: ByteArray, name: String, faceName: String, binary: B
                         !(x == 0 && (id == 0x09 || id == 0x19)),
                         cmp,
                         name,
-                        "${x}_${clt}",
+                        "${x}_${clt_dat}",
                         use_raw
                 )
                 rscJson = "["
                 for (aa in 0 until cmp) {
-                    rscJson +=  "\"${rPrefix}${name}_${z}_${clt}_${aa}.bin\", "
+                    rscJson +=  "\"${rPrefix}${name}_${z}_${clt_dat}_${aa}.bin\", "
                 }
                 rscJson = rscJson.dropLast(2)
                 rscJson += "]"
             } else {
                 rscJson = "["
                 for (aa in 0 until cmp) {
-                    rscJson +=  "\"${rPrefix}${name}_${z}_${clt}_${aa}.bin\", "
+                    rscJson +=  "\"${rPrefix}${name}_${z}_${clt_dat}_${aa}.bin\", "
                 }
                 rscJson = rscJson.dropLast(2)
                 rscJson += "]"
@@ -514,8 +520,8 @@ fun extractComponents(data: ByteArray, name: String, faceName: String, binary: B
 
             if (drawable) {
                 // extern lv_obj_t *face_{{name}};
-                extern += "\textern lv_obj_t *face_${name}_${x}_${clt};\n"
-                objects += "lv_obj_t *face_${name}_${x}_${clt};\n"
+                extern += "\textern lv_obj_t *face_${name}_${x}_${clt_dat};\n"
+                objects += "lv_obj_t *face_${name}_${x}_${clt_dat};\n"
 
                 elements += jsonElem.replace("{{id}}", "$id")
                                     .replace("{{sub}}", "$id")
@@ -523,39 +529,39 @@ fun extractComponents(data: ByteArray, name: String, faceName: String, binary: B
                                     .replace("{{y}}", "$yOff")
                                     .replace("{{pvX}}", "$aOff")
                                     .replace("{{pvY}}", "${ySz - aOff}")
-                                    .replace("{{image}}", "${rPrefix}${name}_${z}_${clt}_0.bin")
+                                    .replace("{{image}}", "${rPrefix}${name}_${z}_${clt_dat}_0.bin")
                                     .replace("{{group}}", "$rscJson")
 
                 faceItems +=
                         lvItem.replace("{{PARENT}}", "face_${name}")
-                                .replace("{{CHILD}}", "face_${name}_${x}_${clt}")
+                                .replace("{{CHILD}}", "face_${name}_${x}_${clt_dat}")
                                 .replace("{{CHILD_X}}", "$xOff")
                                 .replace("{{CHILD_Y}}", "$yOff")
-                                .replace("{{RESOURCE}}", if (use_raw) {"\"${rPrefix}${name}_${z}_${clt}_0.bin\""} else {"&face_${name}_dial_img_${z}_${clt}_0"})
+                                .replace("{{RESOURCE}}", if (use_raw) {"\"${rPrefix}${name}_${z}_${clt_dat}_0.bin\""} else {"&face_${name}_dial_img_${z}_${clt_dat}_0"})
 
                 if (id == 0x0d) {
                     faceItems +=
-                            "\tlv_img_set_pivot(face_${name}_${x}_${clt}, $aOff, ${ySz - aOff});\n"
+                            "\tlv_img_set_pivot(face_${name}_${x}_${clt_dat}, $aOff, ${ySz - aOff});\n"
                     if (lan == 1) {
                         // hour hand
                         lvUpdateTime +=
-                                "\tlv_img_set_angle(face_${name}_${x}_${clt}, hour * 300 + (minute * 5) + (second * (5 / 60)));\n"
+                                "\tlv_img_set_angle(face_${name}_${x}_${clt_dat}, hour * 300 + (minute * 5) + (second * (5 / 60)));\n"
                     }
                     if (lan == 17) {
                         // minute hand
                         lvUpdateTime +=
-                                "\tlv_img_set_angle(face_${name}_${x}_${clt}, (minute * 60) + second);\n"
+                                "\tlv_img_set_angle(face_${name}_${x}_${clt_dat}, (minute * 60) + second);\n"
                     }
                     if (lan == 33) {
                         // second hand
-                        // lvUpdateTime += "\tlv_img_set_angle(face_${name}_${x}_${clt}, second * 60);\n"
-                        secondsType = "&face_${name}_${x}_${clt}"
+                        // lvUpdateTime += "\tlv_img_set_angle(face_${name}_${x}_${clt_dat}, second * 60);\n"
+                        secondsType = "&face_${name}_${x}_${clt_dat}"
                     }
                 }
             }
             if (id == 0x16 && id2 == 0x00) {
                 lvUpdateWeather +=
-                        "\tif (temp >= 0)\n\t{\n\t\tlv_obj_add_flag(face_${name}_${x}_${clt}, LV_OBJ_FLAG_HIDDEN);\n\t} else {\n\t\tlv_obj_clear_flag(face_${name}_${x}_${clt}, LV_OBJ_FLAG_HIDDEN);\n\t}\n"
+                        "\tif (temp >= 0)\n\t{\n\t\tlv_obj_add_flag(face_${name}_${x}_${clt_dat}, LV_OBJ_FLAG_HIDDEN);\n\t} else {\n\t\tlv_obj_clear_flag(face_${name}_${x}_${clt_dat}, LV_OBJ_FLAG_HIDDEN);\n\t}\n"
                 continue
             }
             if (id == 0x16 && id2 == 0x01) {
@@ -569,14 +575,14 @@ fun extractComponents(data: ByteArray, name: String, faceName: String, binary: B
                 when (group(id)) {
                     1 -> {
                         lvUpdateTime +=
-                                "\tlv_img_set_src(face_${name}_${x}_${clt}, face_${name}_dial_img_${z}_${clt}_group[${lvT}]);\n"
+                                "\tlv_img_set_src(face_${name}_${x}_${clt_dat}, face_${name}_dial_img_${z}_${clt_dat}_group[${lvT}]);\n"
                     }
                     2 -> {
                         lvUpdateStatus +=
-                                "\tlv_img_set_src(face_${name}_${x}_${clt}, face_${name}_dial_img_${z}_${clt}_group[${lvT}]);\n"
+                                "\tlv_img_set_src(face_${name}_${x}_${clt_dat}, face_${name}_dial_img_${z}_${clt_dat}_group[${lvT}]);\n"
                         if (lvT == "(battery / 100) % 10") {
                             lvUpdateStatus +=
-                                    "\tif (battery < 100)\n\t{\n\t\tlv_obj_add_flag(face_${name}_${x}_${clt}, LV_OBJ_FLAG_HIDDEN);\n\t} else {\n\t\tlv_obj_clear_flag(face_${name}_${x}_${clt}, LV_OBJ_FLAG_HIDDEN);\n\t}\n"
+                                    "\tif (battery < 100)\n\t{\n\t\tlv_obj_add_flag(face_${name}_${x}_${clt_dat}, LV_OBJ_FLAG_HIDDEN);\n\t} else {\n\t\tlv_obj_clear_flag(face_${name}_${x}_${clt_dat}, LV_OBJ_FLAG_HIDDEN);\n\t}\n"
 
                                     // do not draw it on the preview
                                     continue
@@ -584,35 +590,35 @@ fun extractComponents(data: ByteArray, name: String, faceName: String, binary: B
                     }
                     3 -> {
                         lvUpdateActivity +=
-                                "\tlv_img_set_src(face_${name}_${x}_${clt}, face_${name}_dial_img_${z}_${clt}_group[${lvT}]);\n"
+                                "\tlv_img_set_src(face_${name}_${x}_${clt_dat}, face_${name}_dial_img_${z}_${clt_dat}_group[${lvT}]);\n"
                     }
                     4 -> {
                         lvUpdateHealth +=
-                                "\tlv_img_set_src(face_${name}_${x}_${clt}, face_${name}_dial_img_${z}_${clt}_group[${lvT}]);\n"
+                                "\tlv_img_set_src(face_${name}_${x}_${clt_dat}, face_${name}_dial_img_${z}_${clt_dat}_group[${lvT}]);\n"
                     }
                     5 -> {
                         lvUpdateWeather +=
-                                "\tlv_img_set_src(face_${name}_${x}_${clt}, face_${name}_dial_img_${z}_${clt}_group[${lvT}]);\n"
+                                "\tlv_img_set_src(face_${name}_${x}_${clt_dat}, face_${name}_dial_img_${z}_${clt_dat}_group[${lvT}]);\n"
                     }
                 }
             }
             if (id == 0x17) {
                 lvUpdateWeather +=
-                        "\tlv_img_set_src(face_${name}_${x}_${clt}, face_${name}_dial_img_weather[icon % 8]);\n"
+                        "\tlv_img_set_src(face_${name}_${x}_${clt_dat}, face_${name}_dial_img_weather[icon % 8]);\n"
             }
             if (id == 0x0b && aOff == 0) {
                 lvUpdateStatus +=
-                        "\tlv_img_set_src(face_${name}_${x}_${clt}, face_${name}_dial_img_${z}_${clt}_group[(battery / (100 / ${cmp})) % ${cmp}]);\n"
+                        "\tlv_img_set_src(face_${name}_${x}_${clt_dat}, face_${name}_dial_img_${z}_${clt_dat}_group[(battery / (100 / ${cmp})) % ${cmp}]);\n"
             }
             if (id == 0x0a) {
                 lvUpdateStatus +=
-                        "\tlv_img_set_src(face_${name}_${x}_${clt}, face_${name}_dial_img_connection[(connection ? 0 : 1) % 2]);\n"
+                        "\tlv_img_set_src(face_${name}_${x}_${clt_dat}, face_${name}_dial_img_connection[(connection ? 0 : 1) % 2]);\n"
             }
             if (id == 0x08) {
                 lvUpdateTime +=
-                        "\tif (mode)\n\t{\n\t\tlv_obj_add_flag(face_${name}_${x}_${clt}, LV_OBJ_FLAG_HIDDEN);\n\t} else {\n\t\tlv_obj_clear_flag(face_${name}_${x}_${clt}, LV_OBJ_FLAG_HIDDEN);\n\t}\n"
+                        "\tif (mode)\n\t{\n\t\tlv_obj_add_flag(face_${name}_${x}_${clt_dat}, LV_OBJ_FLAG_HIDDEN);\n\t} else {\n\t\tlv_obj_clear_flag(face_${name}_${x}_${clt_dat}, LV_OBJ_FLAG_HIDDEN);\n\t}\n"
                 lvUpdateTime +=
-                        "\tlv_img_set_src(face_${name}_${x}_${clt}, face_${name}_dial_img_${z}_${clt}_group[(am ? 0 : 1) % 2]);\n"
+                        "\tlv_img_set_src(face_${name}_${x}_${clt_dat}, face_${name}_dial_img_${z}_${clt_dat}_group[(am ? 0 : 1) % 2]);\n"
             }
 
             if (id == 0x0d && (lan == 17 || lan == 33)) {
@@ -620,6 +626,7 @@ fun extractComponents(data: ByteArray, name: String, faceName: String, binary: B
             }
             if (xSz > 500 || ySz > 5000) {
                 // not valid ?
+                println("Not valid x->$xSz y->$ySz")
             } else {
                 val image = getImage(output, xSz, ySz / cmp, offset = offs)
                 graphics.drawImage(image, xOff, yOff, null)
@@ -993,6 +1000,7 @@ extern "C"
 #endif
 
 #include "lvgl.h"
+#include "app_hal.h"
 
 //#define ENABLE_FACE_{{NAME}} // ({{FACE_NAME}}) uncomment to enable or define it elsewhere
 

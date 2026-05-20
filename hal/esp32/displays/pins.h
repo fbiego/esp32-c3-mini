@@ -274,6 +274,28 @@
 
 #define MAX_FILE_OPEN 10
 
+#elif VIEWE_S3_1_5
+#define SCREEN_WIDTH 466
+#define SCREEN_HEIGHT 466
+
+#define LCD_CS 12
+#define LCD_SCK 48
+#define LCD_SD0 13
+#define LCD_SD1 47
+#define LCD_SD2 21
+#define LCD_SD3 14
+#define LCD_RST 11
+// #define LCD_EN 17
+
+#define TOUCH_SDA 17
+#define TOUCH_SCL 18
+#define TOUCH_RST 10
+#define TOUCH_IRQ 9
+
+#define BUTTON_HOME 0
+
+#define MAX_FILE_OPEN 10
+
 #elif VIEWE_KNOB_15
 #define SCREEN_WIDTH 466
 #define SCREEN_HEIGHT 466
@@ -294,6 +316,28 @@
 
 #define ENCODER_A 6
 #define ENCODER_B 5
+#define BUTTON_HOME 0
+
+#define MAX_FILE_OPEN 10
+
+#elif VIEWE_ECHO_EAR
+#define SCREEN_WIDTH 360
+#define SCREEN_HEIGHT 360
+
+#define LCD_CS 39
+#define LCD_SCK 41
+#define LCD_SD0 21
+#define LCD_SD1 48
+#define LCD_SD2 47
+#define LCD_SD3 45
+#define LCD_RST -1
+#define LCD_BL 42
+
+#define TOUCH_SDA 2
+#define TOUCH_SCL 1
+#define TOUCH_RST -1
+#define TOUCH_IRQ 40
+
 #define BUTTON_HOME 0
 
 #define MAX_FILE_OPEN 10
