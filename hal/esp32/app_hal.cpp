@@ -92,6 +92,10 @@ RtcPCF8563<TwoWire> Rtc(Wire);
 #if ESPS3_2_06
 #include <SensorPCF85063.hpp>
 SensorPCF85063 rtc;
+#define XPOWERS_CHIP_AXP2101
+#include <XPowersLib.h>
+XPowersAXP2101 PMU;
+int watchBatteryPercent = 100; // last known-good AXP2101 reading, used by watch faces + settings
 #endif
 
 #define FLASH FFat
@@ -1935,6 +1939,10 @@ void hal_setup()
 
   ui_init();
 
+#if ESPS3_2_06
+  lv_obj_remove_flag(ui_batterySlider, LV_OBJ_FLAG_CLICKABLE); // real PMU reading, not a fake-level debug control
+#endif
+
   bool fsState = setupFS();
   if (fsState)
   {
@@ -2128,6 +2136,23 @@ void hal_setup()
 	watch.setTime(dt.getSecond(), dt.getMinute(), dt.getHour(), dt.getDay(), dt.getMonth(), dt.getYear());
 	rtc.resetAlarm();
 	rtc.disableAlarm();
+
+  if (!PMU.init(Wire, TOUCH_SDA, TOUCH_SCL, AXP2101_SLAVE_ADDRESS))
+  {
+    Timber.e("Failed to find AXP2101 - check your wiring!");
+  }
+  else
+  {
+    int pct = PMU.getBatteryPercent();
+    Timber.i("AXP2101 battery: %d%%, charging: %d, vbus: %d", pct, PMU.isCharging(), PMU.isVbusIn());
+    if (pct >= 0)
+    {
+      watchBatteryPercent = pct;
+      watch.setBattery(pct, PMU.isCharging());
+      lv_slider_set_value(ui_batterySlider, watchBatteryPercent, LV_ANIM_OFF);
+      lv_label_set_text_fmt(ui_batteryLabel, "Battery %d%%", watchBatteryPercent);
+    }
+  }
 #endif
 
   ui_update_seconds(watch.getSecond());
@@ -2325,6 +2350,24 @@ void hal_loop()
       }
     }
 
+#if ESPS3_2_06
+    {
+      static unsigned long lastBatteryPoll = 0;
+      if (millis() - lastBatteryPoll >= 30000)
+      {
+        lastBatteryPoll = millis();
+        int pct = PMU.getBatteryPercent();
+        if (pct >= 0)
+        {
+          watchBatteryPercent = pct;
+          watch.setBattery(pct, PMU.isCharging());
+          lv_slider_set_value(ui_batterySlider, watchBatteryPercent, LV_ANIM_OFF);
+          lv_label_set_text_fmt(ui_batteryLabel, "Battery %d%%", watchBatteryPercent);
+        }
+      }
+    }
+#endif
+
     if (screenTimer.active)
     {
       uint8_t lvl = lv_slider_get_value(ui_brightnessSlider);
@@ -2446,7 +2489,11 @@ void update_faces()
   int temp = watch.getWeatherAt(0).temp;
   int icon = watch.getWeatherAt(0).icon;
 
+#if ESPS3_2_06
+  int battery = watchBatteryPercent;
+#else
   int battery = watch.getPhoneBattery();
+#endif
   bool connection = watch.isConnected();
 
   int steps = 2735;
