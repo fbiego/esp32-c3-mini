@@ -25,6 +25,7 @@ extern "C"
 	extern lv_obj_t *face_1167_410_3_171192;
 	extern lv_obj_t *face_1167_410_4_171192;
 	extern lv_obj_t *face_1167_410_5_171192;
+	extern lv_obj_t *face_1167_410_47_171192;
 	extern lv_obj_t *face_1167_410_6_175276;
 	extern lv_obj_t *face_1167_410_7_175933;
 	extern lv_obj_t *face_1167_410_8_175933;
