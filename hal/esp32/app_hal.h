@@ -27,6 +27,7 @@
 #define ENABLE_FACE_2051_410 // (2051)
 #define ENABLE_FACE_1041_410 // (1041)
 #define ENABLE_FACE_2151_410 // (2151)
+#define ENABLE_FACE_CITIZEN_410 // (Citizen) hand-authored from a Red Arrows Skyhawk product photo
 
 #elif defined(VIEWE_SMARTRING) || defined(VIEWE_KNOB_15) || defined(ESPS3_1_75) || defined(VIEWE_S3_1_5)
 
