@@ -96,6 +96,7 @@ SensorPCF85063 rtc;
 #include <XPowersLib.h>
 XPowersAXP2101 PMU;
 int watchBatteryPercent = 100; // last known-good AXP2101 reading, used by watch faces + settings
+#include "esp_sleep.h"
 #endif
 
 #define FLASH FFat
@@ -142,6 +143,16 @@ bool readIMU = false;
 bool updateSeconds = false;
 bool hasUpdatedSec = false;
 bool navSwitch = false;
+bool extremePowerSave = false;
+#if ESPS3_2_06
+bool on_battery() { return !PMU.isVbusIn(); }
+#endif
+bool touchAsleep = false; // step 4: tracks whether tft.touch.sleep() was called, so
+                          // screen_on() only pays TouchDrvFT6X36::wakeup()'s ~200ms
+                          // reset cost when actually waking from a real touch sleep
+bool bleAsleep = false;   // step 5: tracks whether watch.stop() was called, so
+                          // screen_on() only re-inits BLE (watch.begin()) when it
+                          // was actually stopped
 
 static long oldPosition = 0;
 
@@ -168,6 +179,7 @@ TaskHandle_t gameHandle = NULL;
 void showAlert();
 bool isDay();
 void setTimeout(int i);
+void screenBrightness(uint8_t value);
 
 void hal_setup(void);
 void hal_loop(void);
@@ -272,6 +284,17 @@ void my_touchpad_read(lv_indev_t *indev_driver, lv_indev_data_t *data)
   //   touched = tft.getTouch(&touchX, &touchY);
   // }
 
+#if ESPS3_2_06
+  // Step 4: don't poll a sleeping touch chip over I2C every tick - it can't
+  // wake itself while extremePowerSave has it in deep sleep, only the GPIO0
+  // button can (see screen_on()).
+  if (touchAsleep)
+  {
+    data->state = LV_INDEV_STATE_RELEASED;
+    return;
+  }
+#endif
+
   touched = tft.getTouch(&touchX, &touchY);
 
   if (!touched)
@@ -293,7 +316,113 @@ void screen_on(long extra)
 {
   screenTimer.time = millis() + extra;
   screenTimer.active = true;
+
+#if ESPS3_2_06
+  // Only pay the ~200ms TouchDrvFT6X36::wakeup()/reset() cost when touch was
+  // actually put to sleep (step 4). A real touch press can't reach this
+  // function while asleep in the first place (nothing to read), so this only
+  // fires for the button/alarm wake paths, never on the ordinary touch path.
+  if (touchAsleep)
+  {
+    tft.touch.wakeup();
+    touchAsleep = false;
+  }
+
+  // Step 5: restart BLE the same way - only when it was actually stopped.
+  if (bleAsleep)
+  {
+    watch.begin();
+    bleAsleep = false;
+  }
+#endif
 }
+
+/* Extreme Power Save step 3: while on power (VBUS present) with the switch on,
+   suppress the normal auto-timeout so the screen stays on indefinitely - the
+   GPIO0 button can still force it off (btn_home_handler's existing force-off
+   branch is untouched, it just keeps working since we don't touch
+   screenTimer.active/duration here, only skip the expiry check). Genuinely
+   irrelevant on boards without the AXP2101 (no VBUS sensing there), so this
+   always reads false off ESPS3_2_06 and every other board's behavior is
+   byte-for-byte unchanged. */
+bool staying_on_for_charging()
+{
+#if ESPS3_2_06
+  return extremePowerSave && !on_battery();
+#else
+  return false;
+#endif
+}
+
+#if ESPS3_2_06
+/* Extreme Power Save step 6, retry #3: timer-only polling instead of a GPIO
+   wake source. Attempts #1 (ext0) and #2 (ext1) both proved the RTC-GPIO
+   wake circuit itself is unreliable off USB power (confirmed live: ext1
+   worked cleanly while connected, failed identically to ext0 once actually
+   on battery - almost certainly a clock domain ESP-IDF only keeps alive
+   while a USB host is attached, per DEVELOPER_NOTES.txt cont. 5/6). But the
+   plain TIMER wake was 100% reliable in every single test across both
+   attempts (rc=0, clean, every cycle, no exceptions) - so this version
+   doesn't use a GPIO wake source at all. It just polls GPIO0 with a normal
+   digitalRead() each time the timer wakes it, on a short interval for
+   still-reasonably-snappy response. GPIO0 never switches to RTC-IO function
+   this way - it stays in Button2's own digital mode throughout, which
+   sidesteps the whole RTC-wake-circuit class of problem entirely, not just
+   works around it. */
+void deep_idle_loop()
+{
+  Timber.i("deep_idle_loop: entering (timer-poll)");
+  Serial.flush();
+
+  int iterations = 0;
+  while (extremePowerSave && touchAsleep && bleAsleep && on_battery())
+  {
+    iterations++;
+    esp_sleep_enable_timer_wakeup(200000); // poll every 200ms
+    esp_light_sleep_start();
+
+    if (digitalRead(0) == LOW) // button pressed (active low)
+    {
+      Timber.i("deep_idle_loop: button seen on wake poll (iteration %d)", iterations);
+      Serial.flush();
+
+      // Consume this press entirely here rather than handing it to Button2:
+      // wake the screen ourselves right now, then wait out the physical
+      // release before returning. Button2's own click-duration timing hadn't
+      // polled in seconds (asleep the whole time) - letting it see this
+      // still-held wake press as its first reading measured the hold from an
+      // arbitrary starting point and misclassified plain wake presses as
+      // long-clicks (jumped into the face picker instead of just waking).
+      // Waiting for release here means Button2's first post-wake poll always
+      // sees a clean "not pressed" state, so only a genuinely new press
+      // after this one ever gets classified as a click.
+      // The cap must comfortably cover any realistic human hold (a 2s cap
+      // was too short - a held-a-bit-longer wake press handed the still-down
+      // button to Button2 anyway, which then read it as a fresh press on an
+      // already-awake home screen and treated it as the existing
+      // press-to-turn-off toggle, instantly undoing the screen_on() just
+      // above). 15s is only meant as a safety net against a stuck/shorted
+      // pin, not a real expected wait.
+      screen_on();
+      // screen_on() only sets screenTimer's flag/timestamp - the code that
+      // actually restores the physical backlight lives further down in
+      // hal_loop(), which we won't reach until this function returns (i.e.
+      // not until release, since we're about to block below). Restore the
+      // backlight ourselves right now so the screen visibly lights up
+      // immediately on press, not only after release.
+      screenBrightness(lv_slider_get_value(ui_brightnessSlider));
+      unsigned long releaseWaitStart = millis();
+      while (digitalRead(0) == LOW && millis() - releaseWaitStart < 15000)
+      {
+        delay(10);
+      }
+      break;
+    }
+  }
+  Timber.i("deep_idle_loop: exited after %d iterations", iterations);
+  Serial.flush();
+}
+#endif
 
 bool check_alert_state(AlertType type)
 {
@@ -1228,6 +1357,16 @@ void onNavState(lv_event_t *e)
   prefs.putBool("autonav", navSwitch);
 }
 
+/* Extreme Power Save: settings toggle only so far, no behavior wired up yet
+   (step 2 of the power-management plan - see DEVELOPER_NOTES.txt). */
+void onExtremePowerSave(lv_event_t *e)
+{
+  lv_obj_t *obj = (lv_obj_t *)lv_event_get_target(e);
+  extremePowerSave = lv_obj_has_state(obj, LV_STATE_CHECKED);
+
+  prefs.putBool("extremepwr", extremePowerSave);
+}
+
 void savePrefInt(const char *key, int value)
 {
   prefs.putInt(key, value);
@@ -1749,7 +1888,18 @@ void btn_home_handler(Button2 &btn)
     }
     if (screenTimer.active && screenTimer.duration > 1 && actScr == ui_home)
     {
-      screenTimer.time = millis() - screenTimer.duration - 1; // trigger timeout immediately
+      if (staying_on_for_charging())
+      {
+        // The normal expiry check is suppressed while staying_on_for_charging()
+        // is true, so the rewind-then-expire trick below would never actually
+        // fire - force it off directly instead.
+        screenTimer.active = false;
+        screenBrightness(0);
+      }
+      else
+      {
+        screenTimer.time = millis() - screenTimer.duration - 1; // trigger timeout immediately
+      }
     }
     else if (!screenTimer.active)
     {
@@ -2040,6 +2190,7 @@ void hal_setup()
   circular = prefs.getBool("circular", false);
   alertSwitch = prefs.getBool("alerts", false);
   navSwitch = prefs.getBool("autonav", false);
+  extremePowerSave = prefs.getBool("extremepwr", false);
 
   lv_obj_scroll_to_y(ui_settingsList, 1, LV_ANIM_ON);
   lv_obj_scroll_to_y(ui_appList, 1, LV_ANIM_ON);
@@ -2080,6 +2231,17 @@ void hal_setup()
   else
   {
     lv_obj_remove_state(ui_navStateSwitch, LV_STATE_CHECKED);
+  }
+#endif
+
+#if ESPS3_2_06
+  if (extremePowerSave)
+  {
+    lv_obj_add_state(ui_extremePowerSaveSwitch, LV_STATE_CHECKED);
+  }
+  else
+  {
+    lv_obj_remove_state(ui_extremePowerSaveSwitch, LV_STATE_CHECKED);
   }
 #endif
 
@@ -2200,6 +2362,12 @@ void hal_setup()
 
 void hal_loop()
 {
+#if ESPS3_2_06
+  if (extremePowerSave && touchAsleep && bleAsleep && on_battery())
+  {
+    deep_idle_loop();
+  }
+#endif
 
   if (!transfer)
   {
@@ -2382,13 +2550,31 @@ void hal_loop()
       {
         screenTimer.active = false;
       }
-      else if (screenTimer.time + screenTimer.duration < millis())
+      else if (!staying_on_for_charging() && screenTimer.time + screenTimer.duration < millis())
       {
         Timber.w("Screen timeout");
         screenTimer.active = false;
 
         screenBrightness(0);
         lv_screen_load(ui_home);
+
+#if ESPS3_2_06
+        // Step 4: sleep the touch chip too, gated the same way as the rest of Extreme
+        // Power Save - only while the switch is on and genuinely on battery.
+        if (extremePowerSave && on_battery())
+        {
+          tft.touch.sleep();
+          touchAsleep = true;
+
+          // Step 5: stop BLE entirely too - clearAll=true (the default) is
+          // correct here since begin() below will recreate the server/
+          // advertising objects from scratch; bonding/pairing info lives in
+          // the NimBLE host's own store, untouched by deinit either way, so
+          // the phone's existing pairing should survive this cycle.
+          watch.stop(true);
+          bleAsleep = true;
+        }
+#endif
       }
     }
   }

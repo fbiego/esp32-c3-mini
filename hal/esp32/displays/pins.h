@@ -199,6 +199,14 @@
 #define SCREEN_WIDTH 410
 #define SCREEN_HEIGHT 502
 
+// Physical "BOOT" button, GPIO0 - present on this board's hardware (confirmed
+// working via OLEDS3Watch-joaquim, same physical board) but never wired up
+// for this project's ESPS3_2_06 support until 2026-07-20. Same pin/macro
+// convention already used by ELECROW_S3/VIEWE_*/ESP32_CYD elsewhere in this
+// file - app_hal.cpp's existing Button2/btn_home_handler code just needed
+// this defined to activate for our board, no other changes.
+#define BUTTON_HOME 0
+
 #define LCD_CS 12
 #define LCD_SCK 11
 #define LCD_SD0 4
