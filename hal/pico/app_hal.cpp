@@ -401,6 +401,8 @@ void on_alert_state_change(int32_t states) {}
 
 void onNavState(lv_event_t *e) {}
 
+void onExtremePowerSave(lv_event_t *e) {}
+
 void onLanguageChange(lv_event_t *e)
 {
 }

@@ -79,6 +79,11 @@ extern "C"
     extern lv_obj_t *ui_navStateSwitch;
     extern lv_obj_t *ui_navStateIcon;
     extern lv_obj_t *ui_navStatePanel;
+    void ui_event_extremePowerSaveSwitch(lv_event_t *e);
+    extern lv_obj_t *ui_extremePowerSaveLabel;
+    extern lv_obj_t *ui_extremePowerSaveSwitch;
+    extern lv_obj_t *ui_extremePowerSaveIcon;
+    extern lv_obj_t *ui_extremePowerSavePanel;
     void ui_event_settingsScreen(lv_event_t *e);
     extern lv_obj_t *ui_settingsScreen;
     extern lv_obj_t *ui_settingsList;
