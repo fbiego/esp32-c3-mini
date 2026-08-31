@@ -3217,3 +3217,122 @@ documented for the RTC-GPIO wake investigation). **Next step if this recurs**: a
 capture (pyserial, matching the exact method used for the 2026-08-25 button-unresponsiveness
 diagnosis) specifically while the jerk/stall is happening, to confirm or rule this out before
 investigating further (e.g. BLE after all, or something else entirely).
+
+------------------------------------------------------------------------------------------------
+2026-08-31 (cont.) - Stall investigation, part 2: user reported no improvement from the PMU
+consolidation, added on-device stall-logging instrumentation, found TWO real, separate root
+causes - a genuine ChronosESP32 library bug (patched, fork wired in) and this board's
+already-documented AXP2101 stuck-register state (not a code bug - physical battery disconnect
+is the established fix, see 2026-07-13 entry)
+------------------------------------------------------------------------------------------------
+User reported the PMU-consolidation fix above made no difference, and - crucially - that it
+doesn't reproduce at all while plugged into USB. That ruled out a live serial capture the way the
+2026-08-25 bug was diagnosed (capturing requires USB, which is exactly the condition it doesn't
+reproduce under).
+
+**Added on-device stall logging** (`hal/esp32/app_hal.cpp`, `#if ESPS3_2_06`-gated, explicitly
+marked TEMPORARY in its own comment): `stallCheckpointStart()`/`stallCheckpointEnd()` time four
+`hal_loop()` checkpoints (`refreshPmuStatus`, `lv_timer_handler+delay`, `watch.loop`,
+`btn_home.loop`) and append a line to `/stall_log.txt` on FFat whenever one exceeds 100ms -
+capture on-device while disconnected, retrieve later via the existing serial LIST/GET protocol,
+same shape as the screengrab feature. Built clean on `lolin_s3_2_06` AND `elecrow_c3_1_28`
+(spot-checked a second board with `BUTTON_HOME` defined but not `ESPS3_2_06`, to confirm the
+nested `#if` didn't break other boards) before flashing.
+
+**First capture, right after flashing (over USB)**: a `watch.loop` stall of 2851ms, followed by
+five `lv_timer_handler+delay` stalls around 1081ms each, all in the first ~22 seconds after boot,
+then nothing for 20+ seconds of idle. This directly contradicted "doesn't reproduce on USB" - the
+earlier impression was probably just that a BLE reconnect event (the actual trigger) is rare
+during casual USB testing.
+
+**Root-caused the exact-repeating durations by reading `ChronosESP32::sendCommand()`**
+(`.pio/libdeps/lolin_s3_2_06/ChronosESP32/src/ChronosESP32.cpp:482`, called synchronously from
+`ChronosESP32::loop()`): every single `notify()` call is followed by a hardcoded
+`vTaskDelay(200 / portTICK_PERIOD_MS)` - 200ms for a single-packet send, and once per chunk for a
+multi-packet send. `sendBattery()` (8 bytes, one chunk) = exactly 200ms. `sendESP()` (the
+device-info string, up to 505 chars, force-chunked, ~14-27 chunks of 19 bytes) = up to ~5.4
+seconds of continuous blocking. `sendESP()` fires whenever the **phone app** sends its own
+handshake (`0xCA`/`0xFE`, `_sendESP = true` at `ChronosESP32.cpp:1818`) - i.e. every BLE
+reconnect, which Extreme Power Save's `watch.stop()`/`watch.begin()` cycle can trigger. This
+matches the user's "jerk ~5 seconds after going onto battery" report closely - a reconnect
+shortly after waking from sleep, then a multi-second blocking info-string send.
+
+**Confirmed with a longer on-battery capture** (user unplugged, reproduced the jerk, replugged
+for retrieval): 10 more `watch.loop` entries, split evenly between exactly 200ms and exactly
+2851ms - the two durations expected from the mechanism above - occurring across multiple real
+plug/unplug/charge-state transitions (`batt=1`/`chg=1` visible in the log), not randomly. The
+200ms entries are now more frequent than before this session's earlier PMU-consolidation fix
+made charge-state-change detection much faster (1s vs 30s), so `sendBattery()`'s change-gated
+notify fires closer to the actual physical event - a real, if minor, side effect of that fix.
+
+**Fix: patched the upstream-forked library, not app code.** `~/chronos-esp32`
+(`BigGremlin/chronos-esp32`, clean, on `main`, matching the registry's `1.9.0`) - new branch
+`fix-blocking-notify-delay`, `sendCommand()`'s three `vTaskDelay(200...)` calls replaced with a
+named `SEND_COMMAND_NOTIFY_DELAY_MS` constant set to 30 (still comfortably above a typical
+15-50ms BLE connection interval, cuts a `sendESP()` burst from ~5.4s to under 1s). Committed
+(`56761e4`), pushed to `origin/fix-blocking-notify-delay`. Not yet PR'd upstream to
+`fbiego/chronos-esp32` - ask before opening that, matching this project's established pattern of
+PR'ing finished work (citizen_410, Extreme Power Save) only once confirmed working.
+
+**Wiring the local fork into the chronos-watch build - real gotcha, worth remembering.** First
+attempt added `file:///home/greg/chronos-esp32` *alongside* the existing `${esp32.lib_deps}`
+(which pulls the registry's `fbiego/ChronosESP32@1.9.0`) in `env:lolin_s3_2_06`'s own `lib_deps`.
+This installed **both copies side by side**
+(`.pio/libdeps/lolin_s3_2_06/ChronosESP32/` from the registry, unpatched, and
+`ChronosESP32@src-<hash>/` from the local path, patched) and **both got compiled into separate
+`.a` archives and linked** (`lib65f/libChronosESP32.a` and
+`lib445/libChronosESP32@src-....a`) - which one the linker actually pulls symbols from is
+archive-order-dependent, not something to rely on silently. Verified empirically (checked which
+`.cpp.o` files existed and grepped their content for the patch) rather than assuming either way.
+**Fixed properly**: stopped extending `${esp32.lib_deps}` for this one env and explicitly listed
+its other members (`${env.lib_deps}`, LovyanGFX, Timber, ArduinoJson, Button2) plus the local
+fork path instead of the registry entry - one unambiguous copy, confirmed via a full
+`rm -rf .pio/libdeps/lolin_s3_2_06/ChronosESP32*` + clean rebuild that exactly one `ChronosESP32`
+directory exists and contains `SEND_COMMAND_NOTIFY_DELAY_MS`. Only `lolin_s3_2_06` touched -
+every other board's env still uses `${esp32.lib_deps}` unchanged. **If `[esp32]`'s shared
+lib_deps ever changes, this env's explicit copy needs updating by hand** - flagged in a comment
+at the override site.
+
+**Flashed the real fix, watched the stall log for the reconnect burst - looked good, but revealed
+a second, separate, much bigger problem.** No fresh `watch.loop` stalls in the ~20s after boot
+despite a BLE reconnect (`[DEBUG]: Connected`) - consistent with the fix working. But the *same*
+log capture (after properly reading the whole file this time - a real mistake mid-session was
+reading with a byte-limited buffer and mistaking old data for new, see the correction in-session)
+showed something new and worse: a **sustained run of `lv_timer_handler+delay` stalls, ~1.06-1.08s
+each, one every ~1.1-1.2s, continuously for 5+ minutes straight, unrelated to BLE reconnects**
+(steady `batt=0,chg=0` throughout - just sitting idle on USB).
+
+**A/B test to isolate it: a temporary diagnostic build stopped BLE entirely right after
+`watch.begin()`** (`watch.stop(true)`, clearly marked TEMPORARY, since reverted - never
+committed). Confirmed via boot log: no `[DEBUG]: Connected`, free heap jumped from ~13.6KB to
+~61.5KB (NimBLE's own buffers genuinely inactive). **The sustained ~1.07s stall still happened**,
+proving it is NOT a BLE issue at all - contradicts what would've been a natural assumption given
+this session's BLE finding above.
+
+**Real cause, found directly in the live serial stream during the BLE-off test**: continuous
+`Wire.cpp:513 i2cRead returned Error -1` messages (the Arduino-ESP32 core's own Wire driver
+logging, not app code), firing roughly once every ~1085ms - matching `refreshPmuStatus()`'s
+1-second poll cadence almost exactly. **This means `Wire.setTimeOut(50)` (added 2026-08-25) is
+NOT actually bounding this specific failure to 50ms the way that fix assumed** - the real cost is
+close to the full ~1 second, continuously, for as long as this state persists. This is this
+board's already-documented AXP2101 "stuck-register" state (see 2026-07-13, and the recurring
+"fixed via battery disconnect" pattern across this project's history) - a real, known hardware
+condition, not a new code bug, and this session's evidence suggests it was in that state for the
+entire ~5+ minute test window. **Recommended to the user: a physical battery disconnect (~10 min),
+matching the established remedy** - not yet confirmed as of this entry, that's the next concrete
+step. Worth separately investigating later why `Wire.setTimeOut(50)` isn't bounding this failure
+mode the way it was assumed to - not blocking on that for the immediate fix.
+
+**Cleaned up and reflashed the real (non-diagnostic) firmware**: removed the temporary
+`watch.stop(true)` A/B-test block, rebuilt, reflashed, boot-confirmed clean (BLE reconnects
+normally, AXP2101 read succeeded this time). The stall-logging instrumentation itself was
+deliberately kept in (still `#if ESPS3_2_06`-gated, still marked as temporary/removable) since
+it's the only way to confirm whether a battery disconnect actually clears the sustained pattern -
+remove it once that's confirmed, not before.
+
+**State at the end of this entry**: `hal/esp32/app_hal.cpp` has the PMU consolidation (previous
+entry), the stall-logging instrumentation (this entry, kept), and no BLE-off diagnostic code
+(removed). `platformio.ini`'s `env:lolin_s3_2_06` now points `ChronosESP32` at the local
+`~/chronos-esp32` fork instead of the registry. `~/chronos-esp32` has the delay-fix commit on
+`fix-blocking-notify-delay`, pushed to origin, not yet PR'd upstream. Nothing in `chronos-watch`
+committed yet as of this entry being written - see the commit immediately following it.

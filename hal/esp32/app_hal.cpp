@@ -205,6 +205,48 @@ bool is_charging()
 {
   return cachedCharging;
 }
+
+// TEMPORARY diagnostic instrumentation, 2026-08-31: the PMU-polling consolidation above didn't
+// fix the reported on-battery stall/jerk, and - critically - the symptom doesn't reproduce at
+// all while connected via USB, which is exactly what a live serial capture needs. So this times
+// a handful of hal_loop() checkpoints and appends a line to /stall_log.txt on FFat whenever one
+// exceeds STALL_LOG_THRESHOLD_MS, to be pulled off later via the existing serial LIST/GET
+// protocol (handleSerialCommands()) once reconnected - same "capture on-device while
+// disconnected, retrieve later" shape as the screengrab feature. Remove this block plus its
+// four call sites in hal_loop() once the root cause is found - not meant to stay long-term.
+#define STALL_LOG_THRESHOLD_MS 100
+#define STALL_LOG_PATH "/stall_log.txt"
+#define STALL_LOG_MAX_BYTES (32 * 1024) // cap so an undiagnosed run can't slowly eat FFat
+
+void logStall(const char *checkpoint, unsigned long ms)
+{
+  File f = FLASH.open(STALL_LOG_PATH, FILE_APPEND);
+  if (!f)
+  {
+    return;
+  }
+  if (f.size() > STALL_LOG_MAX_BYTES)
+  {
+    f.close();
+    return;
+  }
+  f.printf("%lu,%s,%lu,batt=%d,chg=%d\n", millis(), checkpoint, ms, (int)cachedOnBattery, (int)cachedCharging);
+  f.close();
+}
+
+unsigned long stallCheckpointStart()
+{
+  return millis();
+}
+
+void stallCheckpointEnd(const char *name, unsigned long startedAt)
+{
+  unsigned long elapsed = millis() - startedAt;
+  if (elapsed > STALL_LOG_THRESHOLD_MS)
+  {
+    logStall(name, elapsed);
+  }
+}
 #endif
 bool touchAsleep = false; // step 4: tracks whether tft.touch.sleep() was called, so
                           // screen_on() only pays TouchDrvFT6X36::wakeup()'s ~200ms
@@ -2726,7 +2768,9 @@ void hal_loop()
   handleSerialCommands();
 
 #if ESPS3_2_06
+  unsigned long _stallT = stallCheckpointStart();
   refreshPmuStatus();
+  stallCheckpointEnd("refreshPmuStatus", _stallT);
 
   if (extremePowerSave && touchAsleep && bleAsleep && on_battery())
   {
@@ -2736,13 +2780,29 @@ void hal_loop()
 
   if (!transfer)
   {
+#if ESPS3_2_06
+    _stallT = stallCheckpointStart();
+#endif
     lv_timer_handler(); // Update the UI-
     delay(5);
+#if ESPS3_2_06
+    stallCheckpointEnd("lv_timer_handler+delay", _stallT);
+    _stallT = stallCheckpointStart();
+#endif
 
     watch.loop();
+#if ESPS3_2_06
+    stallCheckpointEnd("watch.loop", _stallT);
+#endif
 
 #if defined(BUTTON_HOME) && (BUTTON_HOME != -1)
+#if ESPS3_2_06
+    _stallT = stallCheckpointStart();
+#endif
   btn_home.loop();
+#if ESPS3_2_06
+    stallCheckpointEnd("btn_home.loop", _stallT);
+#endif
 #endif
 
 #if defined(M5_STACK_DIAL) || defined(VIEWE_KNOB_15) || defined(ELECROW_S3)
