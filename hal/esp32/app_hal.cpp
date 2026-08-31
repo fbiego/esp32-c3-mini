@@ -241,12 +241,63 @@ unsigned long stallCheckpointStart()
   return millis();
 }
 
+// I2C bus recovery, 2026-08-31: even with both Wire timeouts now correctly set
+// (Wire.setTimeOut()/Wire.setTimeout(), see hal_setup()), stall_log.txt evidence shows the
+// *first* failure of a new "bad episode" still costs close to the old ~1.1s, while every
+// individual bounded step (write/read/readBytes) is now capped at ~50ms - fully accounting for
+// the ~120-150ms *repeat* failures within the same episode, but not this larger first-hit cost.
+// Working theory: a genuinely wedged bus (SDA held low by a device mid-transaction, a real
+// electrical condition no software timeout can shortcut) - the standard fix is the classic I2C
+// bus-recovery sequence: manually clock SCL a few times to let a stuck slave finish/release the
+// bus, force a STOP condition, then reinit Wire. Deliberately reactive (called from
+// stallCheckpointEnd() below only when a checkpoint is clearly in "first-hit" territory, not the
+// smaller bounded-failure range) rather than run on every tick, so a healthy bus is never
+// disturbed by this.
+#define I2C_RECOVERY_THRESHOLD_MS 500
+
+void recoverI2CBus()
+{
+  Wire.end();
+
+  pinMode(TOUCH_SCL, OUTPUT_OPEN_DRAIN);
+  pinMode(TOUCH_SDA, INPUT_PULLUP);
+  digitalWrite(TOUCH_SCL, HIGH);
+
+  for (int i = 0; i < 9 && digitalRead(TOUCH_SDA) == LOW; i++)
+  {
+    digitalWrite(TOUCH_SCL, LOW);
+    delayMicroseconds(5);
+    digitalWrite(TOUCH_SCL, HIGH);
+    delayMicroseconds(5);
+  }
+
+  // Force a STOP condition (SDA low->high while SCL is high) so any device left mid-transaction
+  // sees a clean bus end, not just released clock lines.
+  pinMode(TOUCH_SDA, OUTPUT_OPEN_DRAIN);
+  digitalWrite(TOUCH_SDA, LOW);
+  delayMicroseconds(5);
+  digitalWrite(TOUCH_SCL, HIGH);
+  delayMicroseconds(5);
+  digitalWrite(TOUCH_SDA, HIGH);
+  delayMicroseconds(5);
+
+  Wire.begin(TOUCH_SDA, TOUCH_SCL);
+  Wire.setTimeOut(50);
+  Wire.setTimeout(50);
+
+  Timber.w("recoverI2CBus: ran bus recovery after a >%dms stall", I2C_RECOVERY_THRESHOLD_MS);
+}
+
 void stallCheckpointEnd(const char *name, unsigned long startedAt)
 {
   unsigned long elapsed = millis() - startedAt;
   if (elapsed > STALL_LOG_THRESHOLD_MS)
   {
     logStall(name, elapsed);
+  }
+  if (elapsed > I2C_RECOVERY_THRESHOLD_MS)
+  {
+    recoverI2CBus();
   }
 }
 #endif

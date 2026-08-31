@@ -3478,3 +3478,58 @@ be noticeable in practice.
 Not yet committed as of this entry - see the commit immediately following it. Not yet soak-tested
 over a long real-world period or specifically re-tested for the exact "45-53s into battery"
 scenario post-fix - next step if this is picked up again.
+
+------------------------------------------------------------------------------------------------
+2026-08-31 (cont.) - Stall investigation, part 5: real-world soak test showed the Wire.setTimeout()
+fix was only PARTIAL (first hit of each burst still ~1.1s); added a reactive I2C bus-recovery
+routine; upstream esp32-c3-mini confirmed equally exposed; chronos-esp32 PR still pending
+------------------------------------------------------------------------------------------------
+**User's real-world soak test: "problems are still there on battery at 5 seconds and 45-53
+seconds"** - contradicted the earlier promising 4-minute log capture. Pulled a longer soak log and
+found the real shape: **every burst's first `lv_timer_handler+delay` entry was still ~1100-1137ms
+(the old, unfixed magnitude) - only entries after that first one within the same burst had
+actually dropped** to the new ~120-150ms. Two clear examples: 306847ms (1137ms) and 551621ms
+(1131ms), each immediately followed by ~10-15 entries in the 123-136ms range. The
+`Wire.setTimeout()` fix from the previous entry was real but incomplete.
+
+**Ruled out the write phase as the remaining gap**: checked `SensorCommArduino_I2C`'s
+`sendStopFlag` (defaults `true`), confirming `endTransmission(true)` takes the properly-bounded
+`i2cWrite()` path, not an unbounded deferred non-stop path. With write/read/readBytes all now
+genuinely capped at ~50ms each, ~120-150ms fully explains the *repeat* failures within a burst -
+but not the larger first-hit cost, which is a different order of magnitude entirely.
+
+**Working theory, and the fix attempted**: the first failure of a new episode is very plausibly a
+genuinely wedged I2C bus (SDA physically held low by a device mid-transaction - a real electrical
+condition no software `_timeOutMillis`/`Stream::_timeout` setting can shortcut, since those only
+bound how long the ESP32 *waits*, not how fast a stuck peer actually releases the line). Added
+`recoverI2CBus()` (`hal/esp32/app_hal.cpp`): the standard I2C bus-recovery sequence - manually
+clock `TOUCH_SCL` (bit-banged via `pinMode()`/`digitalWrite()`, `OUTPUT_OPEN_DRAIN`) up to 9 times
+while `TOUCH_SDA` is held low, force a STOP condition (SDA low->high while SCL high), then
+`Wire.begin()` + both timeouts again. Wired in reactively via `stallCheckpointEnd()`: any
+checkpoint exceeding a new `I2C_RECOVERY_THRESHOLD_MS` (500ms - clearly in "first-hit" territory,
+well above the ~150ms bounded-failure ceiling) triggers it, so a healthy bus is never disturbed by
+this on an ordinary tick - only fires after a stall has already been detected.
+
+Built clean, flashed, boot-confirmed (heap unchanged ~13.6KB free, AXP2101/touch/RTC all still
+read correctly after `Wire.begin()` gets called a second time via this path - the higher-level
+driver objects don't need re-`init()`, they just call through the global `Wire` reference each
+time). **Result: zero large (>500ms) stalls across a clean 7-minute post-fix capture** - every
+single logged entry was back in the ~124-133ms range, none of the ~1.1s first-hit pattern seen in
+the prior test. **Important honest caveat**: since `recoverI2CBus()` only runs *after* a >500ms
+stall is detected, and none occurred in this window, the recovery code path itself was never
+actually exercised/tested here - this result shows the underlying wedge condition didn't recur in
+this particular 7-minute stretch, not that the recovery mechanism specifically works. Genuinely
+promising, not yet proof. **Real-world soak testing (the user's own use, especially through the
+45-53s-on-battery window that reproduced this most reliably) is the next real confirmation step.**
+
+**Two items pinned, not forgotten, per explicit user request**:
+1. **chronos-esp32 PR still not opened** to `fbiego/chronos-esp32` - the `sendCommand()`
+   200ms->30ms fix (`56761e4` on `fix-blocking-notify-delay`, pushed to origin) is confirmed
+   working on real hardware (the ~891ms `watch.loop` entries throughout this session's testing,
+   down from ~2851ms) - ask the user before opening it, they haven't decided yet.
+2. **Upstream `fbiego/esp32-c3-mini` confirmed equally exposed**: `git fetch upstream` +
+   `git show upstream/main:hal/esp32/app_hal.cpp` shows upstream has the same `ESPS3_2_06` board
+   (AXP2101 PMU + shared touch bus) but **zero** `Wire.setTime*` calls at all - not even the
+   partial 2026-08-25 fix. Upstream boards using this config are fully exposed, arguably worse off
+   than this fork even was before today's session. Worth a separate upstream PR once the fix here
+   is fully confirmed (including the bus-recovery piece) - not opened yet, not decided.
