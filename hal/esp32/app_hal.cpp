@@ -150,40 +150,59 @@ bool navSwitch = false;
 bool extremePowerSave = false;
 bool screengrabberEnabled = true;
 #if ESPS3_2_06
-// Cached the same way as the 30s battery-percent poll further down (and for
-// the same reason): staying_on_for_charging() calls this on every single
-// hal_loop() iteration, unthrottled. That's fine normally, but when the
-// AXP2101 is in its known flaky/stuck-register state (see DEVELOPER_NOTES.txt),
-// each PMU.isVbusIn() I2C round-trip can take close to a second even with
-// Wire's timeout guard, which throttled the whole loop - including
-// btn_home.loop() - down to ~1Hz and caused misclassified/missed button
-// presses. Re-checking VBUS once a second instead of every tick avoids that
-// without meaningfully delaying charge-state changes.
+// Real, shared PMU cache - only ever written by refreshPmuStatus() below. on_battery()/
+// is_charging() are plain readers of these, no I2C cost of their own.
+bool cachedOnBattery = true;
+bool cachedCharging = false;
+
+// 2026-08-31 (stall investigation): on_battery() and is_charging() used to each independently
+// poll the AXP2101 over I2C on their own unsynchronized 1s cache, and a separate uncached
+// PMU.getBatteryPercent() (plus a third, redundant raw PMU.isCharging() call) ran every 30s
+// further down in hal_loop() - three staggered I2C exposure windows instead of one, landing on
+// different ticks depending on which watchface was active and how the two 1s caches happened
+// to be phased. Under this board's documented flaky/stuck-register AXP2101 state (see
+// DEVELOPER_NOTES.txt; historically observed worse on battery than on USB), every one of those
+// windows is an independent chance for a register read to hang toward Wire's 50ms timeout -
+// user-reported as periodic ~1Hz jerk in an otherwise-smooth animation (classic_410's cogs) plus
+// occasional 1-2s stalls. Folded all three reads into this one shared once-a-second window,
+// called unconditionally from the top of hal_loop() itself (not from on_battery()/is_charging()
+// any more, since their own call frequency varies with the active watchface and whether Extreme
+// Power Save is even on) - so at most one hal_loop() tick per second pays any I2C cost, not two
+// or three. This also lets the on-screen battery percentage update every second instead of every
+// 30s, at no extra polling cost (the bus was already being touched that often anyway) - still
+// deliberately capped at once a second, not faster: a percentage readout doesn't need sub-second
+// freshness, and every additional read is one more chance to hit the flaky-register hang.
+void refreshPmuStatus()
+{
+  static unsigned long lastPoll = 0;
+  if (millis() - lastPoll < 1000)
+  {
+    return;
+  }
+  lastPoll = millis();
+
+  cachedCharging = PMU.isCharging();
+  cachedOnBattery = !PMU.isVbusIn();
+
+  int pct = PMU.getBatteryPercent();
+  if (pct >= 0)
+  {
+    watchBatteryPercent = pct;
+    watch.setBattery(pct, cachedCharging); // no-op on the BLE side unless the value actually changed
+    lv_slider_set_value(ui_batterySlider, watchBatteryPercent, LV_ANIM_OFF);
+    lv_label_set_text_fmt(ui_batteryLabel, "Battery %d%%", watchBatteryPercent);
+  }
+}
+
 bool on_battery()
 {
-  static unsigned long lastVbusCheck = 0;
-  static bool cachedOnBattery = true;
-  if (millis() - lastVbusCheck >= 1000)
-  {
-    lastVbusCheck = millis();
-    cachedOnBattery = !PMU.isVbusIn();
-  }
   return cachedOnBattery;
 }
 
-// Same 1s-cached pattern as on_battery() just above, kept as an independent PMU read (not
-// derived from on_battery()'s own cache) so callers of either don't have to care which one
-// ran most recently - used by the classic_410 face's charge indicator to tell "plugged in,
-// topped up" apart from "plugged in, actively charging".
+// used by the classic_410 face's charge indicator to tell "plugged in, topped up" apart
+// from "plugged in, actively charging"
 bool is_charging()
 {
-  static unsigned long lastChargeCheck = 0;
-  static bool cachedCharging = false;
-  if (millis() - lastChargeCheck >= 1000)
-  {
-    lastChargeCheck = millis();
-    cachedCharging = PMU.isCharging();
-  }
   return cachedCharging;
 }
 #endif
@@ -2707,6 +2726,8 @@ void hal_loop()
   handleSerialCommands();
 
 #if ESPS3_2_06
+  refreshPmuStatus();
+
   if (extremePowerSave && touchAsleep && bleAsleep && on_battery())
   {
     deep_idle_loop();
@@ -2862,23 +2883,10 @@ void hal_loop()
       }
     }
 
-#if ESPS3_2_06
-    {
-      static unsigned long lastBatteryPoll = 0;
-      if (millis() - lastBatteryPoll >= 30000)
-      {
-        lastBatteryPoll = millis();
-        int pct = PMU.getBatteryPercent();
-        if (pct >= 0)
-        {
-          watchBatteryPercent = pct;
-          watch.setBattery(pct, PMU.isCharging());
-          lv_slider_set_value(ui_batterySlider, watchBatteryPercent, LV_ANIM_OFF);
-          lv_label_set_text_fmt(ui_batteryLabel, "Battery %d%%", watchBatteryPercent);
-        }
-      }
-    }
-#endif
+    // Battery percent/charge-state polling moved to refreshPmuStatus(), called once from the
+    // top of hal_loop() - see its own comment for why the old separate 30s poll here (plus the
+    // then-independent on_battery()/is_charging() 1s caches) got consolidated into one shared
+    // once-a-second read.
 
     if (screenTimer.active)
     {

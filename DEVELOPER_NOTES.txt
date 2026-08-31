@@ -3152,3 +3152,68 @@ confirming what each change actually was before committing):
   discarded, per user's explicit "commit it as-is."
 User confirmed all of the above is fine to commit without further explanation - none of it was
 re-derived or re-verified beyond the two checks noted (cog-radius comment, b_w_resized byte-diff).
+
+------------------------------------------------------------------------------------------------
+2026-08-31 (cont.) - Investigated: on-battery 1-2s stalls + ~1Hz animation jerk (e.g. classic_410
+cogs). Root cause not BLE - consolidated three staggered PMU I2C polls into one, built, flashed,
+boot-confirmed - not yet soak-tested for the actual symptom
+------------------------------------------------------------------------------------------------
+User-reported symptom: on battery, occasional 1-2s stalls, and watchface animation (e.g.
+classic_410's cogs) intermittently dropping from smooth multi-Hz updates to a visible ~1Hz jerk.
+User's own first guess was BLE.
+
+**Read `ChronosESP32::loop()` (the compiled `.pio/libdeps/.../ChronosESP32/src/ChronosESP32.cpp`,
+not the unwired local `~/chronos-esp32` clone) before assuming BLE was or wasn't the cause.** It's
+plain `millis()`-gated timer checks plus notify sends on state-change flags, no blocking I2C in
+the path read - doesn't look like the primary suspect, though not proven impossible (NimBLE notify
+calls can theoretically stall briefly under internal congestion, not something visible from this
+source alone).
+
+**Real suspect found by mapping every call touching the shared I2C bus**: `on_battery()` (`PMU.
+isVbusIn()`) and `is_charging()` (`PMU.isCharging()`) each independently cached PMU reads at their
+own 1s interval - unsynchronized with each other, so on a given second they could land on two
+different `hal_loop()` ticks, not one. Separately, a 30s-throttled block did an **uncached**
+`PMU.getBatteryPercent()` plus a **third, redundant, uncached** `PMU.isCharging()` call (`watch.
+setBattery(pct, PMU.isCharging())` - a second independent charging read the same tick as the
+already-cached one). Checked the actual `XPowersAXP2101.tpp` source rather than assuming cost:
+`isCharging()` = 1 register read; `isVbusIn()` = up to 2 (short-circuits to 1 if VBUS is out);
+`getBatteryPercent()` = always 2 (`isBatteryConnect()` + the percent register) - none of these are
+expensive on a healthy bus, but this board's AXP2101 has a **documented flaky/stuck-register
+state** (see the 2026-08-25 entry above, and the recurring "fixed via battery disconnect" pattern
+elsewhere in this project's history) that has historically shown up specifically on battery, not
+USB - during an episode, any one of these reads can individually hang toward `Wire.setTimeOut(50)`
+or beyond. Three staggered, unsynchronized exposure windows per second (two 1s-cache misses plus
+occasional 30s heavier hits) is a materially bigger attack surface than one.
+
+**Fix: consolidated all three reads into a single `refreshPmuStatus()`, called unconditionally
+once from the top of `hal_loop()` (not from `on_battery()`/`is_charging()` themselves, since their
+own call frequency varies with the active watchface and whether Extreme Power Save is on) - so at
+most one tick per second pays any PMU I2C cost, never two or three landing on different ticks.**
+`on_battery()`/`is_charging()` are now plain readers of a shared cache (`cachedOnBattery`/
+`cachedCharging`), zero I2C cost of their own. **User explicitly asked to be mindful that on-screen
+battery percentage should update faster than the old 30s, not slower**, while not making the stall
+risk worse - resolved by folding `getBatteryPercent()` into the same already-necessary
+once-a-second window rather than giving it its own faster cadence: since the bus was already being
+touched every second for vbus/charging state regardless, riding the percent read along on that
+same window is free additional exposure-window-wise (one window either way), while still being
+20x faster on-screen (1s vs 30s) than before. Confirmed `ChronosESP32::setBattery()` (`_batteryLevel
+!= level || _isCharging != charging`) is already internally change-gated, so calling it every
+second instead of every 30s does **not** spam BLE notifications - it only actually sends when the
+value genuinely changes, checked in `ChronosESP32.cpp` before relying on this.
+
+Built clean (RAM 45.4%, Flash 85.4% - both unchanged), flashed via the safe method, boot log
+captured via DTR/RTS reset pulse - clean (`Setup FS success`, `AXP2101 battery: 100%`, `Setup
+done`, BLE connected, heap ~13.6KB free, matching the pre-change baseline).
+
+**Not yet soak-tested for the actual reported symptom** - this fix is grounded in real code
+evidence (three unsynchronized I2C exposure windows reduced to one, a documented flaky-PMU
+mechanism that plausibly explains both "1Hz jerk" and "1-2s stalls," worse specifically on
+battery matching this project's own AXP2101 history) but has **not been confirmed live** to
+actually eliminate the stalls - no live serial capture was taken while the symptom was
+reproducing (the user experiences this during normal on-battery use, not something reproducible
+on demand while connected for diagnostics, and connecting via USB for a live capture supplies
+VBUS power which may itself mask the underlying flaky-PMU behaviour - same catch-22 already
+documented for the RTC-GPIO wake investigation). **Next step if this recurs**: a live serial
+capture (pyserial, matching the exact method used for the 2026-08-25 button-unresponsiveness
+diagnosis) specifically while the jerk/stall is happening, to confirm or rule this out before
+investigating further (e.g. BLE after all, or something else entirely).
