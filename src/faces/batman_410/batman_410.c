@@ -104,12 +104,10 @@ static lv_obj_t *time_bg     = NULL;  // patched-blank copy of the bottom-center
 static lv_obj_t *time_label  = NULL;  // live HH:MM text drawn on top of time_bg
 static lv_obj_t *batt_bg     = NULL;  // patched-blank copy of the top-right "78%" pill
 static lv_obj_t *batt_label  = NULL;  // live battery text drawn on top of batt_bg
-static lv_obj_t *weather_bg  = NULL;  // patched-blank copy of the "22°C" next to the sun icon
-static lv_obj_t *weather_label = NULL; // live temperature text drawn on top of weather_bg
+static lv_obj_t *weather_label = NULL; // live temperature text drawn directly on the (now sun/temp-free) background
 static lv_obj_t *date_bg     = NULL;  // patched-blank copy of the "31" box between 4 and 5
 static lv_obj_t *date_label  = NULL;  // live day-of-month text drawn on top of date_bg
-static lv_obj_t *sun_bg      = NULL;  // patched-blank copy of the static sun icon's old spot
-static lv_obj_t *weather_icon = NULL; // live weather-state icon drawn on top of sun_bg
+static lv_obj_t *weather_icon = NULL; // live weather-state icon drawn directly on the background
 
 // Canvas is already 410x494, the project's standard "content" size - see
 // header comment above.
@@ -191,8 +189,19 @@ static lv_obj_t *weather_icon = NULL; // live weather-state icon drawn on top of
 // Round 3 (2026-08-21, third hardware-feedback pass): another "2px towards
 // center", same (1,2) unit direction as round 2 (the ratio barely changes
 // this close to the original position) - from round 2's (74,61) to (75,63).
-#define DAY_LABEL_X 75
-#define DAY_LABEL_Y 63
+// 2026-08-30: rotated about the dial center (MAIN_CX,MAIN_CY) in the
+// positive (clockwise, per LVGL's transform_rotation convention - see header
+// comment above) direction by a 4px arc, DAY_LABEL only - r=220.2px from dial
+// center at this point, so dtheta=4/r=1.04deg, giving a (+4,-2) tangential
+// translation (rounded to whole pixels): (75,63) -> (79,61). DAY_BG does NOT
+// move with it and never should - unlike the label, it's a fixed crop of the
+// original art (with "FRI" inpainted out) that has to stay exactly where it
+// was cut from to blend seamlessly with the surrounding pill border/tick
+// marks (see this window's own header comment above); moving it broke that
+// seam on real hardware (visible left-edge glitch + disjointed nearby
+// ticks) - reverted back to its original (58,46) after that was caught.
+#define DAY_LABEL_X 79
+#define DAY_LABEL_Y 61
 #define DAY_LABEL_W 60
 #define DAY_LABEL_H 26
 // -28.0 deg, unchanged this round - only position moved, not asked to
@@ -263,12 +272,16 @@ static lv_obj_t *weather_icon = NULL; // live weather-state icon drawn on top of
 // applied as asked each round rather than re-litigated.
 #define WEATHER_BG_X 267
 #define WEATHER_BG_Y 433
-#define WEATHER_LABEL_X 296
+// 2026-08-30: +3 right from round 4's 296 (WEATHER_BG stays put - see comment
+// above; it just blanks the original fixed art, unrelated to where this
+// live label draws).
+#define WEATHER_LABEL_X 299
 #define WEATHER_LABEL_Y 433
 #define WEATHER_LABEL_W 60
 #define WEATHER_LABEL_H 28
-// -23.0 deg (round 4, was -22.0): another "1 more degree" of tilt.
-#define WEATHER_LABEL_ROTATION (-230)
+// -26.0 deg (2026-08-30, was -24.0): another 2 degrees of tilt, same
+// direction as before.
+#define WEATHER_LABEL_ROTATION (-260)
 
 // Day-of-month window: the black box sitting between the 4 and 5 numerals,
 // closer to the dial center than either. Flat, no rotation - unlike the
@@ -314,8 +327,11 @@ static lv_obj_t *weather_icon = NULL; // live weather-state icon drawn on top of
 // independently of the patch - SUN_BG has to stay put (it blanks the
 // original baked sun icon at its fixed art location), but the live icon
 // drawn on top of it doesn't.
-#define WEATHER_ICON_X 269
-#define WEATHER_ICON_Y 448
+// 2026-08-30: +4 right, -1 up from round 4's (269,448), independent nudge
+// (no longer following WEATHER_LABEL_X/Y's own delta - see comment above).
+// Same day, second pass: another +3 right, no further vertical change.
+#define WEATHER_ICON_X 276
+#define WEATHER_ICON_Y 447
 
 // Readout fonts (2026-08-21): bumped a size up from the original 20/24 and
 // switched from LVGL's stock (regular-weight only) montserrat to a
@@ -448,14 +464,17 @@ void init_face_batman_410(void (*callback)(const char*, const lv_img_dsc_t *, lv
     lv_obj_set_pos(batt_label, BATT_LABEL_X, BATT_LABEL_Y);
     lv_obj_set_size(batt_label, BATT_LABEL_W, BATT_LABEL_H);
 
-    /* ---- Weather window: blanked patch + live temperature label (tilted,
-       see WEATHER_LABEL_ROTATION), plus the live weather-state icon +
-       its own blanked patch (see SUN_BG_* / WEATHER_ICON_* above). ---- */
-    weather_bg = lv_image_create(face_batman_410);
-    lv_image_set_src(weather_bg, &face_batman_410_weather_bg);
-    lv_obj_set_pos(weather_bg, WEATHER_BG_X, WEATHER_BG_Y);
-    lv_obj_remove_flag(weather_bg, LV_OBJ_FLAG_SCROLLABLE);
-
+    /* ---- Weather window: live temperature label (tilted, see
+       WEATHER_LABEL_ROTATION), plus the live weather-state icon (see
+       WEATHER_ICON_* above). weather_bg/sun_bg (opaque patches that used to
+       blank the old baked-in "22°C"+sun icon before drawing these on top)
+       removed 2026-08-30 - the background art itself no longer has that
+       static readout (user edited it out of batman_bg_410x494.png directly),
+       so there's nothing left for those patches to hide; leaving them in
+       would have pasted a now-mismatched rectangle over the plain
+       background. See face_batman_410_weather_bg/face_batman_410_sun_bg's
+       own .c files if this ever needs reverting - the assets themselves
+       weren't deleted. */
     weather_label = lv_label_create(face_batman_410);
     lv_obj_set_style_text_font(weather_label, READOUT_FONT_SM, 0);
     lv_obj_set_style_text_color(weather_label, lv_color_white(), 0);
@@ -469,11 +488,6 @@ void init_face_batman_410(void (*callback)(const char*, const lv_img_dsc_t *, lv
     lv_label_set_text(weather_label, "--°C");
     lv_obj_set_pos(weather_label, WEATHER_LABEL_X, WEATHER_LABEL_Y);
     lv_obj_set_size(weather_label, WEATHER_LABEL_W, WEATHER_LABEL_H);
-
-    sun_bg = lv_image_create(face_batman_410);
-    lv_image_set_src(sun_bg, &face_batman_410_sun_bg);
-    lv_obj_set_pos(sun_bg, SUN_BG_X, SUN_BG_Y);
-    lv_obj_remove_flag(sun_bg, LV_OBJ_FLAG_SCROLLABLE);
 
     weather_icon = lv_image_create(face_batman_410);
     lv_image_set_src(weather_icon, &face_batman_410_weather_icon_1); // sunny default

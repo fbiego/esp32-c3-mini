@@ -78,8 +78,17 @@ static lv_timer_t *gear_timer = NULL;
 // this window's own gap to its nearest numerals (11/12/1) in line with the date window's - put
 // back to 101/70 per explicit request right after seeing it on hardware; the numeral-gap
 // normalization only applies to the charge window now (see its own comment below).
-#define COG_OUTER_R 101
-#define COG_INNER_R 70
+// 2026-08-30: requested as target on-screen points (top-left (0,0), this file's own
+// SCREEN_CX/SCREEN_CY=(205,247) frame) for where the two arcs cross the *left* radial
+// line - (147,152) for the top/outer arc, (166,183) for the bottom/inner arc - with the
+// radial sides (COG_HALF_ANGLE_DEG, still 30deg either side of 12 o'clock) and the dial
+// centre left untouched, i.e. only the two radii change, not the angle or centre. Both
+// given points land within ~1-2px of the existing -30deg line (measured angle -31.4deg/
+// -31.3deg respectively, well inside "around" tolerance for an eyeballed target), so this
+// is a pure radius solve: R = distance from (205,247) to each point - outer
+// sqrt(58^2+95^2)=111.3 -> 111, inner sqrt(39^2+64^2)=75.0 -> 75.
+#define COG_OUTER_R 111
+#define COG_INNER_R 75
 #define COG_HALF_ANGLE_DEG 30.0f
 // First attempt at the "top arc looks thin/messy" clipping bug added an *outward* margin
 // to the mask's own bounds so it wouldn't eat the border's stroke - wrong fix, confirmed

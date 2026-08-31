@@ -3125,3 +3125,30 @@ plus a subjective check on whether the extra ~240ms on button-wake is noticeable
 latency turns out to be a problem, the fix is narrowing the gate further (e.g. skip `displayOff()`
 on very short recent-wake cycles) rather than reverting the whole feature - not needed unless real
 testing says so.
+
+------------------------------------------------------------------------------------------------
+2026-08-31 (cont.) - housekeeping commit: prior-session face work + screengrab retrieval output,
+user confirmed fine to commit as-is
+------------------------------------------------------------------------------------------------
+Committed a batch of changes that had been sitting uncommitted in the working tree from before
+this session (not part of the power-save work above, no fresh investigation done here beyond
+confirming what each change actually was before committing):
+- `classic_410.c`: `COG_OUTER_R`/`COG_INNER_R` changed 101/70 -> 111/75, per the file's own inline
+  comment (dated 2026-08-30) - a pure-radius solve against two explicit on-screen target points
+  for where the cog arcs cross the left radial line, angle/centre left untouched.
+- `face_{batman,citizen,classic}_410_dial_img_preview.c`: regenerated preview-thumbnail assets for
+  all three faces (large binary-array diffs, no manual review of pixel content done here).
+- `batman_410.c` + `face_batman_410_face_bg.c` + `batman_bg_410x494.png`: further batman_410
+  background/asset changes on top of the 2026-08-20/21 v5 work already committed.
+- `b_w_resized` face **moved** (confirmed via a byte-for-byte diff against the pre-move committed
+  version, identical) from its own top-level `src/faces/b_w_resized/` into
+  `src/faces/batman_410/b_w_resized/` - git detected these as renames, not delete+add, so history
+  is preserved. Left as found; not investigated further why it's nested under `batman_410/`
+  specifically.
+- `screengrabs/`: the actual `.bmp` dial captures pulled off the watch (Classic/Citizen/Batman/2151)
+  via the serial retrieval tool from the 2026-08-30 entry above, plus PNG conversions and a
+  `_preview_test.png` per face - the real output that confirmed the screengrab feature (already
+  committed in `6f4b66b`) works correctly. Kept as reference artifacts in the repo rather than
+  discarded, per user's explicit "commit it as-is."
+User confirmed all of the above is fine to commit without further explanation - none of it was
+re-derived or re-verified beyond the two checks noted (cog-radius comment, b_w_resized byte-diff).
