@@ -2981,3 +2981,147 @@ Flashed and boot-confirmed on real hardware (`Setup FS success`, `Flash: Total 7
 2486272` after the 4 stored grabs). The switch's on/off behavior itself (toggling it and confirming
 capture is actually skipped when off) has NOT yet been exercised on real hardware - next thing to
 verify, not yet a confirmed-working fact.
+
+------------------------------------------------------------------------------------------------
+2026-08-31 - Power deep-dive: is sleep as deep as possible, what else can be switched off
+(research only, no code changed)
+------------------------------------------------------------------------------------------------
+User asked for a full audit of Extreme Power Save's current depth and any remaining power-saving
+opportunities. Read `hal/esp32/app_hal.cpp`, the CO5300 AMOLED driver
+(`.pio/libdeps/lolin_s3_2_06/GFX Library for Arduino/src/display/Arduino_CO5300.cpp`), `pins.h`,
+and `platformio.ini` end to end rather than trusting prior notes/memory. Findings below; nothing
+in this entry has been implemented yet.
+
+**Confirmed current depth, steps 1-6:**
+1. GPIO0 button enabled (`BUTTON_HOME 0`).
+2. "Extreme Power Save" Settings switch, persisted.
+3. Charge-aware screen timeout (stays on indefinitely on VBUS, button still forces off).
+4. Touch chip sleep (`TouchDrvFT6X36::sleep()`/`wakeup()`), I2C polling stops while asleep.
+5. BLE fully stopped (`watch.stop(true)`/`watch.begin()`).
+6. CPU light sleep, retry #4 (`gpio_wakeup_enable()`/`esp_sleep_enable_gpio_wakeup()`) - confirmed
+   working on real battery, committed `33559ac`. The 3s timer safety-net is currently disabled
+   (dormant, commented) on suspicion it costs power on its own; that specific timer-off variant
+   has only an initial "still works" confirm, not a full soak test.
+
+**Already off / not applicable:** WiFi confirmed unused project-wide (nothing to switch off). No
+IMU compiled into this board's build at all (`ENABLE_APP_QMI8658C` undefined for
+`lolin_s3_2_06`) - nothing running there to sleep.
+
+**Real, concrete, not-yet-taken win identified: the AMOLED panel itself is never told to sleep.**
+Every screen-off call site in `app_hal.cpp` (e.g. line 2882) only calls `screenBrightness(0)`,
+which writes the CO5300 driver's brightness register (`CO5300_W_WDBRIGHTNESSVALNOR`) to 0 over
+QSPI. It never calls the driver's own `displayOff()` (`Arduino_CO5300.cpp:82`), which sends real
+panel `DISPOFF` + `SLPIN` (0x10) commands. At brightness 0 the DDIC's charge pumps/gate
+drivers/QSPI receiver logic stay fully powered, driving the panel at zero output - `SLPIN`
+genuinely powers those down. Low risk to add (this board's QSPI bus is confirmed
+synchronous/blocking, `queue_size=1`, so no reorder risk from two more commands at an already-quiet
+point) but adds ~240ms combined latency to sleep/wake transitions
+(`CO5300_SLPIN_DELAY`/`CO5300_SLPOUT_DELAY`, 120ms each) - needs a real before/after current-draw
+comparison to confirm it's worth that latency, not just assumed from reading the driver. The driver
+also exposes an even-deeper, currently-commented-out `CO5300_W_DEEPSTMODE` register in the same
+`displayOn()`/`displayOff()` functions - flagged as existing but disabled upstream (possibly
+known-unstable there), not recommended to try blind.
+
+**Untapped, lower-priority: `TOUCH_IRQ` (GPIO38) is defined in `pins.h` but never referenced
+anywhere in `app_hal.cpp`.** Touch is currently polled via I2C on every LVGL indev tick whenever
+the screen is on - not just while trying to sleep - so wiring the real interrupt line would cut
+steady-state I2C traffic during ordinary awake use. Smaller and more invasive than the panel-sleep
+win above.
+
+**Considered and NOT recommended, three options:**
+- CPU frequency scaling while awake-but-idle (`setCpuFrequencyMhz()`, never used anywhere in this
+  codebase) - a real lever, but this board runs native USB CDC
+  (`ARDUINO_USB_CDC_ON_BOOT=1`) and has already produced one hard-to-recover USB-clock-domain bug
+  during the cont. 5/6 light-sleep saga above. Same risk class; only worth trying with the same
+  on-battery-only gating discipline already established elsewhere in this file, and real
+  on-device testing.
+- AXP2101 rail-level power-down of the touch/display supply (cutting the actual voltage rail, not
+  just a command-level sleep) - theoretically the deepest possible cut, but blocked the same way
+  the RTC-rail question was blocked in the 2026-07-13 entry above: nobody has the Waveshare
+  schematic confirming which AXP2101 channel (ALDO/BLDO/DCDC) feeds which peripheral, and guessing
+  wrong risks browning out something shared (e.g. the QSPI level shifter). Don't attempt without
+  that schematic.
+- Real `esp_deep_sleep` instead of light sleep - would cut power further but loses all RAM/LVGL
+  state (full reboot + reinit on every wake, real UX cost), and deep sleep's GPIO wake path goes
+  through the same ext0/ext1 RTC_PERIPH domain already proven broken on this exact board off USB
+  power (see the 2026-08-30 research entry above) - retry #4's whole point was avoiding that
+  domain via light-sleep-only GPIO wake, so deep sleep would likely reintroduce the exact failure
+  this project already solved.
+
+**Recommended next step, if this is picked up**: implement the CO5300 `displayOff()`/`displayOn()`
+change first (highest-confidence, lowest-risk, matches this project's own established
+`#if ESPS3_2_06`-gated, one-isolated-change-at-a-time pattern) - build, flash, and confirm on real
+hardware, ideally with an actual before/after current measurement rather than just "boots clean" -
+before considering the touch-IRQ idea.
+
+**Follow-up, same day: touch-wake investigated, real tradeoff found, not recommended as-is.**
+User asked whether the unused `TOUCH_IRQ` line (point above) could let a touch, not just the
+button, wake the watch from `deep_idle_loop()`'s light sleep. Read the actual touch driver source
+(`SensorLib/src/TouchDrvFT6X36.hpp`) rather than assuming: step 4's existing `sleep()` call writes
+`PMODE_DEEP_SLEEP` (`FT6X36_REG_POWER_MODE`), and the driver's own enum comment says that mode
+draws ~100uA but **"the reset pin must be pulled down to wake up"** - confirmed by `wakeup()`
+itself, which calls `reset()` (a hardware GPIO reset pulse), not an I2C wake command. In this mode
+the touch chip's sensing hardware is genuinely powered down; it can't drive `TOUCH_IRQ` on a touch
+at all, no matter how `TOUCH_IRQ` itself is wired up in firmware.
+
+Touch-wake would require switching the sleep call from `PMODE_DEEP_SLEEP` to `PMODE_MONITOR`
+(same enum, ~3mA per the driver's own comment) instead, then adding `TOUCH_IRQ` (GPIO38) as a
+second `gpio_wakeup_enable()` source in `deep_idle_loop()` alongside GPIO0 - mechanically
+straightforward, same wake mechanism already proven working for the button. **Not recommended**:
+~3mA continuous while "asleep" is a real, likely significant cost against the very ~10x
+improvement Extreme Power Save's touch/CPU-sleep steps were measured to deliver - this would be
+trading back a meaningful chunk of that saving for wake convenience, not a free win. Button-only
+wake stays the deliberately cheaper choice unless the user decides touch-wake convenience is worth
+that tradeoff. Nothing implemented; research only.
+
+------------------------------------------------------------------------------------------------
+2026-08-31 (cont.) - Step 7: real CO5300 panel sleep implemented (displayOff()/displayOn()),
+built, flashed, boot-confirmed - datasheet numbers pulled for the earlier estimate, real
+before/after current measurement still pending
+------------------------------------------------------------------------------------------------
+Implemented the panel-sleep win identified in the deep-dive entry above. Before writing code,
+pulled the real CO5300 datasheet (Waveshare-hosted PDF, this exact chip) rather than guessing
+numbers - section 6.2 "DC Characteristics", Stand-by Current table:
+- **Sleep In mode** (what `displayOff()` now sends via `DISPOFF`+`SLPIN`): VDDI ~110uA typ (DSI LP
+  mode) + VCI ~25uA typ = **~135uA combined typ**.
+- **Deep Stand-by mode** (the `CO5300_W_DEEPSTMODE` register the Arduino driver has commented out,
+  still unused here): VDDI ~2uA + VCI ~1uA = **~3uA combined typ** - confirms it's a real,
+  documented deeper mode, not just an unstable stub, but still not being touched (only exposed via
+  a commented-out write in the library, no confidence it's exercised/validated there).
+The datasheet's DC Characteristics table has **no explicit "active/on" operating-current figure**
+to subtract from - genuinely absent from the document, not an omission on this end - so there's no
+datasheet-sourced "before" number to compute an exact delta against. The real saving needs an
+actual on-device current measurement; this entry only pins down the "after" (sleep) side precisely.
+
+**Implementation** (`hal/esp32/displays/viewe.hpp`, `hal/esp32/app_hal.cpp`): added
+`DisplayWrapper::displayOff()`/`displayOn()` wrappers (`gfx->displayOff()`/`gfx->displayOn()` -
+`displayOn`/`displayOff` are plain virtual no-ops on the `Arduino_GFX` base, confirmed by reading
+`Arduino_GFX.cpp:3033-3044`, genuinely implemented by `Arduino_CO5300`; every board that includes
+`viewe.hpp` constructs a real `Arduino_CO5300`, so this is safe for all of them, not just
+`ESPS3_2_06`). New `displayAsleep` flag in `app_hal.cpp`, same pattern as `touchAsleep`/`bleAsleep`.
+**Deliberately gated inside the same `extremePowerSave && on_battery()` block as touch
+sleep/BLE stop (step 4/5's own gate)**, not on every plain screen timeout - the call sends real
+`DISPOFF`+`SLPIN`, adding ~240ms combined blocking delay on wake
+(`CO5300_SLPIN_DELAY`/`CO5300_SLPOUT_DELAY`, 120ms each via `displayOn()`'s `DISPON`+`SLPOUT`
+sequence). That cost is only acceptable stacked onto the already-slower GPIO/button wake path
+(`deep_idle_loop()` -> `screen_on()`), which already pays touch's own ~200ms reset cost - not on an
+ordinary touch-driven wake, which needs to feel instant and never sets this flag. `screen_on()`
+wakes the panel first (before touch/BLE), so `deep_idle_loop()`'s existing "immediate backlight"
+fix (2026-07-20/21 cont. 7, fix #3) now also waits out this ~240ms before the backlight becomes
+visible on a button press - a real, known latency regression on that specific path, flagged here
+so it isn't mistaken for a new bug if noticed during soak testing.
+
+Built clean (`pio run -e lolin_s3_2_06`): RAM 45.4%, Flash 85.4% - both unchanged from the
+pre-change build, confirming this added negligible code size. Flashed via the safe method
+(`pio run -e lolin_s3_2_06 -t upload`, real 3-segment write, NVS/settings preserved). Boot log
+captured via a DTR/RTS reset pulse - clean: `Setup FS success`, `AXP2101 battery: 100%, charging:
+0, vbus: 1`, `Setup done`, BLE `[DEBUG]: Connected`. No crash, no regression visible at boot.
+
+**Not yet soak-tested for the actual power delta or the button-wake latency feel.** Next step:
+real on-battery testing, ideally with a USB power meter or multimeter in series with the battery,
+comparing current draw during an idle `deep_idle_loop()` stretch before vs. after this change (or
+simply confirming overall battery life improves further from the already-measured ~10x baseline),
+plus a subjective check on whether the extra ~240ms on button-wake is noticeable/acceptable. If the
+latency turns out to be a problem, the fix is narrowing the gate further (e.g. skip `displayOff()`
+on very short recent-wake cycles) rather than reverting the whole feature - not needed unless real
+testing says so.

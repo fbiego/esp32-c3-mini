@@ -193,6 +193,16 @@ bool touchAsleep = false; // step 4: tracks whether tft.touch.sleep() was called
 bool bleAsleep = false;   // step 5: tracks whether watch.stop() was called, so
                           // screen_on() only re-inits BLE (watch.begin()) when it
                           // was actually stopped
+bool displayAsleep = false; // step 7 (2026-08-31 power deep-dive): tracks whether
+                             // tft.displayOff() was called, so screen_on() only pays
+                             // Arduino_CO5300::displayOn()'s ~240ms SLPOUT cost (2x
+                             // CO5300_SLPOUT_DELAY) when the panel was actually put to
+                             // sleep - same pattern as touchAsleep/bleAsleep above. Only
+                             // ever set true in the same extremePowerSave-on-battery gate
+                             // as touch/BLE (see the hal_loop() timeout block), so an
+                             // ordinary touch-driven wake or a wake with the switch off
+                             // never pays this cost - it only lands on the already-slower
+                             // GPIO/button wake path.
 
 static long oldPosition = 0;
 
@@ -358,6 +368,16 @@ void screen_on(long extra)
   screenTimer.active = true;
 
 #if ESPS3_2_06
+  // Step 7: wake the panel itself first, before touch/BLE - only when it was actually
+  // put to sleep (mirrors touchAsleep/bleAsleep's own guard immediately below). Only
+  // ever true on the GPIO/button wake path (see the hal_loop() timeout block for where
+  // it's set), so this ~240ms SLPOUT cost never lands on an ordinary touch-driven wake.
+  if (displayAsleep)
+  {
+    tft.displayOn();
+    displayAsleep = false;
+  }
+
   // Only pay the ~200ms TouchDrvFT6X36::wakeup()/reset() cost when touch was
   // actually put to sleep (step 4). A real touch press can't reach this
   // function while asleep in the first place (nothing to read), so this only
@@ -2887,6 +2907,22 @@ void hal_loop()
         // Power Save - only while the switch is on and genuinely on battery.
         if (extremePowerSave && on_battery())
         {
+          // Step 7 (2026-08-31 power deep-dive): put the CO5300 panel itself to sleep
+          // (real DISPOFF+SLPIN over QSPI), not just brightness=0 like every screen-off
+          // elsewhere in this file already does. Per the CO5300 datasheet's own DC
+          // Characteristics table (section 6.2), Sleep-In mode draws ~110uA (VDDI) +
+          // ~25uA (VCI) typ, vs. the driver's boosters/oscillator/GRAM interface staying
+          // fully powered at brightness=0 without this call - real saving, magnitude not
+          // yet measured on this board specifically. Deliberately gated the same as
+          // touch/BLE (only extremePowerSave-on-battery), not every screen timeout: the
+          // ~240ms SLPOUT cost on wake is only acceptable stacked onto the already-slower
+          // GPIO/button wake path (deep_idle_loop()), not on an ordinary instant-feeling
+          // touch-driven wake. QSPI bus here is confirmed synchronous/blocking
+          // (queue_size=1), so no reorder risk from these two extra commands at this
+          // already-quiescent point.
+          tft.displayOff();
+          displayAsleep = true;
+
           tft.touch.sleep();
           touchAsleep = true;
 
