@@ -3421,3 +3421,60 @@ symptom, it can make it worse by adding contention. **Given a precompiled driver
 app-level decoupling available, this is being left as a documented, understood limitation** for
 now - not pursued further this session, matching the user's own framing that the current
 worst-case (an occasional several-second freeze) is livable.
+
+------------------------------------------------------------------------------------------------
+2026-08-31 (cont.) - Stall investigation, part 4: REAL ROOT CAUSE FOUND AND FIXED -
+Wire.setTimeOut() vs Stream::setTimeout() are two different methods, only one was ever set
+------------------------------------------------------------------------------------------------
+User corrected an earlier misreading (the *short* ~1-2s stall ~5s after wake is livable - the
+long 5+ second freeze, which recurred around 45-53s into a battery session in two separate clean
+tests, is the actual problem) and asked to keep digging. A live "gear lock ~53s in" test,
+captured with the (by-then-working) `CLEAR:stall_log.txt` command for a clean read, showed the
+freeze was 100% `lv_timer_handler+delay` entries - zero `watch.loop` - ruling out a NimBLE
+connection-parameter-timeout theory that had looked promising (NimBLE has two internal 40000ms
+timeouts, `BLE_GAP_UPDATE_TIMEOUT_MS`/`BLE_LL_CTRL_PROC_TIMEOUT_MS`, close to the reported timing
+but not supported by the actual log data - correctly abandoned once the evidence didn't back it).
+
+**Real root cause, found by reading `SensorCommArduino_I2C::readRegister()` (SensorLib, used by
+`TouchDrvFT6X36`) and `XPowersCommon.tpp`'s equivalent (XPowersLib, used by the AXP2101 PMU)
+directly - both share the identical pattern**: `wire.requestFrom(addr, len)` followed by
+`wire.readBytes(buf, len)`. `requestFrom()` is correctly bounded by the existing
+`Wire.setTimeOut(50)` (added 2026-08-25) - but `readBytes()` is inherited from Arduino's `Stream`
+base class, which has its **own separate timeout** (`Stream::_timeout`, defaults to **1000ms**,
+set via `Stream::setTimeout()` - lowercase t, a completely different method from
+`TwoWire::setTimeOut()`, capital T-O, despite the near-identical name). **This project only ever
+called the capital-T-O one.** So a failed `requestFrom()` (correctly fails in ~50ms) was
+immediately followed by `readBytes()` looping on an empty buffer for up to another full,
+never-configured second before giving up - on *either* touch or PMU reads, since both libraries
+go through the same `TwoWire`/`Stream` code path. This is an almost exact match for the measured
+~1070-1090ms stall duration (50ms + ~1000ms + overhead), and explains why touch and PMU showed
+the identical signature, why the 2026-08-25 fix's own `Wire.setTimeOut(50)` never actually bounded
+anything to 50ms end-to-end, and why the background-task experiment (moving PMU off the render
+loop) made things worse rather than better - it added a second consumer of the *same* uncapped
+1-second failure mode, and two colliding failures roughly doubled the visible cost.
+
+**Fix**: added `Wire.setTimeout(50);` (lowercase t) immediately alongside the existing
+`Wire.setTimeOut(50);` in `hal_setup()` - two lines, same value, two different mechanisms, both
+now actually bounded. Built clean, flashed, boot-confirmed (heap unchanged, ~13.6KB free).
+
+**Result, confirmed via a clean 4-minute stall-log capture after the fix: stall durations dropped
+from ~1070-1090ms to ~123-131ms** - almost exactly the predicted ~10x reduction (50ms I2C-level +
+50ms Stream-level + overhead vs. the old 50ms + ~1000ms). The underlying transient read failures
+still occur at roughly the same frequency (still logged, since the ~123-131ms values are just
+over the 100ms stall-log threshold) - this fix doesn't eliminate whatever occasionally causes a
+transaction to fail, it eliminates the **cost** of a failure, from a multi-second freeze down to
+a barely-perceptible ~125ms skip in a 33ms-cadence animation. This is very likely the real fix
+for the user's reported "5+ second freeze" - the short "~1-2s at 5s post-wake" stall was already
+separately fixed (the `sendCommand()` notify-delay patch, see above).
+
+**Considered and deliberately not pursued given this result**: reducing the LVGL touch indev's
+poll rate (`lv_indev_get_read_timer()` + `lv_timer_set_period()`, currently the LVGL default
+33ms/`LV_DEF_REFR_PERIOD`, shared with animation/redraw so would need the per-indev timer
+override, not the global constant) - was being investigated as a secondary mitigation before the
+real root cause was found. With the actual per-failure cost now ~125ms instead of ~1070ms, this
+is very likely unnecessary - not implemented, revisit only if the ~125ms bursts turn out to still
+be noticeable in practice.
+
+Not yet committed as of this entry - see the commit immediately following it. Not yet soak-tested
+over a long real-world period or specifically re-tested for the exact "45-53s into battery"
+scenario post-fix - next step if this is picked up again.

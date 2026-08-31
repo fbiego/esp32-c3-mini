@@ -2695,15 +2695,26 @@ void hal_setup()
 #endif
 
 #if ESPS3_2_06
-  // Guard against the AXP2101's known recurring stuck-register state (only
-  // otherwise clearable by a physical battery disconnect - see
-  // DEVELOPER_NOTES.txt) wedging the whole main loop. Without an explicit
-  // timeout here, a stuck I2C transaction on this shared touch/RTC/PMU bus
-  // can block indefinitely inside hal_loop()'s 30s battery poll, freezing
-  // lv_timer_handler()/watch.loop()/btn_home.loop() along with it - i.e. the
-  // button going totally unresponsive. This makes a stuck read fail fast
-  // (skip that one reading, per pct>=0 checks below) instead of hanging.
+  // Guard against occasional failed transactions on this shared touch/RTC/PMU I2C bus
+  // wedging the whole main loop. Without an explicit timeout here, a failed read can block
+  // far longer than expected, freezing lv_timer_handler()/watch.loop()/btn_home.loop() along
+  // with it - i.e. animation jerk, the button going unresponsive, etc.
+  //
+  // 2026-08-31: root-caused why the single setTimeOut() call below (added 2026-08-25) was
+  // never actually bounding a failed read to 50ms the way it looked like it should -
+  // TwoWire::setTimeOut() (capital T-O, sets the ESP32 I2C-driver-level timeout used by
+  // i2cRead()/i2cWrite()) and Stream::setTimeout() (lowercase t, inherited by TwoWire from
+  // the Arduino Stream base class, governs readBytes()) are two completely different
+  // methods with confusingly similar names - only the first was ever called. Both
+  // TouchDrvFT6X36 (SensorLib) and XPowersAXP2101 (XPowersLib) read registers via
+  // requestFrom()+readBytes(), and Stream::_timeout defaults to 1000ms
+  // (cores/esp32/Stream.h) - so a failed requestFrom() (correctly bounded to ~50ms) was
+  // followed by readBytes() looping on an empty buffer for up to another full second before
+  // giving up, on *either* peripheral. That accounts almost exactly for the ~1070-1090ms
+  // stalls measured via stall_log.txt on both touch- and PMU-attributed hal_loop()
+  // checkpoints. Setting both timeouts closes the real gap.
   Wire.setTimeOut(50);
+  Wire.setTimeout(50);
 
   if (!rtc.begin(Wire))
 	{
