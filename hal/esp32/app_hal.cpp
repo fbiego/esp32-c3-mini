@@ -216,7 +216,9 @@ bool is_charging()
 // four call sites in hal_loop() once the root cause is found - not meant to stay long-term.
 #define STALL_LOG_THRESHOLD_MS 100
 #define STALL_LOG_PATH "/stall_log.txt"
-#define STALL_LOG_MAX_BYTES (32 * 1024) // cap so an undiagnosed run can't slowly eat FFat
+#define STALL_LOG_MAX_BYTES (256 * 1024) // raised 2026-08-31: 32KB capped out ~25 min into a
+                                          // continuous-stall session and silently stopped
+                                          // recording before a real test could be captured
 
 void logStall(const char *checkpoint, unsigned long ms)
 {
@@ -2307,6 +2309,16 @@ void handleSerialCommands()
 
     Serial.printf("\nEND:%s\n", name.c_str());
   }
+#if ESPS3_2_06
+  else if (cmd == "CLEAR:stall_log.txt")
+  {
+    // Deliberately scoped to only this one file, not a generic delete-any-file command -
+    // this is temporary diagnostic tooling (see stallCheckpointStart()/End() above), not a
+    // general filesystem management feature.
+    bool removed = FLASH.remove(STALL_LOG_PATH);
+    Serial.println(removed ? "OK:CLEARED" : "ERR:NOFILE");
+  }
+#endif
 }
 
 // void lv_log_register_print_cb(lv_log_print_g_cb_t print_cb) {

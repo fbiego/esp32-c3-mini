@@ -3336,3 +3336,88 @@ entry), the stall-logging instrumentation (this entry, kept), and no BLE-off dia
 `~/chronos-esp32` fork instead of the registry. `~/chronos-esp32` has the delay-fix commit on
 `fix-blocking-notify-delay`, pushed to origin, not yet PR'd upstream. Nothing in `chronos-watch`
 committed yet as of this entry being written - see the commit immediately following it.
+
+------------------------------------------------------------------------------------------------
+2026-08-31 (cont.) - Battery-disconnect citation CORRECTED (was wrong), log cap raised + CLEAR
+command added, deep dive into WHY Wire's 50ms timeout isn't bounding the failure, and a
+background-task fix attempted and REVERTED after making things worse - real lesson, not a dead
+end
+------------------------------------------------------------------------------------------------
+**Correction, important**: earlier guidance to the user recommended a physical battery disconnect
+as "this project's own established fix" for the AXP2101 stuck-register theory. **That citation
+was wrong** - re-checked the actual history in this file: the 2026-07-12 entry explicitly says a
+10-minute physical battery disconnect "made no difference either" (the real fix that day was an
+NVS erase), and the 2026-08-25 entry says a battery pull was tried and "errors resumed
+immediately on reconnect" (the real fix that day was caching the I2C reads). A third citation
+("see 2026-07-13") was also wrong - that entry is an unrelated investigation, doesn't mention
+battery disconnect at all. **Physical battery disconnect has never actually been confirmed to fix
+anything in this project's own history** - the "~10 min, known fix" framing was pattern-matched
+from the *other* project (OLEDS3Watch, different board) without verifying it here first. User
+correctly pushed back based on their own lived experience. Lesson: verify a specific historical
+claim by grepping/reading the actual entries before citing it as established precedent, even when
+it "sounds right" from general pattern familiarity.
+
+**Log cap raised 32KB -> 256KB, `CLEAR:stall_log.txt` serial command added.** The 32KB cap
+silently stopped recording ~25 minutes into a long continuous-stall session, before a real user
+test could be captured - a real instrumentation gap, not just a nice-to-have. `CLEAR` lets a test
+start from a clean file instead of always reading through old accumulated data.
+
+**User did two clean tests with the fresh log**: reported a short (~1-2s) cog stall roughly 5
+seconds after waking, in *both* battery and USB-power conditions, plus a stronger 5+ second stall
+about 45 seconds into a battery-only session. The retrieved log (63 minutes of data) showed the
+real shape of this: not a permanent stuck state and not a brief one-off either - **long quiet
+stretches (multiple minutes, zero logged stalls) punctuated by bursts of the sustained
+~1.07s-per-second stutter, each burst lasting anywhere from ~15s to 7+ minutes, clearing on its
+own**. Only 3 `watch.loop` entries across the whole 63 minutes, all ~891ms (down from the old
+~2851ms) - real confirmation the BLE `sendCommand()` fix is working. The remaining
+`lv_timer_handler+delay` bursts are a separate, still-open problem. Several consecutive ~1.07s
+entries back-to-back read as one continuous freeze with no visible gap, which plausibly explains
+the user's "5+ seconds" perception without there being a literal single 5-second log entry.
+
+**Investigated why `Wire.setTimeOut(50)` isn't actually bounding this to 50ms**, reading
+`esp32-hal-i2c.c` directly: `i2cRead()`/`i2cWriteReadNonStop()` both call
+`xSemaphoreTake(bus[i2c_num].lock, portMAX_DELAY)` - an *unbounded* wait for a per-bus lock,
+before even starting the actual (properly timeout-bounded) transaction. **Checked whether this
+lock could actually contend**: grepped XPowersLib/SensorLib for `xTaskCreate` (none) and
+ChronosESP32 for any `Wire`/I2C use (none) - confirmed all I2C access in this codebase happens
+synchronously from the single main Arduino loop task, so nothing else was ever concurrently
+holding this lock at the time. The real driver implementation
+(`tools/sdk/esp32s3/lib/libdriver.a`) is a **precompiled binary in this SDK version, not
+patchable source** - the local `~/esp-idf` checkout (v5.4.1) doesn't match the bundled v4.4.7
+closely enough to be a reliable source reference either. A from-source ESP-IDF rebuild to patch
+this properly was judged out of reasonable scope for this session.
+
+**Attempted a different fix instead: moved the actual PMU I2C reads onto a dedicated background
+FreeRTOS task** (`pmuPollTask()`, pinned to core 0, low priority, started from `hal_setup()`),
+so a slow transaction would only block that background task, never `hal_loop()`'s rendering.
+`applyPmuStatusToUi()` replaced the old inline `refreshPmuStatus()` call in `hal_loop()` - does
+zero I2C, only compares cached values and updates the UI/BLE when something actually changed.
+Built clean, flashed, boot-confirmed.
+
+**Result: made the render-loop-visible symptom WORSE, not better - reverted, nothing committed.**
+A 3-minute post-fix capture showed the `lv_timer_handler+delay` stalls not just persisting but
+**nearly doubling in duration** (~1876-1889ms vs. the old ~1070ms) and recurring almost every 2
+seconds continuously. **Root cause of the regression, understood after the fact**: `lv_timer_handler()`
+doesn't just render - it also drives the LVGL touch input device's read callback internally
+(`my_touchpad_read()` -> `tft.getTouch()`), and touch lives on the *same* I2C bus as the PMU. So
+moving PMU reads to a separate task didn't remove I2C from the render loop's call chain at all -
+touch polling was always there too, invisible in the earlier analysis because it was never
+separately instrumented. The new background task just added a **second concurrent contender** for
+the same slow bus, and two sequential ~1s-ish transactions colliding roughly doubles the visible
+stall instead of eliminating it. **Cleanly reverted** (`git checkout -- hal/esp32/app_hal.cpp`,
+confirmed no residual diff), rebuilt, reflashed, boot-confirmed back to the known-good state - but
+this also silently discarded the (good, wanted) log-cap-raise and `CLEAR` command changes since
+neither had been committed yet either. **Re-applied those two specifically** (not the background
+task) and reflashed again - this file's own diff reflects only the log-cap raise and `CLEAR`
+command, nothing else, ready to commit.
+
+**Real lesson for next time this is picked up**: the actual mechanism behind the ~1s-per-transaction
+I2C delay is still not root-caused. It's not simply "PMU reads are slow" - touch reads on the same
+bus are evidently just as exposed, which the background-task test revealed by accident. Any future
+attempt needs to account for *all* I2C consumers on this shared bus (touch, RTC, PMU), not just
+whichever one happens to be instrumented at the time - and moving one consumer off the render
+loop without addressing the others (or the underlying per-transaction cost itself) doesn't fix the
+symptom, it can make it worse by adding contention. **Given a precompiled driver blob and no clean
+app-level decoupling available, this is being left as a documented, understood limitation** for
+now - not pursued further this session, matching the user's own framing that the current
+worst-case (an occasional several-second freeze) is livable.
