@@ -3566,3 +3566,49 @@ State of the repo: `hal/esp32/app_hal.cpp` has BLE-fix + `Wire.setTimeout()` + `
 all committed (`03ef788`, `208d370`, `6505532`), stall-logging instrumentation still live and
 still useful (`CLEAR:stall_log.txt` + `GET:stall_log.txt` over serial). Nothing new uncommitted as
 of this entry.
+
+------------------------------------------------------------------------------------------------
+2026-08-31 (cont.) - "Ants" artifact (citizen_410/batman_410, left-side multi-column noise): web
+search lead - possible wrong CO5300 column-offset, not yet investigated further, no code changed
+------------------------------------------------------------------------------------------------
+User asked for an initial web search on the new "ants" bug (see the 2026-08-31 end-of-session
+entry above where this was first logged - vertical lines of noise running up multiple columns on
+the left-hand side of the screen, specifically on `citizen_410` and `batman_410`).
+
+**No exact match found for this specific board/symptom**, but a real, closely-related, documented
+bug class turned up: `esphome/esphome` issue #15765 (`[mipi_spi / CO5300] Green line artifact on
+466x466 AMOLED`) - a wrong panel column-offset/gap value misaligns the CO5300's internal GRAM,
+causing the edge column(s) to wrap around and render as visible garbage at the screen boundary.
+Fixed there via `esp_lcd_panel_set_gap(panel_handle, 6, 0)`, matching the offset the official
+Waveshare BSP uses for *that* panel (466x466, different board/size than ours). Not a confirmed
+match - different panel size, different symptom shape (single green line vs. multi-column "ants")
+- but same chip, same driver family, same general failure mechanism (GRAM/column misalignment).
+
+**Why worth checking specifically in this project**: `hal/esp32/displays/viewe.hpp`'s
+`DisplayWrapper` constructor already passes a **non-zero column offset (`22 /* col_offset1 */,
+0, 0, 0`) for `ESPS3_2_06`** when constructing the `Arduino_CO5300` driver - notably different
+from the related `ESPS3_1_75` board's own offset (`6`) in the same file. Could not find Waveshare's
+actual official Arduino example specifically for the 410x502 (2.06") board via web search to
+confirm whether `22` is correct or a guess/leftover from porting - Waveshare's docs site only had
+a worked example for a *different* board (2.16", 480x480, offsets all 0), not this one. **This is
+the real open question**: is 22 the right value for this exact panel, or is it wrong and causing
+exactly this kind of left-edge, multi-column artifact (more visible on citizen_410/batman_410
+specifically because of their detailed/photo backgrounds near that edge, and less visible on
+faces with plainer content there - unconfirmed, but a real Occam's-razor fit for "left-side only,
+some faces show it more than others").
+
+**Next steps if picked up**: (1) find Waveshare's actual official example source for the 410x502
+board specifically (browse their GitHub repo's real example folder contents directly, e.g.
+`waveshareteam/ESP32-S3-Touch-AMOLED-2.06`'s `examples/arduino/` or `examples/esp-idf/` dirs -
+web search summaries didn't surface the actual file contents) and compare against `22`; (2) failing
+that, experiment directly on hardware - try a few different col_offset1 values and see if the
+artifact shifts/changes, which would confirm the mechanism even without knowing the "textbook
+correct" value up front. One more resource flagged but not yet read: an LVGL forum thread
+("Buggy homebrew display firmware - help me fix the co5300/sh8601 driver + lvgl9 setup") - same
+driver, same LVGL 9 stack as this project, may have relevant discussion.
+
+**Nothing implemented or changed this entry - research only, per explicit "initial feedback"
+framing.** Don't change `col_offset1` blindly without either the confirmed-correct official value
+or real on-device before/after comparison - a wrong guess here risks shifting the *whole* display
+content, not just fixing an edge artifact, on a project where every other display change this
+session has been tested carefully on real hardware first.
