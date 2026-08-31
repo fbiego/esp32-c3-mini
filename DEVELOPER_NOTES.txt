@@ -3533,3 +3533,36 @@ promising, not yet proof. **Real-world soak testing (the user's own use, especia
    partial 2026-08-25 fix. Upstream boards using this config are fully exposed, arguably worse off
    than this fork even was before today's session. Worth a separate upstream PR once the fix here
    is fully confirmed (including the bus-recovery piece) - not opened yet, not decided.
+
+------------------------------------------------------------------------------------------------
+2026-08-31 (cont.) - Stall investigation, part 6: user's real-world soak test says the
+recoverI2CBus() fix did NOT resolve it either - gear jerking still happening at both the ~5s and
+~45-53s marks. Session paused here for the day, not resolved.
+------------------------------------------------------------------------------------------------
+The `recoverI2CBus()` bus-recovery fix (previous entry, commit `6505532`) looked promising in a
+clean 7-minute log capture (zero stalls >500ms), but that capture never actually exercised the
+recovery code path (nothing crossed the trigger threshold in that window) - flagged at the time as
+"promising, not proof." **User's real-world soak test confirms it wasn't proof**: gear jerking is
+still happening at both previously-reported timing windows. Three fixes attempted across this
+session (BLE `sendCommand()` delay, `Wire.setTimeout()`, I2C bus recovery) - the BLE fix is
+confirmed genuinely working (real reduction in `watch.loop` stall duration/frequency measured
+repeatedly), but **the render-loop jerk itself is still not resolved** as of this entry.
+
+**Session paused here for the day at the user's request** ("I'm done vibing for today") - not
+abandoned, just stopped. Whoever resumes this should NOT assume the bus-recovery fix worked just
+because the code is committed and the mechanism is well-reasoned - it demonstrably has not fixed
+the user-visible symptom. Real next steps, not yet started: get a stall_log.txt capture from
+*during* an actual on-battery jerk event (the user has now reproduced this reliably enough - "~5s
+after wake" and "~45-53s on battery" - that a live/near-live capture during a real reproduction,
+not just a passive multi-minute window, might be achievable); confirm whether `recoverI2CBus()`
+is actually being triggered at all when a real jerk happens (add a stall_log.txt line specifically
+when recovery fires, distinct from the general checkpoint log, since right now there's no direct
+evidence recovery ever runs in practice); and reconsider whether the "wedged bus" theory is even
+correct, since a proper recovery sequence *should* clear a genuinely wedged bus and it evidently
+either isn't running, isn't triggering correctly, or isn't the right fix for whatever's actually
+happening.
+
+State of the repo: `hal/esp32/app_hal.cpp` has BLE-fix + `Wire.setTimeout()` + `recoverI2CBus()`
+all committed (`03ef788`, `208d370`, `6505532`), stall-logging instrumentation still live and
+still useful (`CLEAR:stall_log.txt` + `GET:stall_log.txt` over serial). Nothing new uncommitted as
+of this entry.
