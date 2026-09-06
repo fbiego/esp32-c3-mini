@@ -3612,3 +3612,26 @@ framing.** Don't change `col_offset1` blindly without either the confirmed-corre
 or real on-device before/after comparison - a wrong guess here risks shifting the *whole* display
 content, not just fixing an edge artifact, on a project where every other display change this
 session has been tested carefully on real hardware first.
+
+------------------------------------------------------------------------------------------------
+2026-09-06 - citizen_410: hour/minute hand highlight-streak render fixed - tolerance was excluding
+the actual highlight color, not the shape - CONFIRMED working on real hardware
+------------------------------------------------------------------------------------------------
+Follow-on to an earlier pixel-plane fix for the citizen_410 hour/minute hands: the plane logic
+itself was correct, but the color-match tolerance used to decide which pixels count as "highlight"
+was wrong. Checked the actual generated hand fill colors and found this hand isn't a plain white
+shape - the body is dark charcoal/near-black (e.g. R5/31 G13/63 B6/31), with a narrow bright
+silver/white highlight streak down the center sitting ~9-13% below pure white (R27-31/31,
+G55-63/63, B27-31/31). The prior 7.5% tolerance excluded that real highlight cluster almost
+entirely, matching only 98/187 pixels - which is why that earlier fix visually did almost nothing.
+
+Widened the tolerance to actually catch the real highlight cluster (485/613 pixels, up from
+98/187), rebuilt, reflashed `face_citizen_410_hand_hour.c`/`face_citizen_410_hand_minute.c`.
+**User confirmed on real hardware this is now starting to work** - the highlight streak down the
+hour/minute hands reads as faded/translucent against the dial instead of solid silver.
+
+Not a full fix confirmation of "matches reference exactly" - user said "starting to work," so
+worth another look/soak before considering this fully closed. `src/common/generated_features.h`
+also shows an uncommitted include-order change (batman_410's `b_w_resized` include moved under
+`faces/batman_410/`) - looks like normal build-regenerated churn from a face reorganization, not
+hand-picked, bundled into the same commit as the hand fix since it was sitting in the working tree.
