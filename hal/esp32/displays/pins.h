@@ -231,6 +231,26 @@
 
 #define MAX_FILE_OPEN 10
 
+#elif ESPS3_1_43
+
+#define SCREEN_WIDTH 466
+#define SCREEN_HEIGHT 466
+#define OFFSET_X 6
+#define OFFSET_Y 0
+
+#define LCD_CS  9
+#define LCD_SCK 10
+#define LCD_SD0 11
+#define LCD_SD1 12
+#define LCD_SD2 13
+#define LCD_SD3 14
+#define LCD_RST 21
+
+#define TOUCH_SDA 47
+#define TOUCH_SCL 48
+
+#define MAX_FILE_OPEN 10
+
 #elif ESPS3_1_75
 
 #define SCREEN_WIDTH 466

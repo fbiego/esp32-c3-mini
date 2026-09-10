@@ -59,7 +59,7 @@
 #ifdef M5_STACK_DIAL
 #include "M5Dial.h"
 #define tft M5Dial.Display
-#elif defined(VIEWE_SMARTRING) || defined(VIEWE_KNOB_15) || defined(VIEWE_S3_1_5) || defined(ESPS3_1_75)|| defined(ESPS3_2_06)
+#elif defined(VIEWE_SMARTRING) || defined(VIEWE_KNOB_15) || defined(VIEWE_S3_1_5) || defined(ESPS3_1_43) || defined(ESPS3_1_75) || defined(ESPS3_2_06)
 #include "displays/viewe.hpp"
 #define SW_ROTATION
 #elif defined(VIEWE_ECHO_EAR)
@@ -89,9 +89,12 @@ Encoder myEnc(ENCODER_A, ENCODER_B);
 RtcPCF8563<TwoWire> Rtc(Wire);
 #endif
 
-#if ESPS3_2_06
+#if defined(ESPS3_1_43) || defined(ESPS3_2_06)
 #include <SensorPCF85063.hpp>
 SensorPCF85063 rtc;
+#endif
+
+#if defined(ESPS3_2_06)
 #define XPOWERS_CHIP_AXP2101
 #include <XPowersLib.h>
 XPowersAXP2101 PMU;
@@ -1154,7 +1157,7 @@ void configCallback(Config config, uint32_t a, uint32_t b)
 
 #endif
 
-#if ESPS3_2_06
+#if defined(ESPS3_1_43) || defined(ESPS3_2_06)
     rtc.setDateTime(watch.getYear(), watch.getMonth() + 1, watch.getDay(), watch.getHour(true), watch.getMinute(), watch.getSecond());
 #endif
     // ui_update_seconds(watch.getSecond());
@@ -2143,7 +2146,7 @@ void hal_setup()
   watch.setScreen(CS_240x296_191_RTF);
 #elif defined(ESPS3_2_06)
   watch.setScreen(CS_410x494_200_RTF);
-#elif defined(VIEWE_SMARTRING) || defined(VIEWE_KNOB_15) ||  defined(ESPS3_1_75)
+#elif defined(VIEWE_SMARTRING) || defined(VIEWE_KNOB_15) ||  defined(ESPS3_1_43) ||  defined(ESPS3_1_75)
   watch.setScreen(CS_466x466_143_CTF);
 #endif
   String chip = String(ESP.getChipModel());
@@ -2289,7 +2292,7 @@ void hal_setup()
   Rtc.SetSquareWavePin(PCF8563SquareWavePinMode_None);
 #endif
 
-#if ESPS3_2_06
+#if defined(ESPS3_1_43) || defined(ESPS3_2_06)
   if (!rtc.begin(Wire))
 	{
 		Timber.e("Failed to find PCF85063 - check your wiring!");
@@ -2298,7 +2301,9 @@ void hal_setup()
 	watch.setTime(dt.getSecond(), dt.getMinute(), dt.getHour(), dt.getDay(), dt.getMonth(), dt.getYear());
 	rtc.resetAlarm();
 	rtc.disableAlarm();
+#endif
 
+#if defined(ESPS3_2_06)
   if (!PMU.init(Wire, TOUCH_SDA, TOUCH_SCL, AXP2101_SLAVE_ADDRESS))
   {
     Timber.e("Failed to find AXP2101 - check your wiring!");

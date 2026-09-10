@@ -29,7 +29,7 @@
 #define ENABLE_FACE_2151_410 // (2151)
 #define ENABLE_FACE_CITIZEN_410 // (Citizen) hand-authored from a Red Arrows Skyhawk product photo
 
-#elif defined(VIEWE_SMARTRING) || defined(VIEWE_KNOB_15) || defined(ESPS3_1_75) || defined(VIEWE_S3_1_5)
+#elif defined(VIEWE_SMARTRING) || defined(VIEWE_KNOB_15) || defined(ESPS3_1_43) || defined(ESPS3_1_75) || defined(VIEWE_S3_1_5)
 
 #define ENABLE_FACE_756_2_466 // (Red)
 #define ENABLE_FACE_RADAR_466 // (Radar)
@@ -75,7 +75,7 @@
 
 #endif
 
-#if defined(ESPS3_1_69) || defined(ESPS3_1_28) || defined(VIEWE_SMARTRING) || defined(ESPS3_1_75) || defined(ESPS3_2_06)
+#if defined(ESPS3_1_69) || defined(ESPS3_1_28) || defined(VIEWE_SMARTRING) || defined(ESPS3_1_43) || defined(ESPS3_1_75) || defined(ESPS3_2_06)
 #define ENABLE_APP_QMI8658C
 #define ENABLE_APP_ATTITUDE
 #endif
