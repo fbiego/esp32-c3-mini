@@ -3635,3 +3635,28 @@ worth another look/soak before considering this fully closed. `src/common/genera
 also shows an uncommitted include-order change (batman_410's `b_w_resized` include moved under
 `faces/batman_410/`) - looks like normal build-regenerated churn from a face reorganization, not
 hand-picked, bundled into the same commit as the hand fix since it was sitting in the working tree.
+
+------------------------------------------------------------------------------------------------
+2026-10-07 - Watchface selector order: red_magic_410 moved between Analog (75_2_410) and
+classic_410 - flashed to hardware
+------------------------------------------------------------------------------------------------
+User request. Selector order is set purely by the order of the `init_face_*()` registration calls
+at the end of `ui_init_watchfaces()`-style block in `src/ui/ui.c` (~line 4337), NOT by the
+`ENABLE_FACE_*` define order in `hal/esp32/app_hal.h`. Swapped the `init_face_red_magic_410` and
+`init_face_classic_410` lines. ESPS3_2_06 order is now:
+1167 -> 2051 -> 1041 -> 2151 -> Analog (75_2) -> Red Magic -> Classic -> Citizen -> Batman.
+
+Side effect worth knowing for any future reorder: the selected face is persisted by INDEX
+(`prefs.putInt("watchface", index)` in `hal/esp32/app_hal.cpp`), not by name, so reordering
+shifts which face a saved index points to - a user sitting on Classic or Red Magic will boot into
+the other one once after flashing and just needs to re-select.
+
+Flashing note: first upload attempt failed - watch wasn't enumerating at all, then after a replug
+the kernel reported `device not accepting address ..., error -32` / `unable to enumerate USB
+device` on port 1-1.4. A watch reboot fixed it immediately (enumerated as ttyACM0, flashed fine
+via the /dev/serial/by-id path), which points at the running firmware's USB-JTAG/CDC side being
+wedged rather than a cable/port fault. One-off so far; worth noting if it recurs.
+
+Build: lolin_s3_2_06 SUCCESS (RAM 45.4%, Flash 85.4%). The 2026-09-10 uncommitted
+`face_citizen_410_hand_hour.c`/`_minute.c` regenerations were deliberately left OUT of this
+commit - their purpose isn't recorded anywhere, so they stay in the working tree pending review.

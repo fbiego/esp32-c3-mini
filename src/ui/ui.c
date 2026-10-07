@@ -4335,8 +4335,8 @@ void ui_watchfaces_init(void)
       init_face_2051_410(registerWatchface_cb);
       init_face_2151_410(registerWatchface_cb);
       init_face_75_2_410(registerWatchface_cb);
-      init_face_classic_410(registerWatchface_cb);
       init_face_red_magic_410(registerWatchface_cb);
+      init_face_classic_410(registerWatchface_cb);
       init_face_citizen_410(registerWatchface_cb);
       init_face_batman_410(registerWatchface_cb);
 }
