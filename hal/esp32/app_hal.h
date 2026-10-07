@@ -30,7 +30,6 @@
 #define ENABLE_FACE_2151_410 // (2151)
 #define ENABLE_FACE_75_2_410 // (Analog) hand-scaled 240x240 -> 410x410 from the 75_2 face, experimental
 #define ENABLE_FACE_CLASSIC_410 // (Classic) hand-authored, ported from the OLEDS3Watch AnalogFace app, experimental
-#define ENABLE_FACE_RED_MAGIC_410 // (Red Magic) scaled 360x360 -> 410x410 from chronos.ke, by sernason
 #define ENABLE_FACE_CITIZEN_410 // (Citizen) hand-authored from a Red Arrows Skyhawk product photo, experimental
 #define ENABLE_FACE_BATMAN_410 // (Batman) hand-authored chronograph dial, added 2026-07-31
 

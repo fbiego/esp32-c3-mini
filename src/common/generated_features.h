@@ -24,8 +24,6 @@
 #include "../faces/neon_360/neon_360.h"
 #include "../faces/pixel_resized_466/pixel_resized_466.h"
 #include "../faces/smart_resized_466/smart_resized_466.h"
-#include "../faces/red_magic_410/red_magic_410.h"
-#include "../faces/red_magic/red_magic.h"
 #include "../faces/pixel_resized/pixel_resized.h"
 #include "../faces/228/228.h"
 #include "../faces/75_2_410/75_2_410.h"
