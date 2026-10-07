@@ -30,5 +30,6 @@
         "initializer_list": "cpp",
         "span": "cpp",
         "regex": "cpp"
-    }
+    },
+    "idf.currentSetup": "C:\\Users\\Matthew\\esp\\esp-idf"
 }

@@ -3,7 +3,7 @@
 #include <Arduino.h>
 
 #include "Arduino_GFX_Library.h"
-#ifdef ESPS3_2_06
+#if defined(ESPS3_1_43) || defined(ESPS3_2_06)
 #include "TouchDrvFT6X36.hpp"
 #else
 #include "TouchDrvCSTXXX.hpp"
@@ -17,7 +17,7 @@ class DisplayWrapper
 public:
     Arduino_GFX *gfx;
 
-#ifdef ESPS3_2_06
+#if defined(ESPS3_1_43) || defined(ESPS3_2_06)
     TouchDrvFT6X36 touch;
 #else
     TouchDrvCSTXXX touch;
@@ -55,13 +55,16 @@ public:
         digitalWrite(LCD_EN, HIGH);
 #endif
         bool state = gfx->begin();
+		
+#if !defined(ESPS3_1_43)         
         touch.setPins(TOUCH_RST, TOUCH_IRQ);
+#endif        
 
 #if defined(ESPS3_1_75)
         touch.begin(Wire, 0x5A, TOUCH_SDA, TOUCH_SCL);
         touch.setMaxCoordinates(466, 466);
         touch.setMirrorXY(true, true);
-#elif defined(ESPS3_2_06)
+#elif defined(ESPS3_1_43) || defined(ESPS3_2_06)
         touch.begin(Wire, 0x38, TOUCH_SDA, TOUCH_SCL);
 #else
         touch.begin(Wire, 0x15, TOUCH_SDA, TOUCH_SCL);
