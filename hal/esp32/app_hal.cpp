@@ -1534,7 +1534,7 @@ void onMessageClick(lv_event_t *e)
   // Your code here
   int index = (int)lv_event_get_user_data(e);
 
-  index %= NOTIF_SIZE;
+  index %= CS_NOTIF_SIZE;
   Timber.i("Message clicked at index %d", index);
 
   lv_label_set_text(ui_messageTime, watch.getNotificationAt(index).time.c_str());
