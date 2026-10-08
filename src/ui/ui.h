@@ -84,6 +84,11 @@ extern "C"
     extern lv_obj_t *ui_extremePowerSaveSwitch;
     extern lv_obj_t *ui_extremePowerSaveIcon;
     extern lv_obj_t *ui_extremePowerSavePanel;
+    void ui_event_screengrabberSwitch(lv_event_t *e);
+    extern lv_obj_t *ui_screengrabberLabel;
+    extern lv_obj_t *ui_screengrabberSwitch;
+    extern lv_obj_t *ui_screengrabberIcon;
+    extern lv_obj_t *ui_screengrabberPanel;
     void ui_event_settingsScreen(lv_event_t *e);
     extern lv_obj_t *ui_settingsScreen;
     extern lv_obj_t *ui_settingsList;
@@ -291,7 +296,7 @@ extern "C"
 
     void registerWatchface_cb(const char *name, const lv_image_dsc_t *preview, lv_obj_t **watchface, lv_obj_t **seconds);
     void ui_update_watchfaces(int second, int minute, int hour, bool mode, bool am, int day, int month, int year, int weekday,
-                              int temp, int icon, int battery, bool connection, int steps, int distance, int kcal, int bpm, int oxygen);
+                              int temp, int icon, int battery, bool connection, bool plugged, bool charging, int steps, int distance, int kcal, int bpm, int oxygen);
     void ui_update_seconds(int second);
 
     void addNotificationList(int appId, const char *message, int index);

@@ -32,6 +32,7 @@ void onVolumeDown(lv_event_t * e);
 void onAlertState(lv_event_t *e);
 void onNavState(lv_event_t *e);
 void onExtremePowerSave(lv_event_t *e);
+void onScreengrabberChange(lv_event_t *e);
 void onFaceSelected(lv_event_t *e);
 void onCustomFaceSelected(int pathIndex);
 void onMessageClick(lv_event_t *e);

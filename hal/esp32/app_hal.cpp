@@ -37,6 +37,9 @@
 #include <ArduinoJson.h>
 #include <Wire.h>
 #include "app_hal.h"
+#if ESPS3_2_06
+#include "esp_heap_caps.h"
+#endif
 
 #include "feedback.h"
 
@@ -52,6 +55,7 @@
 
 
 #include "driver/rtc_io.h"
+#include "driver/gpio.h"
 
 #include "FS.h"
 #include "FFat.h"
@@ -147,8 +151,158 @@ bool updateSeconds = false;
 bool hasUpdatedSec = false;
 bool navSwitch = false;
 bool extremePowerSave = false;
+bool screengrabberEnabled = true;
 #if ESPS3_2_06
-bool on_battery() { return !PMU.isVbusIn(); }
+// Real, shared PMU cache - only ever written by refreshPmuStatus() below. on_battery()/
+// is_charging() are plain readers of these, no I2C cost of their own.
+bool cachedOnBattery = true;
+bool cachedCharging = false;
+
+// 2026-08-31 (stall investigation): on_battery() and is_charging() used to each independently
+// poll the AXP2101 over I2C on their own unsynchronized 1s cache, and a separate uncached
+// PMU.getBatteryPercent() (plus a third, redundant raw PMU.isCharging() call) ran every 30s
+// further down in hal_loop() - three staggered I2C exposure windows instead of one, landing on
+// different ticks depending on which watchface was active and how the two 1s caches happened
+// to be phased. Under this board's documented flaky/stuck-register AXP2101 state (see
+// DEVELOPER_NOTES.txt; historically observed worse on battery than on USB), every one of those
+// windows is an independent chance for a register read to hang toward Wire's 50ms timeout -
+// user-reported as periodic ~1Hz jerk in an otherwise-smooth animation (classic_410's cogs) plus
+// occasional 1-2s stalls. Folded all three reads into this one shared once-a-second window,
+// called unconditionally from the top of hal_loop() itself (not from on_battery()/is_charging()
+// any more, since their own call frequency varies with the active watchface and whether Extreme
+// Power Save is even on) - so at most one hal_loop() tick per second pays any I2C cost, not two
+// or three. This also lets the on-screen battery percentage update every second instead of every
+// 30s, at no extra polling cost (the bus was already being touched that often anyway) - still
+// deliberately capped at once a second, not faster: a percentage readout doesn't need sub-second
+// freshness, and every additional read is one more chance to hit the flaky-register hang.
+void refreshPmuStatus()
+{
+  static unsigned long lastPoll = 0;
+  if (millis() - lastPoll < 1000)
+  {
+    return;
+  }
+  lastPoll = millis();
+
+  cachedCharging = PMU.isCharging();
+  cachedOnBattery = !PMU.isVbusIn();
+
+  int pct = PMU.getBatteryPercent();
+  if (pct >= 0)
+  {
+    watchBatteryPercent = pct;
+    watch.setBattery(pct, cachedCharging); // no-op on the BLE side unless the value actually changed
+    lv_slider_set_value(ui_batterySlider, watchBatteryPercent, LV_ANIM_OFF);
+    lv_label_set_text_fmt(ui_batteryLabel, "Battery %d%%", watchBatteryPercent);
+  }
+}
+
+bool on_battery()
+{
+  return cachedOnBattery;
+}
+
+// used by the classic_410 face's charge indicator to tell "plugged in, topped up" apart
+// from "plugged in, actively charging"
+bool is_charging()
+{
+  return cachedCharging;
+}
+
+// TEMPORARY diagnostic instrumentation, 2026-08-31: the PMU-polling consolidation above didn't
+// fix the reported on-battery stall/jerk, and - critically - the symptom doesn't reproduce at
+// all while connected via USB, which is exactly what a live serial capture needs. So this times
+// a handful of hal_loop() checkpoints and appends a line to /stall_log.txt on FFat whenever one
+// exceeds STALL_LOG_THRESHOLD_MS, to be pulled off later via the existing serial LIST/GET
+// protocol (handleSerialCommands()) once reconnected - same "capture on-device while
+// disconnected, retrieve later" shape as the screengrab feature. Remove this block plus its
+// four call sites in hal_loop() once the root cause is found - not meant to stay long-term.
+#define STALL_LOG_THRESHOLD_MS 100
+#define STALL_LOG_PATH "/stall_log.txt"
+#define STALL_LOG_MAX_BYTES (256 * 1024) // raised 2026-08-31: 32KB capped out ~25 min into a
+                                          // continuous-stall session and silently stopped
+                                          // recording before a real test could be captured
+
+void logStall(const char *checkpoint, unsigned long ms)
+{
+  File f = FLASH.open(STALL_LOG_PATH, FILE_APPEND);
+  if (!f)
+  {
+    return;
+  }
+  if (f.size() > STALL_LOG_MAX_BYTES)
+  {
+    f.close();
+    return;
+  }
+  f.printf("%lu,%s,%lu,batt=%d,chg=%d\n", millis(), checkpoint, ms, (int)cachedOnBattery, (int)cachedCharging);
+  f.close();
+}
+
+unsigned long stallCheckpointStart()
+{
+  return millis();
+}
+
+// I2C bus recovery, 2026-08-31: even with both Wire timeouts now correctly set
+// (Wire.setTimeOut()/Wire.setTimeout(), see hal_setup()), stall_log.txt evidence shows the
+// *first* failure of a new "bad episode" still costs close to the old ~1.1s, while every
+// individual bounded step (write/read/readBytes) is now capped at ~50ms - fully accounting for
+// the ~120-150ms *repeat* failures within the same episode, but not this larger first-hit cost.
+// Working theory: a genuinely wedged bus (SDA held low by a device mid-transaction, a real
+// electrical condition no software timeout can shortcut) - the standard fix is the classic I2C
+// bus-recovery sequence: manually clock SCL a few times to let a stuck slave finish/release the
+// bus, force a STOP condition, then reinit Wire. Deliberately reactive (called from
+// stallCheckpointEnd() below only when a checkpoint is clearly in "first-hit" territory, not the
+// smaller bounded-failure range) rather than run on every tick, so a healthy bus is never
+// disturbed by this.
+#define I2C_RECOVERY_THRESHOLD_MS 500
+
+void recoverI2CBus()
+{
+  Wire.end();
+
+  pinMode(TOUCH_SCL, OUTPUT_OPEN_DRAIN);
+  pinMode(TOUCH_SDA, INPUT_PULLUP);
+  digitalWrite(TOUCH_SCL, HIGH);
+
+  for (int i = 0; i < 9 && digitalRead(TOUCH_SDA) == LOW; i++)
+  {
+    digitalWrite(TOUCH_SCL, LOW);
+    delayMicroseconds(5);
+    digitalWrite(TOUCH_SCL, HIGH);
+    delayMicroseconds(5);
+  }
+
+  // Force a STOP condition (SDA low->high while SCL is high) so any device left mid-transaction
+  // sees a clean bus end, not just released clock lines.
+  pinMode(TOUCH_SDA, OUTPUT_OPEN_DRAIN);
+  digitalWrite(TOUCH_SDA, LOW);
+  delayMicroseconds(5);
+  digitalWrite(TOUCH_SCL, HIGH);
+  delayMicroseconds(5);
+  digitalWrite(TOUCH_SDA, HIGH);
+  delayMicroseconds(5);
+
+  Wire.begin(TOUCH_SDA, TOUCH_SCL);
+  Wire.setTimeOut(50);
+  Wire.setTimeout(50);
+
+  Timber.w("recoverI2CBus: ran bus recovery after a >%dms stall", I2C_RECOVERY_THRESHOLD_MS);
+}
+
+void stallCheckpointEnd(const char *name, unsigned long startedAt)
+{
+  unsigned long elapsed = millis() - startedAt;
+  if (elapsed > STALL_LOG_THRESHOLD_MS)
+  {
+    logStall(name, elapsed);
+  }
+  if (elapsed > I2C_RECOVERY_THRESHOLD_MS)
+  {
+    recoverI2CBus();
+  }
+}
 #endif
 bool touchAsleep = false; // step 4: tracks whether tft.touch.sleep() was called, so
                           // screen_on() only pays TouchDrvFT6X36::wakeup()'s ~200ms
@@ -156,6 +310,16 @@ bool touchAsleep = false; // step 4: tracks whether tft.touch.sleep() was called
 bool bleAsleep = false;   // step 5: tracks whether watch.stop() was called, so
                           // screen_on() only re-inits BLE (watch.begin()) when it
                           // was actually stopped
+bool displayAsleep = false; // step 7 (2026-08-31 power deep-dive): tracks whether
+                             // tft.displayOff() was called, so screen_on() only pays
+                             // Arduino_CO5300::displayOn()'s ~240ms SLPOUT cost (2x
+                             // CO5300_SLPOUT_DELAY) when the panel was actually put to
+                             // sleep - same pattern as touchAsleep/bleAsleep above. Only
+                             // ever set true in the same extremePowerSave-on-battery gate
+                             // as touch/BLE (see the hal_loop() timeout block), so an
+                             // ordinary touch-driven wake or a wake with the switch off
+                             // never pays this cost - it only lands on the already-slower
+                             // GPIO/button wake path.
 
 static long oldPosition = 0;
 
@@ -321,6 +485,16 @@ void screen_on(long extra)
   screenTimer.active = true;
 
 #if ESPS3_2_06
+  // Step 7: wake the panel itself first, before touch/BLE - only when it was actually
+  // put to sleep (mirrors touchAsleep/bleAsleep's own guard immediately below). Only
+  // ever true on the GPIO/button wake path (see the hal_loop() timeout block for where
+  // it's set), so this ~240ms SLPOUT cost never lands on an ordinary touch-driven wake.
+  if (displayAsleep)
+  {
+    tft.displayOn();
+    displayAsleep = false;
+  }
+
   // Only pay the ~200ms TouchDrvFT6X36::wakeup()/reset() cost when touch was
   // actually put to sleep (step 4). A real touch press can't reach this
   // function while asleep in the first place (nothing to read), so this only
@@ -358,30 +532,61 @@ bool staying_on_for_charging()
 }
 
 #if ESPS3_2_06
-/* Extreme Power Save step 6, retry #3: timer-only polling instead of a GPIO
-   wake source. Attempts #1 (ext0) and #2 (ext1) both proved the RTC-GPIO
-   wake circuit itself is unreliable off USB power (confirmed live: ext1
-   worked cleanly while connected, failed identically to ext0 once actually
-   on battery - almost certainly a clock domain ESP-IDF only keeps alive
-   while a USB host is attached, per DEVELOPER_NOTES.txt cont. 5/6). But the
-   plain TIMER wake was 100% reliable in every single test across both
-   attempts (rc=0, clean, every cycle, no exceptions) - so this version
-   doesn't use a GPIO wake source at all. It just polls GPIO0 with a normal
+/* Extreme Power Save step 6, retry #3 (kept as the proven fallback, see
+   retry #4 below): timer-only polling instead of a GPIO wake source.
+   Attempts #1 (ext0) and #2 (ext1) both proved the RTC-GPIO wake circuit
+   itself is unreliable off USB power (confirmed live: ext1 worked cleanly
+   while connected, failed identically to ext0 once actually on battery -
+   almost certainly a clock domain ESP-IDF only keeps alive while a USB
+   host is attached, per DEVELOPER_NOTES.txt cont. 5/6). But the plain
+   TIMER wake was 100% reliable in every single test across both attempts
+   (rc=0, clean, every cycle, no exceptions) - so this version doesn't use
+   a GPIO wake source at all. It just polls GPIO0 with a normal
    digitalRead() each time the timer wakes it, on a short interval for
-   still-reasonably-snappy response. GPIO0 never switches to RTC-IO function
-   this way - it stays in Button2's own digital mode throughout, which
-   sidesteps the whole RTC-wake-circuit class of problem entirely, not just
-   works around it. */
+   still-reasonably-snappy response. GPIO0 never switches to RTC-IO
+   function this way - it stays in Button2's own digital mode throughout,
+   which sidesteps the whole RTC-wake-circuit class of problem entirely,
+   not just works around it.
+
+   Extreme Power Save step 6, retry #4 (CURRENT, UNTESTED ON BATTERY): swap
+   the 200ms timer poll for a genuine edge/level-triggered GPIO wake source
+   via gpio_wakeup_enable()/esp_sleep_enable_gpio_wakeup(). Per ESP-IDF docs
+   this is a light-sleep-only wake source that does NOT switch the pin into
+   RTC-IO function the way ext0/ext1 do (ESP_SLEEP_WAKEUP_GPIO is a
+   different mechanism from ext0/ext1's RTC_PERIPH-domain wake), so it may
+   sidestep whatever's actually failing on this board's RTCLDO/VDD3P3_RTC
+   rail on battery - see the 2026-08-30 research write-up in
+   DEVELOPER_NOTES.txt for the schematic-derived theory on why ext0/ext1
+   fail here. The timer wake is kept, but only as an infrequent safety net
+   so the while-condition below (extremePowerSave/touchAsleep/bleAsleep/
+   on_battery()) still gets re-checked periodically even with no button
+   press - e.g. if a charger gets plugged in while asleep - not as the
+   primary wake path anymore. If this turns out to fail on real battery the
+   same way ext0/ext1 did, retry #3 above is the known-working fallback:
+   drop the gpio_wakeup_enable()/esp_sleep_enable_gpio_wakeup() calls and
+   the two disable calls at the end of this function, and shorten the timer
+   back to 200ms. */
 void deep_idle_loop()
 {
-  Timber.i("deep_idle_loop: entering (timer-poll)");
+  Timber.i("deep_idle_loop: entering (gpio wakeup only, timer safety net dormant)");
   Serial.flush();
+
+  esp_sleep_enable_gpio_wakeup();
+  gpio_wakeup_enable(GPIO_NUM_0, GPIO_INTR_LOW_LEVEL); // button is active-low
 
   int iterations = 0;
   while (extremePowerSave && touchAsleep && bleAsleep && on_battery())
   {
     iterations++;
-    esp_sleep_enable_timer_wakeup(200000); // poll every 200ms
+    // Timer safety net disabled 2026-08-30: waking the main CPU every 3s to
+    // recheck the while-condition (e.g. charger plugged in while asleep) is
+    // suspected to be a significant power cost in its own right, separate
+    // from the GPIO wake path itself. Pure GPIO wake means this loop now
+    // only re-checks the while-condition when the button actually wakes it.
+    // Re-enable by uncommenting the line below if that safety net is needed
+    // again (e.g. charger-plugged-in-while-asleep stops being detected
+    // promptly enough).
+    // esp_sleep_enable_timer_wakeup(3000000); // safety-net recheck every 3s
     esp_light_sleep_start();
 
     if (digitalRead(0) == LOW) // button pressed (active low)
@@ -422,8 +627,24 @@ void deep_idle_loop()
       break;
     }
   }
+
+  gpio_wakeup_disable(GPIO_NUM_0);
+  esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_GPIO);
+
   Timber.i("deep_idle_loop: exited after %d iterations", iterations);
   Serial.flush();
+
+  // Re-sync the internal clock from the external PCF85063 (accurate,
+  // crystal-based) rather than trusting it after however many hundreds of
+  // 200ms esp_light_sleep_start() cycles this loop just did - those each
+  // rely on the SoC's own internal RTC_SLOW_CLK calibration (imprecise RC
+  // oscillator, no external 32kHz crystal wired to it on this board) to
+  // account for the sleep duration, and small per-cycle errors compound
+  // over an extended on-battery/disconnected idle stretch. Only ever read
+  // once before, at boot (see hal_setup()) - this is the first re-sync.
+  RTC_DateTime dt = rtc.getDateTime();
+  watch.setTime(dt.getSecond(), dt.getMinute(), dt.getHour(), dt.getDay(), dt.getMonth(), dt.getYear());
+  Timber.i("deep_idle_loop: resynced clock from PCF85063 (%02d:%02d:%02d)", dt.getHour(), dt.getMinute(), dt.getSecond());
 }
 #endif
 
@@ -755,17 +976,22 @@ void deleteFile(const char *path)
 
 bool setupFS()
 {
-
-#ifndef ENABLE_CUSTOM_FACE
-  return false;
-#endif
-
+  // FFat must mount unconditionally - it's now also where save_dial_screengrab()
+  // writes .bmp files, not just the custom-face feature below. Previously this
+  // whole function (including FLASH.begin() itself) was skipped outright
+  // whenever ENABLE_CUSTOM_FACE wasn't defined, so the filesystem never mounted
+  // at all on builds without it (confirmed via this board's own boot log:
+  // "Setup FS failed" every time, since FLASH.begin() was never even reached).
   if (!FLASH.begin(true, "/ffat", MAX_FILE_OPEN))
   {
     FLASH.format();
 
     return false;
   }
+
+#ifndef ENABLE_CUSTOM_FACE
+  return true;
+#endif
 
   static lv_fs_drv_t sd_drv;
   lv_fs_drv_init(&sd_drv);
@@ -1370,6 +1596,19 @@ void onExtremePowerSave(lv_event_t *e)
   prefs.putBool("extremepwr", extremePowerSave);
 }
 
+// Lets the dial screengrab (save_dial_screengrab(), called from
+// on_watchface_list_open()) be switched off - it noticeably delays opening
+// the dial selector (~115-620KB lv_snapshot_take() render + BMP write), so
+// off should be a real option for anyone who doesn't want that cost on every
+// long-press.
+void onScreengrabberChange(lv_event_t *e)
+{
+  lv_obj_t *obj = (lv_obj_t *)lv_event_get_target(e);
+  screengrabberEnabled = lv_obj_has_state(obj, LV_STATE_CHECKED);
+
+  prefs.putBool("screengrab", screengrabberEnabled);
+}
+
 void savePrefInt(const char *key, int value)
 {
   prefs.putInt(key, value);
@@ -1476,8 +1715,107 @@ void onFaceSelected(lv_event_t *e)
   prefs.putInt("watchface", index);
 }
 
+// Renders ui_home (the dial currently in use, whatever it is at the moment
+// this is called) into an off-screen RGB565 buffer via LVGL's snapshot API
+// and writes it out as an uncompressed 24bpp BMP - no PNG/JPEG encoder is
+// linked into this build, and BMP needs none. lv_snapshot_take() renders the
+// object tree directly, independent of which screen is currently active, so
+// this works even after the caller has already switched the active screen
+// away from ui_home.
+void save_dial_screengrab()
+{
+  if (!screengrabberEnabled)
+  {
+    return;
+  }
+
+  lv_draw_buf_t *snap = lv_snapshot_take(ui_home, LV_COLOR_FORMAT_RGB565);
+  if (!snap)
+  {
+    Timber.w("save_dial_screengrab: lv_snapshot_take failed (out of memory?)");
+    return;
+  }
+
+  uint32_t w = snap->header.w;
+  uint32_t h = snap->header.h;
+  uint32_t stride = snap->header.stride;
+  uint32_t pixelBytes = w * 3;
+  // BMP rows are padded to a 4-byte boundary per the spec, regardless of
+  // what the header's own biSizeImage/file-size fields say - most decoders
+  // compute the stride themselves from width/bpp rather than trusting those
+  // fields. This board's real display is 410x502 (not the 240x240 assumed
+  // when this was first written), and 410*3=1230 isn't 4-byte aligned, so
+  // skipping padding silently produced corrupt/truncated-looking files.
+  uint32_t rowBytes = (pixelBytes + 3) & ~3u;
+  uint32_t imageSize = rowBytes * h;
+
+  // Filename starts with the dial's own name, so each dial overwrites only
+  // its own previous grab (FILE_WRITE truncates) rather than accumulating.
+  String path = "/" + String(faces[currentIndex].name) + ".bmp";
+  File file = FLASH.open(path, FILE_WRITE);
+  if (!file)
+  {
+    Timber.w("save_dial_screengrab: failed to open %s for write", path.c_str());
+    lv_draw_buf_destroy(snap);
+    return;
+  }
+
+  uint8_t fileHeader[14] = {'B', 'M', 0, 0, 0, 0, 0, 0, 0, 0, 54, 0, 0, 0};
+  uint32_t fileSize = 54 + imageSize;
+  fileHeader[2] = fileSize & 0xFF;
+  fileHeader[3] = (fileSize >> 8) & 0xFF;
+  fileHeader[4] = (fileSize >> 16) & 0xFF;
+  fileHeader[5] = (fileSize >> 24) & 0xFF;
+
+  uint8_t infoHeader[40] = {0};
+  infoHeader[0] = 40; // DIB header size
+  int32_t iw = (int32_t)w, ih = (int32_t)h; // positive height = bottom-up rows
+  memcpy(&infoHeader[4], &iw, 4);
+  memcpy(&infoHeader[8], &ih, 4);
+  infoHeader[12] = 1;  // planes
+  infoHeader[14] = 24; // bits per pixel
+  memcpy(&infoHeader[20], &imageSize, 4);
+
+  file.write(fileHeader, sizeof(fileHeader));
+  file.write(infoHeader, sizeof(infoHeader));
+
+  uint8_t *row = (uint8_t *)calloc(1, rowBytes); // zeroed once; padding bytes at the tail are never touched again
+  if (!row)
+  {
+    Timber.w("save_dial_screengrab: no memory for row buffer");
+    file.close();
+    lv_draw_buf_destroy(snap);
+    return;
+  }
+
+  // BMP rows go bottom-to-top; the snapshot buffer is top-to-bottom.
+  for (int32_t y = (int32_t)h - 1; y >= 0; y--)
+  {
+    const uint16_t *src = (const uint16_t *)(snap->data + y * stride);
+    for (uint32_t x = 0; x < w; x++)
+    {
+      uint16_t px = src[x];
+      uint8_t r5 = (px >> 11) & 0x1F;
+      uint8_t g6 = (px >> 5) & 0x3F;
+      uint8_t b5 = px & 0x1F;
+      row[x * 3 + 0] = (b5 << 3) | (b5 >> 2); // B
+      row[x * 3 + 1] = (g6 << 2) | (g6 >> 4); // G
+      row[x * 3 + 2] = (r5 << 3) | (r5 >> 2); // R
+    }
+    file.write(row, rowBytes);
+  }
+
+  free(row);
+  file.close();
+  lv_draw_buf_destroy(snap);
+
+  Timber.i("save_dial_screengrab: saved %s (%ux%u)", path.c_str(), (unsigned)w, (unsigned)h);
+}
+
 void on_watchface_list_open()
 {
+  // Grab the outgoing dial before anything else about this event runs.
+  save_dial_screengrab();
   feedbackVibrate(v_notif, 2, true);
 }
 
@@ -1582,18 +1920,16 @@ void onLanguageChange(lv_event_t *e)
 
 void setTimeout(int i)
 {
-  if (i == 4)
+  static const int32_t timeoutDurations[] = { 5000, 10000, 20000, 30000, 45000, 60000 };
+  int numDurations = sizeof(timeoutDurations) / sizeof(timeoutDurations[0]);
+
+  if (i == numDurations)
   {
     screenTimer.duration = -1; // always on
   }
-  else if (i == 0)
+  else if (i >= 0 && i < numDurations)
   {
-    screenTimer.duration = 5000; // 5 seconds
-    screenTimer.active = true;
-  }
-  else if (i < 4)
-  {
-    screenTimer.duration = 10000 * i; // 10, 20, 30 seconds
+    screenTimer.duration = timeoutDurations[i];
     screenTimer.active = true;
   }
 }
@@ -1942,10 +2278,101 @@ void btn_home_handler(Button2 &btn)
 }
 #endif
 
+// Set while handleSerialCommands() is streaming raw file bytes out over
+// Serial, so logCallback() doesn't interleave log text into the middle of
+// that byte stream. Doesn't cover the scattered direct Serial.print() calls
+// elsewhere in this file (btn_home_handler etc.) - fine for a manual,
+// deliberate one-off retrieval with no button presses mid-transfer, but not
+// a general-purpose fix.
+static bool serialDumpActive = false;
+
 void logCallback(timber_level_t level, uint32_t ts, const char *message)
 {
-  Serial.print(message);
+  if (!serialDumpActive)
+  {
+    Serial.print(message);
+  }
   Serial1.print(message);
+}
+
+// Minimal ad hoc retrieval path for pulling files (currently: dial
+// screengrab .bmp's) off FFat over the same USB-CDC serial link used for
+// flashing, since this codebase has no other host<-watch download path yet
+// (see save_dial_screengrab()'s own comment - the phone-app BLE protocol
+// only ever receives custom-face uploads, never sends files back). Meant as
+// a temporary manual tool, not a permanent feature - revisit if a real
+// transfer mechanism gets built later.
+//
+// Protocol (text commands, newline-terminated):
+//   LIST            -> one "NAME:<name> SIZE:<bytes>" line per file, then "LISTEND"
+//   GET:<filename>  -> "BEGIN:<filename>:<size>" then exactly <size> raw
+//                      bytes, then "END:<filename>"; or "ERR:NOFILE" if
+//                      missing.
+void handleSerialCommands()
+{
+  if (!Serial.available())
+  {
+    return;
+  }
+
+  String cmd = Serial.readStringUntil('\n');
+  cmd.trim();
+
+  if (cmd == "LIST")
+  {
+    File root = FLASH.open("/");
+    File file = root.openNextFile();
+    while (file)
+    {
+      if (!file.isDirectory())
+      {
+        Serial.printf("NAME:%s SIZE:%u\n", file.name(), (unsigned)file.size());
+      }
+      file = root.openNextFile();
+    }
+    Serial.println("LISTEND");
+  }
+  else if (cmd.startsWith("GET:"))
+  {
+    String name = cmd.substring(4);
+    String path = name.startsWith("/") ? name : "/" + name;
+    File file = FLASH.open(path, FILE_READ);
+    if (!file)
+    {
+      Serial.println("ERR:NOFILE");
+      return;
+    }
+
+    size_t size = file.size();
+    serialDumpActive = true;
+    Serial.printf("BEGIN:%s:%u\n", name.c_str(), (unsigned)size);
+    Serial.flush();
+
+    uint8_t buf[512];
+    size_t remaining = size;
+    while (remaining > 0)
+    {
+      size_t chunk = remaining < sizeof(buf) ? remaining : sizeof(buf);
+      file.read(buf, chunk);
+      Serial.write(buf, chunk);
+      remaining -= chunk;
+    }
+    Serial.flush();
+    file.close();
+    serialDumpActive = false;
+
+    Serial.printf("\nEND:%s\n", name.c_str());
+  }
+#if ESPS3_2_06
+  else if (cmd == "CLEAR:stall_log.txt")
+  {
+    // Deliberately scoped to only this one file, not a generic delete-any-file command -
+    // this is temporary diagnostic tooling (see stallCheckpointStart()/End() above), not a
+    // general filesystem management feature.
+    bool removed = FLASH.remove(STALL_LOG_PATH);
+    Serial.println(removed ? "OK:CLEARED" : "ERR:NOFILE");
+  }
+#endif
 }
 
 // void lv_log_register_print_cb(lv_log_print_g_cb_t print_cb) {
@@ -1983,6 +2410,25 @@ static uint32_t my_tick(void)
 
 void hal_setup()
 {
+
+#if ESPS3_2_06
+  // ESP-IDF's malloc() only spills an allocation into the 8MB PSRAM once that single request
+  // exceeds a size threshold - anything smaller always comes from the ~183KB internal-only
+  // heap, no matter how many small requests pile up. LVGL's per-widget lv_obj_t/style structs
+  // are all individually well under any sane default threshold, so every one of them (ticks,
+  // numerals, hands, and now classic_410's ~36 gear/tooth/hub objects) has always landed
+  // exclusively in that scarce internal heap - the same heap BLE/WiFi's own DMA buffers must
+  // also come from. Confirmed via this board's own heapUsage() log + a live serial capture:
+  // internal heap at 98.66% used right at boot, "BLE_INIT: Malloc failed" logged immediately
+  // after - which is the actual root cause behind Extreme Power Save's on-battery wake
+  // sequence failing (screen_on() calls watch.begin() to restart BLE, which needs a chunk of
+  // this same exhausted internal heap). Lowering the spill threshold to 128 bytes lets nearly
+  // all of LVGL's small object allocations go to PSRAM instead, freeing internal RAM back up.
+  // DMA-requiring allocations (BLE/WiFi/display driver buffers) are unaffected - those request
+  // MALLOC_CAP_DMA explicitly, which PSRAM can't satisfy, so they still always land internal
+  // regardless of this setting.
+  heap_caps_malloc_extmem_enable(128);
+#endif
 
   Serial.begin(115200); /* prepare for possible serial debug */
   Serial1.begin(115200);
@@ -2194,15 +2640,16 @@ void hal_setup()
   alertSwitch = prefs.getBool("alerts", false);
   navSwitch = prefs.getBool("autonav", false);
   extremePowerSave = prefs.getBool("extremepwr", false);
+  screengrabberEnabled = prefs.getBool("screengrab", true);
 
   lv_obj_scroll_to_y(ui_settingsList, 1, LV_ANIM_ON);
   lv_obj_scroll_to_y(ui_appList, 1, LV_ANIM_ON);
   lv_obj_scroll_to_y(ui_appInfoPanel, 1, LV_ANIM_ON);
   lv_obj_scroll_to_y(ui_gameList, 1, LV_ANIM_ON);
 
-  if (tm > 4)
+  if (tm > 6)
   {
-    tm = 4;
+    tm = 6;
   }
   else if (tm < 0)
   {
@@ -2245,6 +2692,15 @@ void hal_setup()
   else
   {
     lv_obj_remove_state(ui_extremePowerSaveSwitch, LV_STATE_CHECKED);
+  }
+
+  if (screengrabberEnabled)
+  {
+    lv_obj_add_state(ui_screengrabberSwitch, LV_STATE_CHECKED);
+  }
+  else
+  {
+    lv_obj_remove_state(ui_screengrabberSwitch, LV_STATE_CHECKED);
   }
 #endif
 
@@ -2290,6 +2746,29 @@ void hal_setup()
   Rtc.StopAlarm();
   Rtc.StopTimer();
   Rtc.SetSquareWavePin(PCF8563SquareWavePinMode_None);
+#endif
+
+#if ESPS3_2_06
+  // Guard against occasional failed transactions on this shared touch/RTC/PMU I2C bus
+  // wedging the whole main loop. Without an explicit timeout here, a failed read can block
+  // far longer than expected, freezing lv_timer_handler()/watch.loop()/btn_home.loop() along
+  // with it - i.e. animation jerk, the button going unresponsive, etc.
+  //
+  // 2026-08-31: root-caused why the single setTimeOut() call below (added 2026-08-25) was
+  // never actually bounding a failed read to 50ms the way it looked like it should -
+  // TwoWire::setTimeOut() (capital T-O, sets the ESP32 I2C-driver-level timeout used by
+  // i2cRead()/i2cWrite()) and Stream::setTimeout() (lowercase t, inherited by TwoWire from
+  // the Arduino Stream base class, governs readBytes()) are two completely different
+  // methods with confusingly similar names - only the first was ever called. Both
+  // TouchDrvFT6X36 (SensorLib) and XPowersAXP2101 (XPowersLib) read registers via
+  // requestFrom()+readBytes(), and Stream::_timeout defaults to 1000ms
+  // (cores/esp32/Stream.h) - so a failed requestFrom() (correctly bounded to ~50ms) was
+  // followed by readBytes() looping on an empty buffer for up to another full second before
+  // giving up, on *either* peripheral. That accounts almost exactly for the ~1070-1090ms
+  // stalls measured via stall_log.txt on both touch- and PMU-attributed hal_loop()
+  // checkpoints. Setting both timeouts closes the real gap.
+  Wire.setTimeOut(50);
+  Wire.setTimeout(50);
 #endif
 
 #if defined(ESPS3_1_43) || defined(ESPS3_2_06)
@@ -2367,7 +2846,13 @@ void hal_setup()
 
 void hal_loop()
 {
+  handleSerialCommands();
+
 #if ESPS3_2_06
+  unsigned long _stallT = stallCheckpointStart();
+  refreshPmuStatus();
+  stallCheckpointEnd("refreshPmuStatus", _stallT);
+
   if (extremePowerSave && touchAsleep && bleAsleep && on_battery())
   {
     deep_idle_loop();
@@ -2376,13 +2861,29 @@ void hal_loop()
 
   if (!transfer)
   {
+#if ESPS3_2_06
+    _stallT = stallCheckpointStart();
+#endif
     lv_timer_handler(); // Update the UI-
     delay(5);
+#if ESPS3_2_06
+    stallCheckpointEnd("lv_timer_handler+delay", _stallT);
+    _stallT = stallCheckpointStart();
+#endif
 
     watch.loop();
+#if ESPS3_2_06
+    stallCheckpointEnd("watch.loop", _stallT);
+#endif
 
 #if defined(BUTTON_HOME) && (BUTTON_HOME != -1)
+#if ESPS3_2_06
+    _stallT = stallCheckpointStart();
+#endif
   btn_home.loop();
+#if ESPS3_2_06
+    stallCheckpointEnd("btn_home.loop", _stallT);
+#endif
 #endif
 
 #if defined(M5_STACK_DIAL) || defined(VIEWE_KNOB_15) || defined(ELECROW_S3)
@@ -2523,23 +3024,10 @@ void hal_loop()
       }
     }
 
-#if ESPS3_2_06
-    {
-      static unsigned long lastBatteryPoll = 0;
-      if (millis() - lastBatteryPoll >= 30000)
-      {
-        lastBatteryPoll = millis();
-        int pct = PMU.getBatteryPercent();
-        if (pct >= 0)
-        {
-          watchBatteryPercent = pct;
-          watch.setBattery(pct, PMU.isCharging());
-          lv_slider_set_value(ui_batterySlider, watchBatteryPercent, LV_ANIM_OFF);
-          lv_label_set_text_fmt(ui_batteryLabel, "Battery %d%%", watchBatteryPercent);
-        }
-      }
-    }
-#endif
+    // Battery percent/charge-state polling moved to refreshPmuStatus(), called once from the
+    // top of hal_loop() - see its own comment for why the old separate 30s poll here (plus the
+    // then-independent on_battery()/is_charging() 1s caches) got consolidated into one shared
+    // once-a-second read.
 
     if (screenTimer.active)
     {
@@ -2568,6 +3056,22 @@ void hal_loop()
         // Power Save - only while the switch is on and genuinely on battery.
         if (extremePowerSave && on_battery())
         {
+          // Step 7 (2026-08-31 power deep-dive): put the CO5300 panel itself to sleep
+          // (real DISPOFF+SLPIN over QSPI), not just brightness=0 like every screen-off
+          // elsewhere in this file already does. Per the CO5300 datasheet's own DC
+          // Characteristics table (section 6.2), Sleep-In mode draws ~110uA (VDDI) +
+          // ~25uA (VCI) typ, vs. the driver's boosters/oscillator/GRAM interface staying
+          // fully powered at brightness=0 without this call - real saving, magnitude not
+          // yet measured on this board specifically. Deliberately gated the same as
+          // touch/BLE (only extremePowerSave-on-battery), not every screen timeout: the
+          // ~240ms SLPOUT cost on wake is only acceptable stacked onto the already-slower
+          // GPIO/button wake path (deep_idle_loop()), not on an ordinary instant-feeling
+          // touch-driven wake. QSPI bus here is confirmed synchronous/blocking
+          // (queue_size=1), so no reorder risk from these two extra commands at this
+          // already-quiescent point.
+          tft.displayOff();
+          displayAsleep = true;
+
           tft.touch.sleep();
           touchAsleep = true;
 
@@ -2682,8 +3186,12 @@ void update_faces()
 
 #if ESPS3_2_06
   int battery = watchBatteryPercent;
+  bool plugged = !on_battery();
+  bool charging = is_charging();
 #else
   int battery = watch.getPhoneBattery();
+  bool plugged = false;
+  bool charging = false;
 #endif
   bool connection = watch.isConnected();
 
@@ -2701,7 +3209,7 @@ void update_faces()
   {
 
     ui_update_watchfaces(second, minute, hour, mode, am, day, month, year, weekday,
-                         temp, icon, battery, connection, steps, distance, kcal, bpm, oxygen);
+                         temp, icon, battery, connection, plugged, charging, steps, distance, kcal, bpm, oxygen);
   }
 }
 

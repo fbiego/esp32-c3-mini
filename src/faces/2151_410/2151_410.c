@@ -205,18 +205,20 @@ void init_face_2151_410(void (*callback)(const char*, const lv_img_dsc_t *, lv_o
     lv_img_set_src(face_2151_410_5_65535, &face_2151_410_dial_img_5_65535_0);
     lv_obj_set_width(face_2151_410_5_65535, LV_SIZE_CONTENT);
     lv_obj_set_height(face_2151_410_5_65535, LV_SIZE_CONTENT);
-    lv_obj_set_x(face_2151_410_5_65535, 225);
+    lv_obj_set_x(face_2151_410_5_65535, -100);
     lv_obj_set_y(face_2151_410_5_65535, 25);
     lv_obj_add_flag(face_2151_410_5_65535, LV_OBJ_FLAG_ADV_HITTEST );
+    lv_obj_add_flag(face_2151_410_5_65535, LV_OBJ_FLAG_HIDDEN );
     lv_obj_clear_flag(face_2151_410_5_65535, LV_OBJ_FLAG_SCROLLABLE );
 
     face_2151_410_6_65535 = lv_img_create(face_2151_410);
     lv_img_set_src(face_2151_410_6_65535, &face_2151_410_dial_img_5_65535_0);
     lv_obj_set_width(face_2151_410_6_65535, LV_SIZE_CONTENT);
     lv_obj_set_height(face_2151_410_6_65535, LV_SIZE_CONTENT);
-    lv_obj_set_x(face_2151_410_6_65535, 206);
+    lv_obj_set_x(face_2151_410_6_65535, -100);
     lv_obj_set_y(face_2151_410_6_65535, 25);
     lv_obj_add_flag(face_2151_410_6_65535, LV_OBJ_FLAG_ADV_HITTEST );
+    lv_obj_add_flag(face_2151_410_6_65535, LV_OBJ_FLAG_HIDDEN );
     lv_obj_clear_flag(face_2151_410_6_65535, LV_OBJ_FLAG_SCROLLABLE );
 
     face_2151_410_7_207436 = lv_img_create(face_2151_410);
@@ -268,9 +270,10 @@ void init_face_2151_410(void (*callback)(const char*, const lv_img_dsc_t *, lv_o
     lv_img_set_src(face_2151_410_12_65535, &face_2151_410_dial_img_5_65535_0);
     lv_obj_set_width(face_2151_410_12_65535, LV_SIZE_CONTENT);
     lv_obj_set_height(face_2151_410_12_65535, LV_SIZE_CONTENT);
-    lv_obj_set_x(face_2151_410_12_65535, 193);
+    lv_obj_set_x(face_2151_410_12_65535, -100);
     lv_obj_set_y(face_2151_410_12_65535, 25);
     lv_obj_add_flag(face_2151_410_12_65535, LV_OBJ_FLAG_ADV_HITTEST );
+    lv_obj_add_flag(face_2151_410_12_65535, LV_OBJ_FLAG_HIDDEN );
     lv_obj_clear_flag(face_2151_410_12_65535, LV_OBJ_FLAG_SCROLLABLE );
 
     face_2151_410_13_215670 = lv_img_create(face_2151_410);
@@ -607,10 +610,10 @@ void update_time_2151_410(int second, int minute, int hour, bool mode, bool am, 
 	}
 	lv_img_set_src(face_2151_410_4_206548, face_2151_410_dial_img_4_206548_group[(am ? 0 : 1) % 2]);
 	lv_img_set_src(face_2151_410_22_233288, face_2151_410_dial_img_22_233288_group[((weekday + 6) / 1) % 7]);
-	lv_img_set_src(face_2151_410_23_246741, face_2151_410_dial_img_23_246741_group[(month / 1) % 10]);
-	lv_img_set_src(face_2151_410_24_246741, face_2151_410_dial_img_23_246741_group[(month / 10) % 10]);
-	lv_img_set_src(face_2151_410_25_246741, face_2151_410_dial_img_23_246741_group[(day / 1) % 10]);
-	lv_img_set_src(face_2151_410_26_246741, face_2151_410_dial_img_23_246741_group[(day / 10) % 10]);
+	lv_img_set_src(face_2151_410_23_246741, face_2151_410_dial_img_23_246741_group[(day / 1) % 10]);
+	lv_img_set_src(face_2151_410_24_246741, face_2151_410_dial_img_23_246741_group[(day / 10) % 10]);
+	lv_img_set_src(face_2151_410_25_246741, face_2151_410_dial_img_23_246741_group[(month / 1) % 10]);
+	lv_img_set_src(face_2151_410_26_246741, face_2151_410_dial_img_23_246741_group[(month / 10) % 10]);
 	lv_img_set_src(face_2151_410_44_255511, face_2151_410_dial_img_44_255511_group[(hour / 1) % 10]);
 	lv_img_set_src(face_2151_410_45_255511, face_2151_410_dial_img_44_255511_group[(hour / 10) % 10]);
 	lv_img_set_src(face_2151_410_46_255511, face_2151_410_dial_img_44_255511_group[(minute / 1) % 10]);
@@ -627,6 +630,19 @@ void update_weather_2151_410(int temp, int icon)
         return;
     }
 	lv_img_set_src(face_2151_410_50_277299, face_2151_410_dial_img_weather[icon % 8]);
+
+	int t = temp < 0 ? 0 : temp;
+	lv_img_set_src(face_2151_410_7_207436, face_2151_410_dial_img_7_207436_group[(t / 1) % 10]);
+	lv_img_set_src(face_2151_410_8_207436, face_2151_410_dial_img_7_207436_group[(t / 10) % 10]);
+	lv_img_set_src(face_2151_410_9_207436, face_2151_410_dial_img_7_207436_group[(t / 100) % 10]);
+	if (t < 100)
+	{
+		lv_obj_add_flag(face_2151_410_9_207436, LV_OBJ_FLAG_HIDDEN);
+	} else {
+		lv_obj_clear_flag(face_2151_410_9_207436, LV_OBJ_FLAG_HIDDEN);
+	}
+	lv_obj_clear_flag(face_2151_410_10_212058, LV_OBJ_FLAG_HIDDEN);
+	lv_obj_add_flag(face_2151_410_11_213871, LV_OBJ_FLAG_HIDDEN);
 
 #endif
 }

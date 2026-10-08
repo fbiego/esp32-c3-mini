@@ -23,9 +23,8 @@ extern "C"
 #ifdef ENABLE_FACE_CITIZEN_410
     extern lv_obj_t *face_citizen_410;
 
-    LV_IMG_DECLARE(face_citizen_410_dial_img);
+    LV_IMG_DECLARE(face_citizen_410_face_bg);
     LV_IMG_DECLARE(face_citizen_410_dial_img_preview);
-    LV_IMG_DECLARE(face_citizen_410_body_bg);
     LV_IMG_DECLARE(face_citizen_410_hand_hour);
     LV_IMG_DECLARE(face_citizen_410_hand_minute);
     LV_IMG_DECLARE(face_citizen_410_hand_second);

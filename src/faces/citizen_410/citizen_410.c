@@ -13,8 +13,7 @@
 
 lv_obj_t *face_citizen_410;
 
-static lv_obj_t *body_bg      = NULL;
-static lv_obj_t *dial_img     = NULL;
+static lv_obj_t *face_bg      = NULL;
 static lv_obj_t *hour_hand    = NULL;
 static lv_obj_t *min_hand     = NULL;
 static lv_obj_t *sec_hand     = NULL;
@@ -46,10 +45,13 @@ static lv_obj_t *batt_shadow_halo[4] = {NULL};
 #define SCREEN_H 494
 #define Y_OFFSET ((SCREEN_H - CH) / 2)
 // Whole dial+hands+text assembly nudged 3px left on-screen 2026-07-20 (user
-// noticed it read slightly right-of-center) - dial_img's own raster is
-// untouched, only its draw position and everything anchored to it moves.
-// face_citizen_410_body_bg is a separate case, already re-cropped/shifted to
-// match wherever the dial ends up (see that asset's own header comment).
+// noticed it read slightly right-of-center). Originally this moved dial_img's
+// draw position relative to a separate body_bg layer; 2026-07-30 the two were
+// merged into one baked face_citizen_410_face_bg raster (see
+// tools/facegen/merge_citizen_410_bg.py) at exactly this offset, so the shift
+// is now permanent - re-nudging requires re-running that script with a new
+// DIAL_SHIFT_X, not just changing this #define. Still kept here (rather than
+// inlined) since DATE_BOX/BATT_BOX/SCREEN_CX below are still computed off it.
 #define DIAL_SHIFT_X -3
 #define SCREEN_CX (CW / 2 + DIAL_SHIFT_X)
 #define SCREEN_CY (Y_OFFSET + CH / 2)
@@ -158,19 +160,15 @@ void init_face_citizen_410(void (*callback)(const char*, const lv_img_dsc_t *, l
 
     lv_obj_add_event_cb(face_citizen_410, onFaceEvent, LV_EVENT_ALL, NULL);
 
-    /* ---- Body/case background: the watch's crown/pushers/bracelet, pattern-matched (not
-       eyeballed) against the existing dial so it lines up exactly - see face_citizen_410_body_bg.c.
-       Drawn full-screen, behind the dial, which now has transparent corners so this shows through
-       in the four triangular areas around the round dial. ---- */
-    body_bg = lv_image_create(face_citizen_410);
-    lv_image_set_src(body_bg, &face_citizen_410_body_bg);
-    lv_obj_set_pos(body_bg, 0, 0);
-    lv_obj_remove_flag(body_bg, LV_OBJ_FLAG_SCROLLABLE);
-
-    dial_img = lv_image_create(face_citizen_410);
-    lv_image_set_src(dial_img, &face_citizen_410_dial_img);
-    lv_obj_set_pos(dial_img, DIAL_SHIFT_X, Y_OFFSET);
-    lv_obj_remove_flag(dial_img, LV_OBJ_FLAG_SCROLLABLE);
+    /* ---- Full-screen face background: the dial (pattern-matched crop) and the watch's
+       body/case (crown/pushers/bracelet) used to be two separate images - a full-screen opaque
+       body_bg behind a 410x410 dial_img with transparent corners - composited here into one
+       opaque 410x494 raster (face_citizen_410_face_bg) since the dial's position relative to
+       the body was already fixed. See tools/facegen/merge_citizen_410_bg.py. ---- */
+    face_bg = lv_image_create(face_citizen_410);
+    lv_image_set_src(face_bg, &face_citizen_410_face_bg);
+    lv_obj_set_pos(face_bg, 0, 0);
+    lv_obj_remove_flag(face_bg, LV_OBJ_FLAG_SCROLLABLE);
 
     /* ---- Date window: real LCD-panel background (photo, blurred to erase the
        old static text but keep the real grey gradient/texture) + black text

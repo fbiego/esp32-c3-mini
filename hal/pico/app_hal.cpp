@@ -306,18 +306,16 @@ void screenBrightness(uint8_t value)
 
 void setTimeout(int i)
 {
-  if (i == 4)
+  static const int32_t timeoutDurations[] = { 5000, 10000, 20000, 30000, 45000, 60000 };
+  int numDurations = sizeof(timeoutDurations) / sizeof(timeoutDurations[0]);
+
+  if (i == numDurations)
   {
     screenTimer.duration = -1; // always on
   }
-  else if (i == 0)
+  else if (i >= 0 && i < numDurations)
   {
-    screenTimer.duration = 5000; // 5 seconds
-    screenTimer.active = true;
-  }
-  else if (i < 4)
-  {
-    screenTimer.duration = 10000 * i; // 10, 20, 30 seconds
+    screenTimer.duration = timeoutDurations[i];
     screenTimer.active = true;
   }
 }

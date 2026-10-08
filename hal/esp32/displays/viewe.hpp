@@ -108,6 +108,21 @@ public:
         ((Arduino_CO5300 *)gfx)->setBrightness(brightness);
     }
 
+    // 2026-08-31 power deep-dive: real panel sleep (CO5300 DISPOFF+SLPIN / DISPON+SLPOUT),
+    // distinct from setBrightness(0) - see the call sites in app_hal.cpp for why this matters.
+    // displayOff()/displayOn() are plain virtual methods on the Arduino_GFX base (no-op there),
+    // genuinely implemented by Arduino_CO5300 - every board that includes this file constructs
+    // a real Arduino_CO5300 above, so this is safe for all of them, not just ESPS3_2_06.
+    void displayOff(void)
+    {
+        gfx->displayOff();
+    }
+
+    void displayOn(void)
+    {
+        gfx->displayOn();
+    }
+
     void writePixel(int32_t x, int32_t y, const uint16_t color)
     {
         gfx->writePixel(x, y, color);

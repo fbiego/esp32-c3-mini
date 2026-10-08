@@ -21,13 +21,17 @@
 #endif
 
 #elif defined(ESPS3_2_06)
-#define ENABLE_FACE_174_410 // (174)
-#define ENABLE_FACE_228_410 // (228)
+// ENABLE_FACE_174_410 disabled 2026-07-18 (cont.), swapped for 1167_410 (user prefers the
+// cyan tech/weather face). ENABLE_FACE_228_410 (Santa/moon) stays disabled from the original
+// 2026-07-18 flash-budget cut for citizen_410's body/case background.
 #define ENABLE_FACE_1167_410 // (1167)
 #define ENABLE_FACE_2051_410 // (2051)
 #define ENABLE_FACE_1041_410 // (1041)
 #define ENABLE_FACE_2151_410 // (2151)
-#define ENABLE_FACE_CITIZEN_410 // (Citizen) hand-authored from a Red Arrows Skyhawk product photo
+#define ENABLE_FACE_75_2_410 // (Analog) hand-scaled 240x240 -> 410x410 from the 75_2 face, experimental
+#define ENABLE_FACE_CLASSIC_410 // (Classic) hand-authored, ported from the OLEDS3Watch AnalogFace app, experimental
+#define ENABLE_FACE_CITIZEN_410 // (Citizen) hand-authored from a Red Arrows Skyhawk product photo, experimental
+#define ENABLE_FACE_BATMAN_410 // (Batman) hand-authored chronograph dial, added 2026-07-31
 
 #elif defined(VIEWE_SMARTRING) || defined(VIEWE_KNOB_15) || defined(ESPS3_1_43) || defined(ESPS3_1_75) || defined(VIEWE_S3_1_5)
 
